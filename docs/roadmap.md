@@ -11,6 +11,8 @@ Sound always stays the last functional stage: new intermediate features are inse
 
 ## Stage 1 — Core and Flow
 
+Breakdown into pieces with progress: [stage-1.md](stage-1.md).
+
 - SQLite storage: database location, schema for settings, session types, runs and stages; schema documented in `docs/`.
 - Localization helper `t(key)` with English strings; all UI text goes through it from the start.
 - Session types: manage list and colors, system `None`, archiving.
