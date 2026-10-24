@@ -40,7 +40,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - A nested transaction raises an error.
   - A statement outside a transaction block is committed immediately.
 
-- [ ] **1.5 Migration runner**
+- [x] **1.5 Migration runner**
   - On a fresh database, applies all `NNN_*.sql` files in order and sets `PRAGMA user_version` to the last number.
   - A second run changes nothing.
   - On an older database applies only the missing files.

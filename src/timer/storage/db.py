@@ -35,6 +35,9 @@ class Db:
     def insert(self, sql: str, params: Params = ()) -> int | None:
         return self._conn.execute(sql, params).lastrowid
 
+    def execute_script(self, sql: str) -> None:
+        self._conn.executescript(sql)
+
     @contextmanager
     def transaction(self) -> Iterator[None]:
         if self._conn.in_transaction:
