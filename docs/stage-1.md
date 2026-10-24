@@ -16,7 +16,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
 
 - [x] **1.0 Breakdown** — this document, linked from the roadmap.
 
-- [ ] **1.1 Localization helper**
+- [x] **1.1 Localization helper**
   - `t("key")` returns the English text from one catalog file with flat dotted keys.
   - `t("key", name=value)` substitutes `{name}` placeholders.
   - An unknown key raises `KeyError`, so typos fail loudly.
