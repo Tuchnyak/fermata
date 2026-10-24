@@ -27,7 +27,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - The directory is created if missing; calling again does not fail.
   - `db_path()` is `<data_dir>/timer.db`.
 
-- [ ] **1.3 Db helper: queries**
+- [x] **1.3 Db helper: queries**
   - `Db.open(path)` opens a SQLite file or `:memory:`, with foreign keys enforced and rows readable by column name.
   - `execute` returns the number of affected rows; `insert` returns the new id.
   - `query` returns a list of objects built by the given mapper; `query_one` returns one object or `None`.
