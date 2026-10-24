@@ -22,7 +22,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - An unknown key raises `KeyError`, so typos fail loudly.
   - Later pieces add their own keys to the catalog.
 
-- [ ] **1.2 Data directory**
+- [x] **1.2 Data directory**
   - `data_dir()` returns `$XDG_DATA_HOME/timer` when the variable is set, otherwise `~/.local/share/timer`.
   - The directory is created if missing; calling again does not fail.
   - `db_path()` is `<data_dir>/timer.db`.
