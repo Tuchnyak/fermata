@@ -1,5 +1,6 @@
 import sqlite3
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -33,3 +34,16 @@ class Db:
 
     def insert(self, sql: str, params: Params = ()) -> int | None:
         return self._conn.execute(sql, params).lastrowid
+
+    @contextmanager
+    def transaction(self) -> Iterator[None]:
+        if self._conn.in_transaction:
+            raise RuntimeError("Nested transactions are not supported")
+        self._conn.execute("BEGIN")
+        try:
+            yield
+            self._conn.execute("COMMIT")
+        except BaseException:
+            if self._conn.in_transaction:
+                self._conn.execute("ROLLBACK")
+            raise

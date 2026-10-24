@@ -34,7 +34,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - Named parameters (`:name` with a dict) work.
   - Violating a foreign key raises an error.
 
-- [ ] **1.4 Db helper: transactions**
+- [x] **1.4 Db helper: transactions**
   - Changes made inside `with db.transaction():` are committed when the block ends normally.
   - An exception inside the block rolls everything back and is re-raised.
   - A nested transaction raises an error.
