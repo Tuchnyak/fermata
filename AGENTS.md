@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Pomodoro timer with Plans (pre-designed queues of sessions) and Flow mode. Desktop app for Linux.
+Pomodoro timer with Scenarios (pre-designed queues of work intervals) and Flow mode. Desktop app for Linux.
 
 - Requirements and decisions: [docs/spec.md](docs/spec.md)
 - Stage order and backlog: [docs/roadmap.md](docs/roadmap.md)
