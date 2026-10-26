@@ -3,5 +3,10 @@
   "category.name_empty": "The name must not be empty.",
   "category.name_taken": "A category with this name already exists.",
   "category.color_invalid": "The color must look like #rrggbb.",
-  "category.system_readonly": "The system category cannot be changed."
+  "category.system_readonly": "The system category cannot be changed.",
+  "setting.unknown_key": "Unknown setting.",
+  "setting.minutes_invalid": "Minutes must be a whole number from 1 to 180.",
+  "setting.long_break_every_invalid": "The long break interval must be a whole number from 1 to 20.",
+  "setting.transition_mode_invalid": "The transition mode must be auto, confirm or mixed.",
+  "setting.blink_invalid": "The blink setting must be on or off."
 }

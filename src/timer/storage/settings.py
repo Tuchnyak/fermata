@@ -1,6 +1,15 @@
+"""Global settings: the typed `Settings` snapshot and the repository that reads and writes it.
+
+Settings live in the `setting` table as key/value text (see docs/schema.md). Only changed
+values are stored; a missing key means the default declared in `Settings`. Values are
+validated by `settings_rules` before they are written.
+"""
+
 from dataclasses import dataclass, fields
 
 from timer.storage.db import Db
+from timer.storage.settings_rules import RULES
+from timer.validation import ValidationError
 
 type Value = bool | int | str
 
@@ -48,6 +57,11 @@ class SettingsRepository:
         return Settings(**setting_values)
 
     def set(self, key: str, value: Value) -> None:
+        rule = RULES.get(key)
+        if rule is None:
+            raise ValidationError("setting.unknown_key")
+        if not rule.is_valid(value):
+            raise ValidationError(rule.error_key)
         self._db.execute(
             "INSERT INTO setting (key, value) VALUES (:key, :value)"
             " ON CONFLICT (key) DO UPDATE SET value = excluded.value",

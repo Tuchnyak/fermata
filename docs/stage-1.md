@@ -81,7 +81,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - `set(key, value)` persists the value; it is still there after reopening the database.
   - Theme and sound settings arrive with their own stages.
 
-- [ ] **1.11 Settings validation**
+- [x] **1.11 Settings validation**
   - Minutes must be 1–180 and N must be 1–20.
   - Transition mode must be one of `auto`, `confirm`, `mixed`.
   - An invalid value or an unknown key raises an error and stores nothing.
