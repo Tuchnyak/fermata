@@ -41,7 +41,7 @@ The agent develops, the owner acts as product manager and reviewer.
 
 - Each roadmap stage gets its own branch: `<type>/stage-<N>-<topic>`, e.g. `feat/stage-1-core`.
 - A stage is split into atomic pieces. For each piece (ATDD):
-  1. Write the acceptance tests and present them; the owner approves them before implementation.
+  1. Write the acceptance tests and present them together with their red run; the owner approves them before implementation. For new code the tests come with a stub: the names the tests use, with `raise NotImplementedError` bodies and deliberately wrong values (e.g. enum members), so every test fails on the missing behavior, not on an import error. The stub is not committed on its own; the implementation replaces it.
   2. Implement until the tests pass.
   3. Present the result: what changed, how it was verified, how to check it.
   4. Commit only after the owner's explicit approval.

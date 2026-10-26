@@ -1,0 +1,42 @@
+"""Interval kinds and the rules of their sequence: what comes next and how long it lasts.
+
+Pure logic: no clock and no database. The kinds are the same texts that the `interval` table
+stores in its `kind` column (see docs/schema.md).
+"""
+
+from collections.abc import Sequence
+from enum import StrEnum
+
+from timer.storage.settings import Settings
+
+
+class IntervalKind(StrEnum):
+    WORK = "work"
+    SHORT_BREAK = "short_break"
+    LONG_BREAK = "long_break"
+
+
+def next_kind(finished: Sequence[IntervalKind], settings: Settings) -> IntervalKind:
+    """Return the kind of the interval that follows the finished ones of a session.
+
+    Only kinds are given, not how an interval ended, so a skipped work interval counts
+    toward `long_break_every` like a completed one.
+    """
+    if not finished or finished[-1] != IntervalKind.WORK:
+        return IntervalKind.WORK
+
+    work_interval_count = finished.count(IntervalKind.WORK)
+    if work_interval_count % settings.long_break_every == 0:
+        return IntervalKind.LONG_BREAK
+    return IntervalKind.SHORT_BREAK
+
+
+def planned_seconds(kind: IntervalKind, settings: Settings) -> int:
+    """Return the length in seconds that the settings give to an interval of this kind."""
+    if kind == IntervalKind.WORK:
+        minutes = settings.work_minutes
+    elif kind == IntervalKind.SHORT_BREAK:
+        minutes = settings.short_break_minutes
+    else:
+        minutes = settings.long_break_minutes
+    return minutes * 60

@@ -88,7 +88,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
 
 ### Timer engine (pure logic, no UI, no database)
 
-- [ ] **1.12 Interval sequencing**
+- [x] **1.12 Interval sequencing**
   - After a work interval comes a short break; after every N-th work interval a long break instead; after a break comes a work interval.
   - Skipped work intervals count toward N.
   - With defaults the order is: work, short, work, short, work, short, work, long, work, …
