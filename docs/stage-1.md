@@ -47,7 +47,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - A database whose version is newer than the known migrations is rejected without changes.
   - A failing migration is rolled back completely and the version stays unchanged.
 
-- [ ] **1.6 Schema v1** (migration `001`)
+- [x] **1.6 Schema v1** (migration `001`)
   - The complete schema of spec §16: tables `setting`, `category`, `scenario`, `scenario_row`, `session`, `interval` and the view `interval_details`. Stage 2 adds code for scenarios, not tables.
   - `category`: name unique ignoring case; the system category `None` exists after migration.
   - `scenario`: name unique ignoring case; repeat count at least 1; four optional timer overrides (NULL = use the global value). `scenario_row`: position unique within a scenario, count at least 1; rows are deleted together with their scenario.

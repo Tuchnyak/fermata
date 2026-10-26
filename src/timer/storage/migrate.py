@@ -1,7 +1,10 @@
 import re
+from importlib import resources
 from importlib.resources.abc import Traversable
 
 from timer.storage.db import Db
+
+MIGRATIONS_DIR = resources.files("timer") / "storage" / "migrations"
 
 _FILE_NAME_EXPRESSION = re.compile(r"^(\d{3})_.+\.sql$")
 
