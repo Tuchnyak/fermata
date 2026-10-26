@@ -287,3 +287,89 @@ def test_system_category_cannot_be_updated(category_repository, changes):
 def test_update_of_an_unknown_id_raises_lookup_error(category_repository):
     with pytest.raises(LookupError):
         category_repository.update(999, name="Job")
+
+
+# --- archive and unarchive ---------------------------------------------------
+
+
+def test_archived_category_is_not_listed(category_repository):
+    work = category_repository.create("Work", "#112233")
+    category_repository.create("Reading", "#445566")
+
+    category_repository.archive(work.id)
+
+    assert names(category_repository) == ["None", "Reading"]
+
+
+def test_archived_category_can_still_be_read_with_its_name_and_color(category_repository):
+    work = category_repository.create("Work", "#112233")
+
+    category_repository.archive(work.id)
+
+    archived = category_repository.get_by_id(work.id)
+    assert archived == Category(
+        id=work.id, name="Work", color="#112233", is_system=False, is_archived=True
+    )
+
+
+def test_archived_name_stays_reserved(category_repository):
+    work = category_repository.create("Work", "#112233")
+    category_repository.archive(work.id)
+
+    with pytest.raises(ValidationError) as error:
+        category_repository.create("work", "#445566")
+
+    assert error.value.key == "category.name_taken"
+
+
+def test_unarchived_category_is_listed_again_in_its_place(category_repository):
+    category_repository.create("Apple", "#112233")
+    banana = category_repository.create("Banana", "#112233")
+    category_repository.create("Cherry", "#112233")
+    category_repository.archive(banana.id)
+
+    category_repository.unarchive(banana.id)
+
+    assert names(category_repository) == ["None", "Apple", "Banana", "Cherry"]
+    assert category_repository.get_by_id(banana.id) == banana
+
+
+def test_archive_does_not_touch_other_categories(category_repository):
+    work = category_repository.create("Work", "#112233")
+    reading = category_repository.create("Reading", "#445566")
+
+    category_repository.archive(work.id)
+
+    assert category_repository.get_by_id(reading.id) == reading
+
+
+def test_archiving_twice_is_harmless(category_repository):
+    work = category_repository.create("Work", "#112233")
+
+    category_repository.archive(work.id)
+    category_repository.archive(work.id)
+
+    assert category_repository.get_by_id(work.id).is_archived is True
+
+
+def test_unarchiving_an_active_category_is_harmless(category_repository):
+    work = category_repository.create("Work", "#112233")
+
+    category_repository.unarchive(work.id)
+
+    assert category_repository.get_by_id(work.id) == work
+
+
+@pytest.mark.parametrize("operation", ["archive", "unarchive"])
+def test_system_category_cannot_be_archived_or_unarchived(category_repository, operation):
+    with pytest.raises(ValidationError) as error:
+        getattr(category_repository, operation)(1)
+
+    assert error.value.key == "category.system_readonly"
+    assert names(category_repository) == ["None"]
+
+
+@pytest.mark.parametrize("operation", ["archive", "unarchive"])
+def test_unknown_id_raises_lookup_error(category_repository, operation):
+    with pytest.raises(LookupError):
+        getattr(category_repository, operation)(999)

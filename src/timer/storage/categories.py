@@ -43,11 +43,7 @@ class CategoryRepository:
     def update(
         self, category_id: int, *, name: str | None = None, color: str | None = None
     ) -> Category:
-        category = self.get_by_id(category_id)
-        if category is None:
-            raise LookupError(f"No category with id {category_id}")
-        if category.is_system:
-            raise ValidationError("category.system_readonly")
+        category = self._get_changeable(category_id)
         new_color = category.color if color is None else color
         new_name = self._validate(
             category.name if name is None else name, new_color, own_id=category_id
@@ -57,6 +53,12 @@ class CategoryRepository:
             {"name": new_name, "color": new_color, "id": category_id},
         )
         return replace(category, name=new_name, color=new_color)
+
+    def archive(self, category_id: int) -> None:
+        self._set_archived(category_id, True)
+
+    def unarchive(self, category_id: int) -> None:
+        self._set_archived(category_id, False)
 
     def get_by_id(self, category_id: int) -> Category | None:
         return self._db.query_one(
@@ -71,6 +73,20 @@ class CategoryRepository:
         others = [category for category in active if not category.is_system]
         others.sort(key=lambda category: category.name.casefold())
         return system + others
+
+    def _get_changeable(self, category_id: int) -> Category:
+        category = self.get_by_id(category_id)
+        if category is None:
+            raise LookupError(f"No category with id {category_id}")
+        if category.is_system:
+            raise ValidationError("category.system_readonly")
+        return category
+
+    def _set_archived(self, category_id: int, archived: bool) -> None:
+        self._get_changeable(category_id)
+        self._db.execute(
+            "UPDATE category SET is_archived = ? WHERE id = ?", (int(archived), category_id)
+        )
 
     def _validate(self, name: str, color: str, own_id: int | None = None) -> str:
         """Validate a name and a color together; return the trimmed name."""

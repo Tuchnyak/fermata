@@ -68,7 +68,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - `update(id, name=…, color=…)` applies the same validation as create.
   - The system category and unknown ids are rejected.
 
-- [ ] **1.9 Categories: archive**
+- [x] **1.9 Categories: archive**
   - `archive(id)` removes the category from `list_active()`; `get(id)` still returns it.
   - `unarchive(id)` brings it back.
   - The system category cannot be archived.
