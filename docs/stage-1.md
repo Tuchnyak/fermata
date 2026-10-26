@@ -64,7 +64,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - `get(id)` returns any category, archived or not.
   - `list_active()` returns non-archived categories, `None` first, then by name.
 
-- [ ] **1.8 Categories: rename and recolor**
+- [x] **1.8 Categories: rename and recolor**
   - `update(id, name=…, color=…)` applies the same validation as create.
   - The system category and unknown ids are rejected.
 

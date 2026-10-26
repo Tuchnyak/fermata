@@ -102,7 +102,13 @@ def test_rejected_category_is_not_stored(category_repository):
 
 
 @pytest.mark.parametrize(
-    "key", ["category.name_empty", "category.name_taken", "category.color_invalid"]
+    "key",
+    [
+        "category.name_empty",
+        "category.name_taken",
+        "category.color_invalid",
+        "category.system_readonly",
+    ],
 )
 def test_error_messages_exist_in_the_catalog(key):
     assert t(key)
@@ -158,3 +164,126 @@ def test_archived_categories_are_not_listed(db, category_repository):
     db.execute("UPDATE category SET is_archived = 1 WHERE id = ?", (work.id,))
 
     assert names(category_repository) == ["None", "Reading"]
+
+
+# --- update ------------------------------------------------------------------
+
+
+def test_update_changes_name_and_color_and_returns_the_category(category_repository):
+    work = category_repository.create("Work", "#112233")
+
+    updated = category_repository.update(work.id, name="Job", color="#445566")
+
+    assert updated == Category(
+        id=work.id, name="Job", color="#445566", is_system=False, is_archived=False
+    )
+    assert category_repository.get_by_id(work.id) == updated
+
+
+def test_update_of_the_name_only_keeps_the_color(category_repository):
+    work = category_repository.create("Work", "#112233")
+
+    updated = category_repository.update(work.id, name="Job")
+
+    assert (updated.name, updated.color) == ("Job", "#112233")
+
+
+def test_update_of_the_color_only_keeps_the_name(category_repository):
+    work = category_repository.create("Work", "#112233")
+
+    updated = category_repository.update(work.id, color="#445566")
+
+    assert (updated.name, updated.color) == ("Work", "#445566")
+
+
+def test_updated_name_is_trimmed(category_repository):
+    work = category_repository.create("Work", "#112233")
+
+    assert category_repository.update(work.id, name="  Job \t").name == "Job"
+
+
+def test_update_does_not_touch_other_categories(category_repository):
+    work = category_repository.create("Work", "#112233")
+    reading = category_repository.create("Reading", "#445566")
+
+    category_repository.update(work.id, name="Job", color="#778899")
+
+    assert category_repository.get_by_id(reading.id) == reading
+
+
+@pytest.mark.parametrize("name", ["Work", "WORK", "work"])
+def test_category_may_keep_its_own_name_or_change_only_its_case(
+    category_repository, name
+):
+    work = category_repository.create("Work", "#112233")
+
+    assert category_repository.update(work.id, name=name).name == name
+
+
+@pytest.mark.parametrize("name", ["", "   "])
+def test_update_rejects_an_empty_name(category_repository, name):
+    work = category_repository.create("Work", "#112233")
+
+    with pytest.raises(ValidationError) as error:
+        category_repository.update(work.id, name=name)
+
+    assert error.value.key == "category.name_empty"
+
+
+@pytest.mark.parametrize("color", ["red", "#fff", "112233"])
+def test_update_rejects_an_invalid_color(category_repository, color):
+    work = category_repository.create("Work", "#112233")
+
+    with pytest.raises(ValidationError) as error:
+        category_repository.update(work.id, color=color)
+
+    assert error.value.key == "category.color_invalid"
+
+
+@pytest.mark.parametrize("name", ["Reading", "reading", "  READING ", "None"])
+def test_update_rejects_a_name_taken_by_another_category(category_repository, name):
+    category_repository.create("Reading", "#445566")
+    work = category_repository.create("Work", "#112233")
+
+    with pytest.raises(ValidationError) as error:
+        category_repository.update(work.id, name=name)
+
+    assert error.value.key == "category.name_taken"
+
+
+def test_update_rejects_a_name_taken_by_an_archived_category(db, category_repository):
+    reading = category_repository.create("Reading", "#445566")
+    db.execute("UPDATE category SET is_archived = 1 WHERE id = ?", (reading.id,))
+    work = category_repository.create("Work", "#112233")
+
+    with pytest.raises(ValidationError) as error:
+        category_repository.update(work.id, name="Reading")
+
+    assert error.value.key == "category.name_taken"
+
+
+@pytest.mark.parametrize(
+    "changes", [{"name": " ", "color": "#445566"}, {"name": "Job", "color": "red"}]
+)
+def test_rejected_update_changes_nothing(category_repository, changes):
+    work = category_repository.create("Work", "#112233")
+
+    with pytest.raises(ValidationError):
+        category_repository.update(work.id, **changes)
+
+    assert category_repository.get_by_id(work.id) == work
+
+
+@pytest.mark.parametrize("changes", [{"name": "Job"}, {"color": "#445566"}])
+def test_system_category_cannot_be_updated(category_repository, changes):
+    with pytest.raises(ValidationError) as error:
+        category_repository.update(1, **changes)
+
+    assert error.value.key == "category.system_readonly"
+    assert category_repository.get_by_id(1).name == "None"
+    assert category_repository.get_by_id(1).color != "#445566"
+
+
+def test_update_of_an_unknown_id_raises_lookup_error(category_repository):
+    with pytest.raises(LookupError):
+        category_repository.update(999, name="Job")

@@ -2,5 +2,6 @@
   "app.title": "Timer",
   "category.name_empty": "The name must not be empty.",
   "category.name_taken": "A category with this name already exists.",
-  "category.color_invalid": "The color must look like #rrggbb."
+  "category.color_invalid": "The color must look like #rrggbb.",
+  "category.system_readonly": "The system category cannot be changed."
 }

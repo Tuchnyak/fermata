@@ -1,6 +1,6 @@
 import re
 import sqlite3
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from timer.storage.db import Db
 from timer.validation import ValidationError
@@ -32,19 +32,31 @@ class CategoryRepository:
         self._db = db
 
     def create(self, name: str, color: str) -> Category:
-        name = name.strip()
-        if not name:
-            raise ValidationError("category.name_empty")
-        if not _COLOR.fullmatch(color):
-            raise ValidationError("category.color_invalid")
-        if self._name_is_taken(name):
-            raise ValidationError("category.name_taken")
+        name = self._validate(name, color)
         category_id = self._db.insert(
             "INSERT INTO category (name, color) VALUES (:name, :color)",
             {"name": name, "color": color},
         )
         assert category_id is not None
         return Category(category_id, name, color, is_system=False, is_archived=False)
+
+    def update(
+        self, category_id: int, *, name: str | None = None, color: str | None = None
+    ) -> Category:
+        category = self.get_by_id(category_id)
+        if category is None:
+            raise LookupError(f"No category with id {category_id}")
+        if category.is_system:
+            raise ValidationError("category.system_readonly")
+        new_color = category.color if color is None else color
+        new_name = self._validate(
+            category.name if name is None else name, new_color, own_id=category_id
+        )
+        self._db.execute(
+            "UPDATE category SET name = :name, color = :color WHERE id = :id",
+            {"name": new_name, "color": new_color, "id": category_id},
+        )
+        return replace(category, name=new_name, color=new_color)
 
     def get_by_id(self, category_id: int) -> Category | None:
         return self._db.query_one(
@@ -60,7 +72,24 @@ class CategoryRepository:
         others.sort(key=lambda category: category.name.casefold())
         return system + others
 
-    def _name_is_taken(self, name: str) -> bool:
+    def _validate(self, name: str, color: str, own_id: int | None = None) -> str:
+        """Validate a name and a color together; return the trimmed name."""
+        name = name.strip()
+        if not name:
+            raise ValidationError("category.name_empty")
+        if not _COLOR.fullmatch(color):
+            raise ValidationError("category.color_invalid")
+        if self._name_is_taken(name, own_id):
+            raise ValidationError("category.name_taken")
+        return name
+
+    def _name_is_taken(self, name: str, own_id: int | None) -> bool:
         # SQLite's NOCASE folds only ASCII, so names are compared here instead.
-        taken = self._db.query("SELECT name FROM category", mapper=lambda row: row["name"])
-        return name.casefold() in {existing.casefold() for existing in taken}
+        others = self._db.query(
+            "SELECT id, name FROM category",
+            mapper=lambda row: (row["id"], row["name"]),
+        )
+        return any(
+            existing_id != own_id and existing.casefold() == name.casefold()
+            for existing_id, existing in others
+        )
