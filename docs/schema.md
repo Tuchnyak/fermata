@@ -42,7 +42,7 @@ A user-defined label with a color. Categories are archived, never deleted.
 | Column | Type | Notes |
 |---|---|---|
 | `id` | INTEGER | primary key |
-| `name` | TEXT | not null; unique ignoring case |
+| `name` | TEXT | not null; unique ignoring ASCII case in the database, the application compares names with Unicode case folding |
 | `color` | TEXT | not null; `#rrggbb` |
 | `is_system` | INTEGER | 1 only for the built-in `None` category (`id = 1`) |
 | `is_archived` | INTEGER | 1 = hidden from selection, still referenced by history |
@@ -54,7 +54,7 @@ A saved sequence of work intervals.
 | Column | Type | Notes |
 |---|---|---|
 | `id` | INTEGER | primary key |
-| `name` | TEXT | not null; unique ignoring case |
+| `name` | TEXT | not null; unique ignoring ASCII case in the database, the application compares names with Unicode case folding |
 | `repeat_count` | INTEGER | not null, at least 1: how many times the whole list of rows is repeated |
 | `work_minutes` | INTEGER | override of the work interval length; NULL = use the global value |
 | `short_break_minutes` | INTEGER | override; NULL = global |

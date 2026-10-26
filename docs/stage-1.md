@@ -59,7 +59,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
 
 ### Categories
 
-- [ ] **1.7 Categories: create and read**
+- [x] **1.7 Categories: create and read**
   - `create(name, color)` returns the new category; the name is trimmed and must not be empty; the color must look like `#rrggbb`; a duplicate name (ignoring case) is rejected.
   - `get(id)` returns any category, archived or not.
   - `list_active()` returns non-archived categories, `None` first, then by name.
