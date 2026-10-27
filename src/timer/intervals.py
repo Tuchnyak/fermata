@@ -20,6 +20,7 @@ class IntervalKind(StrEnum):
 
 class IntervalStatus(StrEnum):
     COMPLETED = "completed"
+    SKIPPED = "skipped"
 
 
 @dataclass(frozen=True)

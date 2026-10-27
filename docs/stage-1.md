@@ -104,7 +104,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - While paused the remaining time does not change and the paused time is not counted as worked time.
   - Resume continues the countdown; pausing an already paused interval has no effect.
 
-- [ ] **1.15 Engine: skip**
+- [x] **1.15 Engine: skip**
   - Skipping a work interval ends it as `skipped` with the time actually elapsed, and the next interval (per 1.12) starts immediately.
   - Skipping a break ends it as `skipped`, and the next work interval starts immediately.
   - Skip starts the next interval immediately in every transition mode.

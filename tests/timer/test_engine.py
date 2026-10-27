@@ -290,6 +290,194 @@ def test_a_clock_set_back_during_a_pause_does_not_change_the_worked_time(engine,
     assert engine.remaining_seconds() == 25 * 60 - 600
 
 
+# --- skip --------------------------------------------------------------------
+
+
+def test_skipping_a_work_interval_starts_a_short_break_immediately(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    clock.advance(600)
+
+    engine.skip()
+
+    assert engine.current_interval == RunningInterval(
+        kind=IntervalKind.SHORT_BREAK,
+        category_id=None,
+        planned_seconds=5 * 60,
+        started_at=clock(),
+    )
+    assert engine.remaining_seconds() == 5 * 60
+
+
+def test_a_skipped_work_interval_is_recorded_with_the_time_actually_worked(
+    engine, clock
+):
+    engine.start_flow(CATEGORY_ID)
+    started_at = clock()
+    clock.advance(600)
+
+    engine.skip()
+
+    assert engine.finished_intervals == [
+        FinishedInterval(
+            kind=IntervalKind.WORK,
+            category_id=CATEGORY_ID,
+            planned_seconds=25 * 60,
+            started_at=started_at,
+            ended_at=started_at + timedelta(seconds=600),
+            actual_seconds=600,
+            status=IntervalStatus.SKIPPED,
+        )
+    ]
+
+
+def test_time_spent_paused_is_not_counted_in_a_skipped_interval(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    started_at = clock()
+    clock.advance(300)
+    engine.pause()
+    clock.advance(1000)
+    engine.resume()
+    clock.advance(300)
+
+    engine.skip()
+
+    skipped = engine.finished_intervals[0]
+    assert skipped.actual_seconds == 600
+    assert skipped.ended_at == started_at + timedelta(seconds=1600)
+
+
+def test_a_paused_interval_can_be_skipped(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    started_at = clock()
+    clock.advance(600)
+    engine.pause()
+    clock.advance(1000)
+
+    engine.skip()
+
+    skipped = engine.finished_intervals[0]
+    assert skipped.actual_seconds == 600
+    assert skipped.ended_at == started_at + timedelta(seconds=1600)
+    assert engine.current_interval.kind == IntervalKind.SHORT_BREAK
+    assert engine.is_paused is False
+
+
+@pytest.mark.parametrize(
+    ("elapsed", "actual_seconds"), [(0, 0), (0.9, 0), (90.9, 90), (600, 600)]
+)
+def test_the_worked_time_of_a_skipped_interval_is_in_whole_seconds_rounded_down(
+    engine, clock, elapsed, actual_seconds
+):
+    engine.start_flow(CATEGORY_ID)
+    clock.advance(elapsed)
+
+    engine.skip()
+
+    assert engine.finished_intervals[0].actual_seconds == actual_seconds
+
+
+def test_the_worked_time_of_a_skipped_interval_never_exceeds_the_planned_time(
+    engine, clock
+):
+    engine.start_flow(CATEGORY_ID)
+
+    clock.advance(25 * 60 + 300)  # the time is up, but no tick has noticed it yet
+    engine.skip()
+
+    assert engine.finished_intervals[0].actual_seconds == 25 * 60
+
+
+def test_skipping_a_break_starts_a_work_interval_of_the_same_category(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    engine.skip()  # the work interval; a short break starts
+    clock.advance(120)
+
+    engine.skip()
+
+    assert engine.current_interval == RunningInterval(
+        kind=IntervalKind.WORK,
+        category_id=CATEGORY_ID,
+        planned_seconds=25 * 60,
+        started_at=clock(),
+    )
+
+
+def test_a_skipped_break_is_recorded_with_the_time_actually_taken(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    engine.skip()
+    break_started_at = clock()
+    clock.advance(120)
+
+    engine.skip()
+
+    assert engine.finished_intervals[1] == FinishedInterval(
+        kind=IntervalKind.SHORT_BREAK,
+        category_id=None,
+        planned_seconds=5 * 60,
+        started_at=break_started_at,
+        ended_at=break_started_at + timedelta(seconds=120),
+        actual_seconds=120,
+        status=IntervalStatus.SKIPPED,
+    )
+
+
+def test_skipped_work_intervals_count_toward_the_long_break(engine):
+    engine.start_flow(CATEGORY_ID)
+    for _ in range(3):
+        engine.skip()  # a work interval
+        engine.skip()  # the short break after it
+
+    engine.skip()  # the fourth work interval
+
+    assert engine.current_interval.kind == IntervalKind.LONG_BREAK
+    assert engine.current_interval.planned_seconds == 15 * 60
+
+
+def test_a_work_interval_follows_a_skipped_long_break(engine):
+    engine.start_flow(CATEGORY_ID)
+    for _ in range(7):
+        engine.skip()  # four work intervals and three short breaks
+
+    engine.skip()  # the long break
+
+    assert engine.current_interval.kind == IntervalKind.WORK
+
+
+def test_the_next_interval_takes_its_length_from_the_settings_at_the_time_it_starts(
+    engine, settings_repository
+):
+    engine.start_flow(CATEGORY_ID)
+    settings_repository.set("short_break_minutes", 10)
+
+    engine.skip()
+    assert engine.current_interval.planned_seconds == 10 * 60
+
+    settings_repository.set("work_minutes", 40)
+    engine.skip()
+    assert engine.current_interval.planned_seconds == 40 * 60
+
+
+@pytest.mark.parametrize("transition_mode", ["auto", "confirm", "mixed"])
+def test_skip_starts_the_next_interval_immediately_in_every_transition_mode(
+    engine, settings_repository, transition_mode
+):
+    settings_repository.set("transition_mode", transition_mode)
+    engine.start_flow(CATEGORY_ID)
+
+    engine.skip()
+    assert engine.current_interval.kind == IntervalKind.SHORT_BREAK
+
+    engine.skip()
+    assert engine.current_interval.kind == IntervalKind.WORK
+
+
+def test_skip_while_idle_does_nothing(engine):
+    engine.skip()
+
+    assert engine.current_interval is None
+    assert engine.finished_intervals == []
+
+
 # --- settings are read at the start ------------------------------------------
 
 

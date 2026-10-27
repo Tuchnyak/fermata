@@ -14,6 +14,7 @@ from timer.intervals import (
     IntervalKind,
     IntervalStatus,
     RunningInterval,
+    next_kind,
     planned_seconds,
 )
 from timer.storage.settings import Settings
@@ -27,6 +28,7 @@ class Engine:
         self._clock = clock
         self._current_interval: RunningInterval | None = None
         self._finished_intervals: list[FinishedInterval] = []
+        self._flow_category_id: int | None = None
         self._paused_at: datetime | None = None
         self._paused_seconds = 0.0  # the pauses already over, in the current interval
 
@@ -57,14 +59,19 @@ class Engine:
         self._paused_at = None
 
     def start_flow(self, category_id: int) -> None:
-        settings = self._get_settings()
-        self._current_interval = RunningInterval(
-            kind=IntervalKind.WORK,
-            category_id=category_id,
-            planned_seconds=planned_seconds(IntervalKind.WORK, settings),
-            started_at=self._clock(),
+        self._flow_category_id = category_id
+        self._begin_interval(IntervalKind.WORK, category_id, self._get_settings())
+
+    def skip(self) -> None:
+        """End the running interval early and start the next one at once."""
+        interval = self._current_interval
+        if interval is None:
+            return
+        worked_seconds = min(int(self._worked_seconds(interval)), interval.planned_seconds)
+        self._finish_current_interval(
+            IntervalStatus.SKIPPED, ended_at=self._clock(), actual_seconds=worked_seconds
         )
-        self._clear_pauses()
+        self._begin_next_interval()
 
     def remaining_seconds(self) -> float:
         """Seconds left in the running interval; 0 when nothing is running.
@@ -73,11 +80,9 @@ class Engine:
         """
         if self._current_interval is None:
             return 0.0
-        interval = self._current_interval
-        counted_until = self._paused_at if self._paused_at is not None else self._clock()
-        time_delta = counted_until - interval.started_at
-        worked_seconds = time_delta.total_seconds() - self._paused_seconds
-        return interval.planned_seconds - worked_seconds
+        return self._current_interval.planned_seconds - self._worked_seconds(
+            self._current_interval
+        )
 
     def tick(self) -> None:
         """Finish the running interval if its time has elapsed."""
@@ -87,12 +92,46 @@ class Engine:
             return
         self._complete_current_interval()
 
+    def _worked_seconds(self, interval: RunningInterval) -> float:
+        counted_until = self._paused_at if self._paused_at is not None else self._clock()
+        time_delta = counted_until - interval.started_at
+        return time_delta.total_seconds() - self._paused_seconds
+
+    def _begin_next_interval(self) -> None:
+        finished_kinds = [interval.kind for interval in self._finished_intervals]
+        settings = self._get_settings()
+        kind = next_kind(finished_kinds, settings)
+        category_id = self._flow_category_id if kind == IntervalKind.WORK else None
+        self._begin_interval(kind, category_id, settings)
+
+    def _begin_interval(
+        self, kind: IntervalKind, category_id: int | None, settings: Settings
+    ) -> None:
+        self._current_interval = RunningInterval(
+            kind=kind,
+            category_id=category_id,
+            planned_seconds=planned_seconds(kind, settings),
+            started_at=self._clock(),
+        )
+        self._clear_pauses()
+
     def _complete_current_interval(self) -> None:
         interval = self._current_interval
         assert interval is not None
         # The end is calculated, not read from the clock: a late tick must not stretch it.
         interval_seconds = interval.planned_seconds + self._paused_seconds
         ended_at = interval.started_at + timedelta(seconds=interval_seconds)
+        self._finish_current_interval(
+            IntervalStatus.COMPLETED,
+            ended_at=ended_at,
+            actual_seconds=interval.planned_seconds,
+        )
+
+    def _finish_current_interval(
+        self, status: IntervalStatus, ended_at: datetime, actual_seconds: int
+    ) -> None:
+        interval = self._current_interval
+        assert interval is not None
         self._finished_intervals.append(
             FinishedInterval(
                 kind=interval.kind,
@@ -100,8 +139,8 @@ class Engine:
                 planned_seconds=interval.planned_seconds,
                 started_at=interval.started_at,
                 ended_at=ended_at,
-                actual_seconds=interval.planned_seconds,
-                status=IntervalStatus.COMPLETED,
+                actual_seconds=actual_seconds,
+                status=status,
             )
         )
         self._current_interval = None
