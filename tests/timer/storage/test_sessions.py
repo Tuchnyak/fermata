@@ -373,3 +373,146 @@ def test_there_is_no_last_category_when_only_scenarios_were_run(
     session_repository.start_interval(scenario_id, 1, work_interval(work_category_id))
 
     assert session_repository.last_flow_category_id() is None
+
+
+# --- interrupt_running_sessions ----------------------------------------------
+
+
+def all_rows(db):
+    sessions = db.query("SELECT * FROM session ORDER BY id", mapper=dict)
+    intervals = db.query("SELECT * FROM interval ORDER BY id", mapper=dict)
+    return sessions, intervals
+
+
+def add_running_flow(session_repository, category_id, started_at=STARTED):
+    """A flow with one running work interval, as an app closed in the middle leaves it."""
+    session_id = session_repository.create_flow(started_at)
+    interval_id = session_repository.start_interval(
+        session_id, 1, work_interval(category_id, started_at=started_at)
+    )
+    return session_id, interval_id
+
+
+def test_a_running_session_becomes_interrupted(
+    db, session_repository, work_category_id
+):
+    session_id, _ = add_running_flow(session_repository, work_category_id)
+
+    session_repository.interrupt_running_sessions()
+
+    session = stored_session(db, session_id)
+    assert session["status"] == "interrupted"
+    assert session["ended_at"] is None
+
+
+def test_its_unfinished_interval_becomes_interrupted_without_an_actual_duration(
+    session_repository, work_category_id
+):
+    session_id, _ = add_running_flow(session_repository, work_category_id)
+
+    session_repository.interrupt_running_sessions()
+
+    (interval,) = session_repository.list_intervals(session_id)
+    assert interval.status == IntervalStatus.INTERRUPTED
+    assert interval.actual_seconds is None
+    assert interval.ended_at is None
+    assert interval.started_at == STARTED
+
+
+def test_the_finished_intervals_of_the_session_are_left_as_they_were(
+    session_repository, work_category_id
+):
+    session_id, first_id = add_running_flow(session_repository, work_category_id)
+    session_repository.finish_interval(
+        first_id, status=IntervalStatus.COMPLETED, actual_seconds=25 * 60, ended_at=LATER
+    )
+    session_repository.start_interval(session_id, 2, short_break())
+    completed_before = session_repository.list_intervals(session_id)[0]
+
+    session_repository.interrupt_running_sessions()
+
+    completed, interrupted = session_repository.list_intervals(session_id)
+    assert completed == completed_before
+    assert interrupted.status == IntervalStatus.INTERRUPTED
+
+
+def test_a_session_interrupted_while_waiting_has_no_interval_to_change(
+    db, session_repository, work_category_id
+):
+    session_id, interval_id = add_running_flow(session_repository, work_category_id)
+    session_repository.finish_interval(
+        interval_id,
+        status=IntervalStatus.COMPLETED,
+        actual_seconds=25 * 60,
+        ended_at=LATER,
+    )
+    intervals_before = session_repository.list_intervals(session_id)
+
+    session_repository.interrupt_running_sessions()
+
+    assert stored_session(db, session_id)["status"] == "interrupted"
+    assert session_repository.list_intervals(session_id) == intervals_before
+
+
+def test_every_running_session_is_interrupted(db, session_repository, work_category_id):
+    first_id, _ = add_running_flow(session_repository, work_category_id)
+    second_id, _ = add_running_flow(
+        session_repository, work_category_id, started_at=LATER
+    )
+
+    session_repository.interrupt_running_sessions()
+
+    assert stored_session(db, first_id)["status"] == "interrupted"
+    assert stored_session(db, second_id)["status"] == "interrupted"
+
+
+def test_a_running_scenario_session_is_interrupted_too(
+    db, session_repository, work_category_id
+):
+    session_id = db.insert(
+        "INSERT INTO session (kind, status, started_at, scenario_name, scenario_snapshot)"
+        " VALUES ('scenario', 'running', :started_at, 'Day', '{}')",
+        {"started_at": "2026-01-01T12:00:00Z"},
+    )
+    session_repository.start_interval(session_id, 1, work_interval(work_category_id))
+
+    session_repository.interrupt_running_sessions()
+
+    assert stored_session(db, session_id)["status"] == "interrupted"
+    assert session_repository.list_intervals(session_id)[0].status == (
+        IntervalStatus.INTERRUPTED
+    )
+
+
+@pytest.mark.parametrize("status", [SessionStatus.COMPLETED, SessionStatus.STOPPED])
+def test_finished_sessions_and_their_intervals_are_not_touched(
+    db, session_repository, work_category_id, status
+):
+    session_id, interval_id = add_running_flow(session_repository, work_category_id)
+    session_repository.finish_interval(
+        interval_id, status=IntervalStatus.STOPPED, actual_seconds=600, ended_at=LATER
+    )
+    session_repository.finish_session(session_id, status=status, ended_at=LATER)
+    rows_before = all_rows(db)
+
+    session_repository.interrupt_running_sessions()
+
+    assert all_rows(db) == rows_before
+
+
+def test_running_it_again_changes_nothing(db, session_repository, work_category_id):
+    add_running_flow(session_repository, work_category_id)
+    session_repository.interrupt_running_sessions()
+    rows_after_the_first_run = all_rows(db)
+
+    session_repository.interrupt_running_sessions()
+
+    assert all_rows(db) == rows_after_the_first_run
+
+
+def test_a_clean_database_stays_as_it_is(db, session_repository):
+    rows_before = all_rows(db)
+
+    session_repository.interrupt_running_sessions()
+
+    assert all_rows(db) == rows_before == ([], [])

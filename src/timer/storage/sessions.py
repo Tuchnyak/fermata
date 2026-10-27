@@ -112,6 +112,26 @@ class SessionRepository:
         if updated_count == 0:
             raise LookupError(f"No session with id {session_id}")
 
+    def interrupt_running_sessions(self) -> None:
+        """Mark what an app closed in the middle left running as interrupted.
+
+        The end times stay empty: it is not known when the app was closed.
+        """
+        parameters = {
+            "running": SessionStatus.RUNNING,
+            "interrupted": SessionStatus.INTERRUPTED,
+        }
+        with self._db.transaction():
+            self._db.execute(
+                "UPDATE interval SET status = :interrupted WHERE status IS NULL"
+                " AND session_id IN (SELECT id FROM session WHERE status = :running)",
+                parameters,
+            )
+            self._db.execute(
+                "UPDATE session SET status = :interrupted WHERE status = :running",
+                parameters,
+            )
+
     def list_intervals(self, session_id: int) -> list[IntervalEntity]:
         return self._db.query(
             "SELECT * FROM interval WHERE session_id = ? ORDER BY position",

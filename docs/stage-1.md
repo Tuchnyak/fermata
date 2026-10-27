@@ -133,7 +133,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - Verified by simulating a flow with a fake clock: complete a work interval, take a break, skip a work interval, stop.
   - Each step is written in one transaction.
 
-- [ ] **1.21 Startup recovery**
+- [x] **1.21 Startup recovery**
   - On startup, a session still marked `running` becomes `interrupted`, and its unfinished interval (status NULL) becomes `interrupted` with no actual duration.
   - Running it again, or on a clean database, changes nothing.
 

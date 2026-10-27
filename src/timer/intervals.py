@@ -22,6 +22,7 @@ class IntervalStatus(StrEnum):
     COMPLETED = "completed"
     SKIPPED = "skipped"
     STOPPED = "stopped"
+    INTERRUPTED = "interrupted"
 
 
 @dataclass(frozen=True)
