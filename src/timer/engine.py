@@ -60,18 +60,21 @@ class Engine:
 
     def start_flow(self, category_id: int) -> None:
         self._flow_category_id = category_id
+        self._finished_intervals = []
         self._begin_interval(IntervalKind.WORK, category_id, self._get_settings())
 
     def skip(self) -> None:
         """End the running interval early and start the next one at once."""
-        interval = self._current_interval
-        if interval is None:
+        if self._current_interval is None:
             return
-        worked_seconds = min(int(self._worked_seconds(interval)), interval.planned_seconds)
-        self._finish_current_interval(
-            IntervalStatus.SKIPPED, ended_at=self._clock(), actual_seconds=worked_seconds
-        )
+        self._end_current_interval_early(IntervalStatus.SKIPPED)
         self._begin_next_interval()
+
+    def stop(self) -> None:
+        """End the running interval early and the flow with it."""
+        if self._current_interval is None:
+            return
+        self._end_current_interval_early(IntervalStatus.STOPPED)
 
     def remaining_seconds(self) -> float:
         """Seconds left in the running interval; 0 when nothing is running.
@@ -114,6 +117,14 @@ class Engine:
             started_at=self._clock(),
         )
         self._clear_pauses()
+
+    def _end_current_interval_early(self, status: IntervalStatus) -> None:
+        interval = self._current_interval
+        assert interval is not None
+        worked_seconds = min(int(self._worked_seconds(interval)), interval.planned_seconds)
+        self._finish_current_interval(
+            status, ended_at=self._clock(), actual_seconds=worked_seconds
+        )
 
     def _complete_current_interval(self) -> None:
         interval = self._current_interval

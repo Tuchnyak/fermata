@@ -478,6 +478,186 @@ def test_skip_while_idle_does_nothing(engine):
     assert engine.finished_intervals == []
 
 
+# --- stop --------------------------------------------------------------------
+
+
+def test_stop_records_the_interval_as_stopped_with_the_time_actually_worked(
+    engine, clock
+):
+    engine.start_flow(CATEGORY_ID)
+    started_at = clock()
+    clock.advance(600)
+
+    engine.stop()
+
+    assert engine.finished_intervals == [
+        FinishedInterval(
+            kind=IntervalKind.WORK,
+            category_id=CATEGORY_ID,
+            planned_seconds=25 * 60,
+            started_at=started_at,
+            ended_at=started_at + timedelta(seconds=600),
+            actual_seconds=600,
+            status=IntervalStatus.STOPPED,
+        )
+    ]
+
+
+def test_stop_ends_the_flow_and_the_engine_becomes_idle(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    clock.advance(600)
+
+    engine.stop()
+    clock.advance(10 * 60)
+    engine.tick()
+
+    assert engine.current_interval is None
+    assert engine.is_paused is False
+    assert engine.remaining_seconds() == 0
+    assert len(engine.finished_intervals) == 1
+
+
+def test_a_break_can_be_stopped(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    engine.skip()
+    break_started_at = clock()
+    clock.advance(120)
+
+    engine.stop()
+
+    assert engine.finished_intervals[1] == FinishedInterval(
+        kind=IntervalKind.SHORT_BREAK,
+        category_id=None,
+        planned_seconds=5 * 60,
+        started_at=break_started_at,
+        ended_at=break_started_at + timedelta(seconds=120),
+        actual_seconds=120,
+        status=IntervalStatus.STOPPED,
+    )
+    assert engine.current_interval is None
+
+
+def test_time_spent_paused_is_not_counted_in_a_stopped_interval(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    started_at = clock()
+    clock.advance(300)
+    engine.pause()
+    clock.advance(1000)
+    engine.resume()
+    clock.advance(300)
+
+    engine.stop()
+
+    stopped = engine.finished_intervals[0]
+    assert stopped.actual_seconds == 600
+    assert stopped.ended_at == started_at + timedelta(seconds=1600)
+
+
+def test_a_paused_interval_can_be_stopped(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    started_at = clock()
+    clock.advance(600)
+    engine.pause()
+    clock.advance(1000)
+
+    engine.stop()
+
+    stopped = engine.finished_intervals[0]
+    assert stopped.actual_seconds == 600
+    assert stopped.ended_at == started_at + timedelta(seconds=1600)
+    assert engine.is_paused is False
+
+
+def test_the_worked_time_of_a_stopped_interval_is_in_whole_seconds_rounded_down(
+    engine, clock
+):
+    engine.start_flow(CATEGORY_ID)
+    clock.advance(90.9)
+
+    engine.stop()
+
+    assert engine.finished_intervals[0].actual_seconds == 90
+
+
+def test_the_worked_time_of_a_stopped_interval_never_exceeds_the_planned_time(
+    engine, clock
+):
+    engine.start_flow(CATEGORY_ID)
+
+    clock.advance(25 * 60 + 300)  # the time is up, but no tick has noticed it yet
+    engine.stop()
+
+    assert engine.finished_intervals[0].actual_seconds == 25 * 60
+
+
+def test_stop_while_idle_does_nothing(engine):
+    engine.stop()
+
+    assert engine.current_interval is None
+    assert engine.finished_intervals == []
+
+
+def test_stopping_twice_records_the_interval_once(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    clock.advance(600)
+
+    engine.stop()
+    engine.stop()
+
+    assert len(engine.finished_intervals) == 1
+
+
+# --- a new flow after a stop ---------------------------------------------------
+
+
+def test_a_new_flow_begins_with_a_work_interval_of_its_own_category(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    engine.stop()
+    clock.advance(3600)
+
+    engine.start_flow(CATEGORY_ID + 1)
+
+    assert engine.current_interval == RunningInterval(
+        kind=IntervalKind.WORK,
+        category_id=CATEGORY_ID + 1,
+        planned_seconds=25 * 60,
+        started_at=clock(),
+    )
+
+
+def test_the_breaks_of_a_new_flow_lead_back_to_its_own_category(engine):
+    engine.start_flow(CATEGORY_ID)
+    engine.stop()
+
+    engine.start_flow(CATEGORY_ID + 1)
+    engine.skip()  # the work interval; a short break starts
+    engine.skip()  # the break; a work interval starts
+
+    assert engine.current_interval.category_id == CATEGORY_ID + 1
+
+
+def test_a_new_flow_starts_with_no_finished_intervals(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    clock.advance(600)
+    engine.stop()
+
+    engine.start_flow(CATEGORY_ID)
+
+    assert engine.finished_intervals == []
+
+
+def test_a_new_flow_counts_work_intervals_toward_the_long_break_from_zero(engine):
+    engine.start_flow(CATEGORY_ID)
+    for _ in range(5):
+        engine.skip()  # three work intervals and two short breaks
+    engine.stop()  # the third short break
+
+    engine.start_flow(CATEGORY_ID)
+    engine.skip()  # the first work interval of the new flow
+
+    assert engine.current_interval.kind == IntervalKind.SHORT_BREAK
+
+
 # --- settings are read at the start ------------------------------------------
 
 

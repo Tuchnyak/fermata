@@ -109,7 +109,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - Skipping a break ends it as `skipped`, and the next work interval starts immediately.
   - Skip starts the next interval immediately in every transition mode.
 
-- [ ] **1.16 Engine: stop**
+- [x] **1.16 Engine: stop**
   - Stop ends the current interval as `stopped` with the time actually elapsed and ends the flow; the engine becomes idle.
   - Stop while idle has no effect.
 
