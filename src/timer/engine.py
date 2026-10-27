@@ -7,6 +7,7 @@ the engine never counts ticks: the remaining time is always computed from the cl
 """
 
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from timer.intervals import (
@@ -21,12 +22,27 @@ from timer.intervals import (
 from timer.storage.settings import Settings
 
 
+@dataclass(frozen=True)
+class FlowEvent:
+    """What one engine step changed, reported to the listener as a unit."""
+
+    at: datetime
+    flow_started: bool = False
+    finished_interval: FinishedInterval | None = None
+    started_interval: RunningInterval | None = None
+    flow_ended: bool = False
+
+
 class Engine:
     def __init__(
-        self, get_settings: Callable[[], Settings], clock: Callable[[], datetime]
+        self,
+        get_settings: Callable[[], Settings],
+        clock: Callable[[], datetime],
+        on_flow_event: Callable[[FlowEvent], None] | None = None,
     ):
         self._get_settings = get_settings
         self._clock = clock
+        self._on_flow_event = on_flow_event
         self._current_interval: RunningInterval | None = None
         self._finished_intervals: list[FinishedInterval] = []
         self._flow_category_id: int | None = None
@@ -75,12 +91,14 @@ class Engine:
         self._finished_intervals = []
         work_seconds = planned_seconds(IntervalKind.WORK, self._get_settings())
         self._begin_interval(BaseInterval(IntervalKind.WORK, category_id, work_seconds))
+        self._emit(flow_started=True, started_interval=self._current_interval)
 
     def confirm(self) -> None:
         """Start the upcoming interval; does nothing unless the engine is waiting."""
         if not self._is_waiting:
             return
         self._begin_interval(self._plan_next_interval())
+        self._emit(started_interval=self._current_interval)
 
     def skip(self) -> None:
         """End the running interval early and start the next one at once."""
@@ -88,13 +106,20 @@ class Engine:
             return
         self._end_current_interval_early(IntervalStatus.SKIPPED)
         self._begin_interval(self._plan_next_interval())
+        self._emit(
+            finished_interval=self._finished_intervals[-1],
+            started_interval=self._current_interval,
+        )
 
     def stop(self) -> None:
         """End the running interval early and the flow with it."""
+        was_waiting = self._is_waiting
         self._is_waiting = False
-        if self._current_interval is None:
-            return
-        self._end_current_interval_early(IntervalStatus.STOPPED)
+        if self._current_interval is not None:
+            self._end_current_interval_early(IntervalStatus.STOPPED)
+            self._emit(finished_interval=self._finished_intervals[-1], flow_ended=True)
+        elif was_waiting:
+            self._emit(flow_ended=True)
 
     def remaining_seconds(self) -> float:
         """Seconds left in the running interval; 0 when nothing is running.
@@ -114,6 +139,30 @@ class Engine:
         if self.remaining_seconds() > 0:
             return
         self._complete_current_interval()
+        self._emit(
+            finished_interval=self._finished_intervals[-1],
+            started_interval=self._current_interval,
+        )
+
+    def _emit(
+        self,
+        *,
+        flow_started: bool = False,
+        finished_interval: FinishedInterval | None = None,
+        started_interval: RunningInterval | None = None,
+        flow_ended: bool = False,
+    ) -> None:
+        if self._on_flow_event is None:
+            return
+        self._on_flow_event(
+            FlowEvent(
+                at=self._clock(),
+                flow_started=flow_started,
+                finished_interval=finished_interval,
+                started_interval=started_interval,
+                flow_ended=flow_ended,
+            )
+        )
 
     def _worked_seconds(self, interval: RunningInterval) -> float:
         counted_until = self._paused_at if self._paused_at is not None else self._clock()

@@ -128,7 +128,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - Intervals of a session are returned in order.
   - `last_flow_category_id()` returns the category of the most recent flow, or `None` when there was no flow.
 
-- [ ] **1.20 Recorder: engine to database**
+- [x] **1.20 Recorder: engine to database**
   - A flow session and every interval it goes through are written to the database with correct status, positions and durations.
   - Verified by simulating a flow with a fake clock: complete a work interval, take a break, skip a work interval, stop.
   - Each step is written in one transaction.

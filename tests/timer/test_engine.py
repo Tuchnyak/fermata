@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 import pytest
-from timer.engine import Engine
+from timer.engine import Engine, FlowEvent
 from timer.intervals import (
     BaseInterval,
     FinishedInterval,
@@ -24,8 +24,17 @@ def settings_repository():
 
 
 @pytest.fixture
-def engine(settings_repository, clock):
-    return Engine(get_settings=settings_repository.get_all, clock=clock)
+def events():
+    return []
+
+
+@pytest.fixture
+def engine(settings_repository, clock, events):
+    return Engine(
+        get_settings=settings_repository.get_all,
+        clock=clock,
+        on_flow_event=events.append,
+    )
 
 
 def run_to_the_end(engine, clock):
@@ -949,6 +958,138 @@ def test_mixed_starts_a_long_break_at_once_after_the_fourth_work_interval(
     run_to_the_end(mixed_engine, clock)  # the fourth work interval
 
     assert mixed_engine.current_interval.kind == IntervalKind.LONG_BREAK
+
+
+# --- flow events ----------------------------------------------------------------
+
+
+def test_starting_a_flow_emits_one_event_with_the_first_interval(
+    engine, clock, events
+):
+    engine.start_flow(CATEGORY_ID)
+
+    assert events == [
+        FlowEvent(at=clock(), flow_started=True, started_interval=engine.current_interval)
+    ]
+
+
+def test_a_tick_that_changes_nothing_emits_no_event(engine, clock, events):
+    engine.start_flow(CATEGORY_ID)
+    events.clear()
+
+    clock.advance(100)
+    engine.tick()
+
+    assert events == []
+
+
+def test_completion_in_confirm_mode_emits_the_finished_interval_only(
+    engine, clock, events
+):
+    engine.start_flow(CATEGORY_ID)
+    events.clear()
+
+    run_to_the_end(engine, clock)
+
+    assert events == [
+        FlowEvent(at=clock(), finished_interval=engine.finished_intervals[0])
+    ]
+
+
+def test_completion_in_auto_mode_emits_the_finished_and_the_started_interval_together(
+    auto_engine, clock, events
+):
+    auto_engine.start_flow(CATEGORY_ID)
+    events.clear()
+
+    run_to_the_end(auto_engine, clock)
+
+    assert events == [
+        FlowEvent(
+            at=clock(),
+            finished_interval=auto_engine.finished_intervals[0],
+            started_interval=auto_engine.current_interval,
+        )
+    ]
+
+
+def test_confirm_emits_the_started_interval_only(engine, clock, events):
+    engine.start_flow(CATEGORY_ID)
+    run_to_the_end(engine, clock)
+    events.clear()
+
+    engine.confirm()
+
+    assert events == [FlowEvent(at=clock(), started_interval=engine.current_interval)]
+
+
+def test_skip_emits_the_skipped_and_the_started_interval_together(engine, clock, events):
+    engine.start_flow(CATEGORY_ID)
+    clock.advance(600)
+    events.clear()
+
+    engine.skip()
+
+    assert events == [
+        FlowEvent(
+            at=clock(),
+            finished_interval=engine.finished_intervals[0],
+            started_interval=engine.current_interval,
+        )
+    ]
+
+
+def test_stop_emits_the_stopped_interval_and_the_end_of_the_flow(engine, clock, events):
+    engine.start_flow(CATEGORY_ID)
+    clock.advance(600)
+    events.clear()
+
+    engine.stop()
+
+    assert events == [
+        FlowEvent(
+            at=clock(),
+            finished_interval=engine.finished_intervals[0],
+            flow_ended=True,
+        )
+    ]
+
+
+def test_stop_while_waiting_emits_the_end_of_the_flow_only(engine, clock, events):
+    engine.start_flow(CATEGORY_ID)
+    run_to_the_end(engine, clock)
+    events.clear()
+
+    engine.stop()
+
+    assert events == [FlowEvent(at=clock(), flow_ended=True)]
+
+
+def test_operations_that_change_nothing_emit_no_event(engine, clock, events):
+    engine.skip()
+    engine.stop()
+    engine.confirm()
+    engine.pause()
+    engine.resume()
+    engine.tick()
+    engine.start_flow(CATEGORY_ID)
+    events.clear()
+
+    engine.pause()
+    engine.resume()
+    engine.confirm()
+
+    assert events == []
+
+
+def test_the_engine_works_without_a_listener(settings_repository, clock):
+    engine = Engine(get_settings=settings_repository.get_all, clock=clock)
+
+    engine.start_flow(CATEGORY_ID)
+    engine.skip()
+    engine.stop()
+
+    assert len(engine.finished_intervals) == 2
 
 
 # --- settings are read at the start ------------------------------------------
