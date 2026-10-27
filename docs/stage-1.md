@@ -94,7 +94,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - With defaults the order is: work, short, work, short, work, short, work, long, work, …
   - Lengths come from the given timer settings.
 
-- [ ] **1.13 Engine: running an interval**
+- [x] **1.13 Engine: running an interval**
   - Starting a flow with a category begins a work interval of the configured length.
   - The remaining time is computed from an injected clock (no tick counting, so no drift).
   - When the planned time has elapsed the interval completes with actual time equal to planned.

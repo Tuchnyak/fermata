@@ -1,5 +1,7 @@
 import pytest
-from timer.intervals import IntervalKind, next_kind, planned_seconds
+from timer.intervals import IntervalKind, IntervalStatus, next_kind, planned_seconds
+from timer.storage.db import Db
+from timer.storage.migrate import MIGRATIONS_DIR, migrate
 from timer.storage.settings import Settings
 
 WORK = IntervalKind.WORK
@@ -9,15 +11,57 @@ LONG = IntervalKind.LONG_BREAK
 DEFAULT_SETTINGS = Settings()
 
 
-# --- kinds -------------------------------------------------------------------
+# --- kinds and statuses in the database ---------------------------------------
+
+STARTED = "2026-01-01T12:00:00Z"
 
 
-@pytest.mark.parametrize(
-    ("kind", "text"),
-    [(WORK, "work"), (SHORT, "short_break"), (LONG, "long_break")],
-)
-def test_kinds_are_the_texts_stored_in_the_database(kind, text):
-    assert kind == text
+@pytest.fixture
+def db():
+    db = Db.open(":memory:")
+    migrate(db, MIGRATIONS_DIR)
+    return db
+
+
+def insert_interval(db, kind, status=None):
+    """Insert an interval of the given kind and status; the table's checks must accept it."""
+    session_id = db.insert(
+        "INSERT INTO session (kind, status, started_at) VALUES ('flow', 'running', :started_at)",
+        {"started_at": STARTED},
+    )
+    category_id = 1 if kind == WORK else None  # 1 is the system category `None`
+    db.insert(
+        "INSERT INTO interval (session_id, position, kind, category_id, planned_seconds,"
+        " started_at, status)"
+        " VALUES (:session_id, 1, :kind, :category_id, 1500, :started_at, :status)",
+        {
+            "session_id": session_id,
+            "kind": kind,
+            "category_id": category_id,
+            "started_at": STARTED,
+            "status": status,
+        },
+    )
+
+
+def stored_column(db, column):
+    return db.query_one(
+        f"SELECT {column} FROM interval", mapper=lambda row: row[column]
+    )
+
+
+@pytest.mark.parametrize("kind", list(IntervalKind))
+def test_the_interval_table_accepts_every_interval_kind(db, kind):
+    insert_interval(db, kind)
+
+    assert stored_column(db, "kind") == kind
+
+
+@pytest.mark.parametrize("status", list(IntervalStatus))
+def test_the_interval_table_accepts_every_interval_status(db, status):
+    insert_interval(db, WORK, status)
+
+    assert stored_column(db, "status") == status
 
 
 # --- sequencing --------------------------------------------------------------

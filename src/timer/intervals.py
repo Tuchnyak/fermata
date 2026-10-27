@@ -5,6 +5,8 @@ stores in its `kind` column (see docs/schema.md).
 """
 
 from collections.abc import Sequence
+from dataclasses import dataclass
+from datetime import datetime
 from enum import StrEnum
 
 from timer.storage.settings import Settings
@@ -14,6 +16,30 @@ class IntervalKind(StrEnum):
     WORK = "work"
     SHORT_BREAK = "short_break"
     LONG_BREAK = "long_break"
+
+
+class IntervalStatus(StrEnum):
+    COMPLETED = "completed"
+
+
+@dataclass(frozen=True)
+class BaseInterval:
+    kind: IntervalKind
+    category_id: int | None
+    planned_seconds: int
+
+
+@dataclass(frozen=True)
+class RunningInterval(BaseInterval):
+    started_at: datetime
+
+
+@dataclass(frozen=True)
+class FinishedInterval(BaseInterval):
+    started_at: datetime
+    ended_at: datetime
+    actual_seconds: int
+    status: IntervalStatus
 
 
 def next_kind(finished: Sequence[IntervalKind], settings: Settings) -> IntervalKind:
