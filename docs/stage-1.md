@@ -113,7 +113,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - Stop ends the current interval as `stopped` with the time actually elapsed and ends the flow; the engine becomes idle.
   - Stop while idle has no effect.
 
-- [ ] **1.17 Engine: transition mode "confirm"**
+- [x] **1.17 Engine: transition mode "confirm"**
   - When an interval completes, the engine enters a waiting state that exposes the upcoming interval (kind, category, length); no time is counted.
   - `confirm()` starts the upcoming interval.
 

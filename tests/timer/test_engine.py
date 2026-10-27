@@ -3,6 +3,7 @@ from datetime import timedelta
 import pytest
 from timer.engine import Engine
 from timer.intervals import (
+    BaseInterval,
     FinishedInterval,
     IntervalKind,
     IntervalStatus,
@@ -25,6 +26,12 @@ def settings_repository():
 @pytest.fixture
 def engine(settings_repository, clock):
     return Engine(get_settings=settings_repository.get_all, clock=clock)
+
+
+def run_to_the_end(engine, clock):
+    """Let the running interval's time elapse and let the engine notice it."""
+    clock.advance(engine.remaining_seconds())
+    engine.tick()
 
 
 # --- idle --------------------------------------------------------------------
@@ -656,6 +663,150 @@ def test_a_new_flow_counts_work_intervals_toward_the_long_break_from_zero(engine
     engine.skip()  # the first work interval of the new flow
 
     assert engine.current_interval.kind == IntervalKind.SHORT_BREAK
+
+
+# --- transition mode "confirm" -------------------------------------------------
+
+
+def test_no_interval_is_upcoming_while_idle_or_running(engine):
+    assert engine.upcoming_interval is None
+
+    engine.start_flow(CATEGORY_ID)
+
+    assert engine.upcoming_interval is None
+
+
+def test_after_a_work_interval_the_engine_waits_with_a_short_break_upcoming(
+    engine, clock
+):
+    engine.start_flow(CATEGORY_ID)
+
+    run_to_the_end(engine, clock)
+
+    assert engine.current_interval is None
+    assert engine.upcoming_interval == BaseInterval(
+        kind=IntervalKind.SHORT_BREAK, category_id=None, planned_seconds=5 * 60
+    )
+
+
+def test_after_a_break_the_engine_waits_with_a_work_interval_upcoming(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    engine.skip()  # a short break starts
+
+    run_to_the_end(engine, clock)
+
+    assert engine.current_interval is None
+    assert engine.upcoming_interval == BaseInterval(
+        kind=IntervalKind.WORK, category_id=CATEGORY_ID, planned_seconds=25 * 60
+    )
+
+
+def test_after_the_fourth_work_interval_a_long_break_is_upcoming(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    for _ in range(3):
+        engine.skip()  # a work interval
+        engine.skip()  # the short break after it
+
+    run_to_the_end(engine, clock)  # the fourth work interval
+
+    assert engine.upcoming_interval == BaseInterval(
+        kind=IntervalKind.LONG_BREAK, category_id=None, planned_seconds=15 * 60
+    )
+
+
+def test_no_time_is_counted_while_the_engine_waits(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    run_to_the_end(engine, clock)
+
+    clock.advance(10 * 3600)
+    engine.tick()
+
+    assert engine.remaining_seconds() == 0
+    assert len(engine.finished_intervals) == 1
+    assert engine.upcoming_interval.kind == IntervalKind.SHORT_BREAK
+
+
+def test_confirm_starts_the_upcoming_interval_from_the_moment_of_confirmation(
+    engine, clock
+):
+    engine.start_flow(CATEGORY_ID)
+    run_to_the_end(engine, clock)
+    clock.advance(3600)
+
+    engine.confirm()
+
+    assert engine.current_interval == RunningInterval(
+        kind=IntervalKind.SHORT_BREAK,
+        category_id=None,
+        planned_seconds=5 * 60,
+        started_at=clock(),
+    )
+    assert engine.upcoming_interval is None
+    assert engine.remaining_seconds() == 5 * 60
+
+
+def test_confirm_after_a_break_starts_a_work_interval_of_the_flow_category(
+    engine, clock
+):
+    engine.start_flow(CATEGORY_ID)
+    engine.skip()
+    run_to_the_end(engine, clock)
+
+    engine.confirm()
+
+    assert engine.current_interval.kind == IntervalKind.WORK
+    assert engine.current_interval.category_id == CATEGORY_ID
+
+
+def test_confirm_does_nothing_unless_the_engine_is_waiting(engine, clock):
+    engine.confirm()
+    assert engine.current_interval is None
+
+    engine.start_flow(CATEGORY_ID)
+    started_at = clock()
+    clock.advance(100)
+    engine.confirm()
+
+    assert engine.current_interval.started_at == started_at
+    assert engine.remaining_seconds() == 25 * 60 - 100
+
+
+def test_a_settings_change_while_waiting_applies_to_the_interval_started_by_confirm(
+    engine, clock, settings_repository
+):
+    engine.start_flow(CATEGORY_ID)
+    run_to_the_end(engine, clock)
+
+    settings_repository.set("short_break_minutes", 10)
+    assert engine.upcoming_interval.planned_seconds == 10 * 60
+
+    engine.confirm()
+    assert engine.current_interval.planned_seconds == 10 * 60
+
+
+def test_stop_while_waiting_ends_the_flow(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    run_to_the_end(engine, clock)
+
+    engine.stop()
+    engine.confirm()
+
+    assert engine.upcoming_interval is None
+    assert engine.current_interval is None
+    assert len(engine.finished_intervals) == 1
+
+
+def test_skip_and_pause_do_nothing_while_waiting(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    run_to_the_end(engine, clock)
+
+    engine.skip()
+    engine.pause()
+
+    assert engine.current_interval is None
+    assert engine.is_paused is False
+    assert engine.upcoming_interval.kind == IntervalKind.SHORT_BREAK
+    assert len(engine.finished_intervals) == 1
 
 
 # --- settings are read at the start ------------------------------------------

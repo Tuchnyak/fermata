@@ -10,6 +10,7 @@ from collections.abc import Callable
 from datetime import datetime, timedelta
 
 from timer.intervals import (
+    BaseInterval,
     FinishedInterval,
     IntervalKind,
     IntervalStatus,
@@ -29,6 +30,7 @@ class Engine:
         self._current_interval: RunningInterval | None = None
         self._finished_intervals: list[FinishedInterval] = []
         self._flow_category_id: int | None = None
+        self._is_waiting = False  # an interval has ended and `confirm()` is awaited
         self._paused_at: datetime | None = None
         self._paused_seconds = 0.0  # the pauses already over, in the current interval
 
@@ -41,6 +43,16 @@ class Engine:
     def finished_intervals(self) -> list[FinishedInterval]:
         """The intervals that have ended, in order. Provides copy of a list."""
         return list(self._finished_intervals)
+
+    @property
+    def upcoming_interval(self) -> BaseInterval | None:
+        """The interval that `confirm()` would start, or None if the engine is not waiting.
+
+        Worked out from the settings of the moment, so a change made while waiting applies.
+        """
+        if not self._is_waiting:
+            return None
+        return self._plan_next_interval()
 
     @property
     def is_paused(self) -> bool:
@@ -61,17 +73,25 @@ class Engine:
     def start_flow(self, category_id: int) -> None:
         self._flow_category_id = category_id
         self._finished_intervals = []
-        self._begin_interval(IntervalKind.WORK, category_id, self._get_settings())
+        work_seconds = planned_seconds(IntervalKind.WORK, self._get_settings())
+        self._begin_interval(BaseInterval(IntervalKind.WORK, category_id, work_seconds))
+
+    def confirm(self) -> None:
+        """Start the upcoming interval; does nothing unless the engine is waiting."""
+        if not self._is_waiting:
+            return
+        self._begin_interval(self._plan_next_interval())
 
     def skip(self) -> None:
         """End the running interval early and start the next one at once."""
         if self._current_interval is None:
             return
         self._end_current_interval_early(IntervalStatus.SKIPPED)
-        self._begin_next_interval()
+        self._begin_interval(self._plan_next_interval())
 
     def stop(self) -> None:
         """End the running interval early and the flow with it."""
+        self._is_waiting = False
         if self._current_interval is None:
             return
         self._end_current_interval_early(IntervalStatus.STOPPED)
@@ -100,22 +120,21 @@ class Engine:
         time_delta = counted_until - interval.started_at
         return time_delta.total_seconds() - self._paused_seconds
 
-    def _begin_next_interval(self) -> None:
+    def _plan_next_interval(self) -> BaseInterval:
         finished_kinds = [interval.kind for interval in self._finished_intervals]
         settings = self._get_settings()
         kind = next_kind(finished_kinds, settings)
         category_id = self._flow_category_id if kind == IntervalKind.WORK else None
-        self._begin_interval(kind, category_id, settings)
+        return BaseInterval(kind, category_id, planned_seconds(kind, settings))
 
-    def _begin_interval(
-        self, kind: IntervalKind, category_id: int | None, settings: Settings
-    ) -> None:
+    def _begin_interval(self, plan: BaseInterval) -> None:
         self._current_interval = RunningInterval(
-            kind=kind,
-            category_id=category_id,
-            planned_seconds=planned_seconds(kind, settings),
+            kind=plan.kind,
+            category_id=plan.category_id,
+            planned_seconds=plan.planned_seconds,
             started_at=self._clock(),
         )
+        self._is_waiting = False
         self._clear_pauses()
 
     def _end_current_interval_early(self, status: IntervalStatus) -> None:
@@ -137,6 +156,7 @@ class Engine:
             ended_at=ended_at,
             actual_seconds=interval.planned_seconds,
         )
+        self._is_waiting = True
 
     def _finish_current_interval(
         self, status: IntervalStatus, ended_at: datetime, actual_seconds: int
