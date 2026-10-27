@@ -151,6 +151,145 @@ def test_the_number_and_spacing_of_ticks_do_not_change_when_the_interval_ends(
     assert len(engine.finished_intervals) == 1
 
 
+# --- pause and resume --------------------------------------------------------
+
+
+def test_a_running_interval_is_not_paused(engine):
+    engine.start_flow(CATEGORY_ID)
+
+    assert engine.is_paused is False
+
+
+def test_pause_marks_the_interval_as_paused_and_resume_clears_the_mark(engine):
+    engine.start_flow(CATEGORY_ID)
+
+    engine.pause()
+    assert engine.is_paused is True
+
+    engine.resume()
+    assert engine.is_paused is False
+
+
+def test_the_remaining_time_does_not_change_while_paused(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    clock.advance(600)
+
+    engine.pause()
+    clock.advance(1000)
+
+    assert engine.remaining_seconds() == 25 * 60 - 600
+
+
+def test_a_paused_interval_does_not_finish_however_long_the_pause_lasts(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    clock.advance(60)
+
+    engine.pause()
+    clock.advance(10 * 3600)
+    engine.tick()
+
+    assert engine.current_interval is not None
+    assert engine.finished_intervals == []
+
+
+def test_resume_continues_the_countdown_from_where_it_stopped(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    clock.advance(600)
+    engine.pause()
+    clock.advance(1000)
+
+    engine.resume()
+    clock.advance(100)
+
+    assert engine.remaining_seconds() == 25 * 60 - 700
+
+
+def test_several_pauses_add_up(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    clock.advance(300)
+    engine.pause()
+    clock.advance(1000)
+    engine.resume()
+    clock.advance(300)
+    engine.pause()
+    clock.advance(2000)
+    engine.resume()
+    clock.advance(100)
+
+    assert engine.remaining_seconds() == 25 * 60 - 700
+
+
+def test_paused_time_is_not_counted_as_worked_time(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    started_at = clock()
+    clock.advance(600)
+    engine.pause()
+    clock.advance(30 * 60)
+    engine.resume()
+    clock.advance(900)  # 600 + 900 seconds worked: the whole interval
+
+    engine.tick()
+
+    assert engine.finished_intervals == [
+        FinishedInterval(
+            kind=IntervalKind.WORK,
+            category_id=CATEGORY_ID,
+            planned_seconds=25 * 60,
+            started_at=started_at,
+            ended_at=started_at + timedelta(minutes=25 + 30),
+            actual_seconds=25 * 60,
+            status=IntervalStatus.COMPLETED,
+        )
+    ]
+
+
+def test_pausing_a_paused_interval_has_no_effect(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    started_at = clock()
+    clock.advance(600)
+    engine.pause()
+    clock.advance(100)
+
+    engine.pause()  # must not restart the pause
+    clock.advance(100)
+    engine.resume()
+    clock.advance(900)
+    engine.tick()
+
+    assert engine.finished_intervals[0].ended_at == started_at + timedelta(
+        seconds=25 * 60 + 200
+    )
+
+
+def test_resuming_a_running_interval_has_no_effect(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    clock.advance(600)
+
+    engine.resume()
+    clock.advance(100)
+
+    assert engine.remaining_seconds() == 25 * 60 - 700
+
+
+def test_pause_and_resume_while_idle_do_nothing(engine):
+    engine.pause()
+    engine.resume()
+
+    assert engine.is_paused is False
+    assert engine.current_interval is None
+
+
+def test_a_clock_set_back_during_a_pause_does_not_change_the_worked_time(engine, clock):
+    engine.start_flow(CATEGORY_ID)
+    clock.advance(600)
+    engine.pause()
+
+    clock.advance(-100)
+    engine.resume()
+
+    assert engine.remaining_seconds() == 25 * 60 - 600
+
+
 # --- settings are read at the start ------------------------------------------
 
 

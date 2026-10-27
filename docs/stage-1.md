@@ -100,7 +100,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - When the planned time has elapsed the interval completes with actual time equal to planned.
   - Settings are read when an interval starts: a change affects only intervals that start afterwards.
 
-- [ ] **1.14 Engine: pause and resume**
+- [x] **1.14 Engine: pause and resume**
   - While paused the remaining time does not change and the paused time is not counted as worked time.
   - Resume continues the countdown; pausing an already paused interval has no effect.
 
