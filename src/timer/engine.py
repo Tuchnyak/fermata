@@ -156,7 +156,18 @@ class Engine:
             ended_at=ended_at,
             actual_seconds=interval.planned_seconds,
         )
-        self._is_waiting = True
+        if self._next_interval_starts_by_itself(interval.kind):
+            self._begin_interval(self._plan_next_interval())
+        else:
+            self._is_waiting = True
+
+    def _next_interval_starts_by_itself(self, completed_kind: IntervalKind) -> bool:
+        transition_mode = self._get_settings().transition_mode
+        if transition_mode == "auto":
+            return True
+        if transition_mode == "mixed":
+            return completed_kind == IntervalKind.WORK
+        return False
 
     def _finish_current_interval(
         self, status: IntervalStatus, ended_at: datetime, actual_seconds: int

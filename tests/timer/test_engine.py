@@ -809,6 +809,148 @@ def test_skip_and_pause_do_nothing_while_waiting(engine, clock):
     assert len(engine.finished_intervals) == 1
 
 
+# --- transition mode "auto" -----------------------------------------------------
+
+
+@pytest.fixture
+def auto_engine(engine, settings_repository):
+    settings_repository.set("transition_mode", "auto")
+    return engine
+
+
+def test_auto_starts_a_short_break_at_once_after_a_work_interval(auto_engine, clock):
+    auto_engine.start_flow(CATEGORY_ID)
+
+    run_to_the_end(auto_engine, clock)
+
+    assert auto_engine.current_interval == RunningInterval(
+        kind=IntervalKind.SHORT_BREAK,
+        category_id=None,
+        planned_seconds=5 * 60,
+        started_at=clock(),
+    )
+    assert auto_engine.upcoming_interval is None
+    assert [interval.status for interval in auto_engine.finished_intervals] == [
+        IntervalStatus.COMPLETED
+    ]
+
+
+def test_auto_starts_a_work_interval_at_once_after_a_break(auto_engine, clock):
+    auto_engine.start_flow(CATEGORY_ID)
+    run_to_the_end(auto_engine, clock)  # the work interval; the break starts
+
+    run_to_the_end(auto_engine, clock)  # the break
+
+    assert auto_engine.current_interval == RunningInterval(
+        kind=IntervalKind.WORK,
+        category_id=CATEGORY_ID,
+        planned_seconds=25 * 60,
+        started_at=clock(),
+    )
+    assert auto_engine.upcoming_interval is None
+
+
+def test_auto_keeps_the_flow_going_and_puts_a_long_break_after_the_fourth_work(
+    auto_engine, clock
+):
+    auto_engine.start_flow(CATEGORY_ID)
+
+    for _ in range(7):  # four work intervals and the three breaks between them
+        run_to_the_end(auto_engine, clock)
+
+    assert auto_engine.current_interval.kind == IntervalKind.LONG_BREAK
+    assert len(auto_engine.finished_intervals) == 7
+
+
+def test_auto_starts_the_next_interval_when_the_tick_notices_the_end(auto_engine, clock):
+    auto_engine.start_flow(CATEGORY_ID)
+
+    clock.advance(25 * 60 + 300)  # a late tick
+    auto_engine.tick()
+
+    assert auto_engine.current_interval.started_at == clock()
+    assert auto_engine.remaining_seconds() == 5 * 60
+
+
+def test_the_transition_mode_in_force_is_the_one_at_the_end_of_the_interval(
+    engine, clock, settings_repository
+):
+    engine.start_flow(CATEGORY_ID)
+
+    settings_repository.set("transition_mode", "auto")
+    run_to_the_end(engine, clock)
+
+    assert engine.current_interval.kind == IntervalKind.SHORT_BREAK
+
+
+# --- transition mode "mixed" -----------------------------------------------------
+
+
+@pytest.fixture
+def mixed_engine(engine, settings_repository):
+    settings_repository.set("transition_mode", "mixed")
+    return engine
+
+
+def test_mixed_starts_a_break_at_once_after_a_work_interval(mixed_engine, clock):
+    mixed_engine.start_flow(CATEGORY_ID)
+
+    run_to_the_end(mixed_engine, clock)
+
+    assert mixed_engine.current_interval == RunningInterval(
+        kind=IntervalKind.SHORT_BREAK,
+        category_id=None,
+        planned_seconds=5 * 60,
+        started_at=clock(),
+    )
+    assert mixed_engine.upcoming_interval is None
+
+
+def test_mixed_waits_for_confirmation_after_a_break(mixed_engine, clock):
+    mixed_engine.start_flow(CATEGORY_ID)
+    run_to_the_end(mixed_engine, clock)  # the work interval; the break starts
+
+    run_to_the_end(mixed_engine, clock)  # the break
+
+    assert mixed_engine.current_interval is None
+    assert mixed_engine.upcoming_interval == BaseInterval(
+        kind=IntervalKind.WORK, category_id=CATEGORY_ID, planned_seconds=25 * 60
+    )
+    clock.advance(3600)
+    mixed_engine.tick()
+    assert mixed_engine.current_interval is None
+
+
+def test_mixed_starts_the_work_interval_on_confirm(mixed_engine, clock):
+    mixed_engine.start_flow(CATEGORY_ID)
+    run_to_the_end(mixed_engine, clock)
+    run_to_the_end(mixed_engine, clock)
+    clock.advance(3600)
+
+    mixed_engine.confirm()
+
+    assert mixed_engine.current_interval == RunningInterval(
+        kind=IntervalKind.WORK,
+        category_id=CATEGORY_ID,
+        planned_seconds=25 * 60,
+        started_at=clock(),
+    )
+
+
+def test_mixed_starts_a_long_break_at_once_after_the_fourth_work_interval(
+    mixed_engine, clock
+):
+    mixed_engine.start_flow(CATEGORY_ID)
+    for _ in range(3):
+        run_to_the_end(mixed_engine, clock)  # a work interval; its break starts
+        run_to_the_end(mixed_engine, clock)  # the break
+        mixed_engine.confirm()  # the next work interval
+
+    run_to_the_end(mixed_engine, clock)  # the fourth work interval
+
+    assert mixed_engine.current_interval.kind == IntervalKind.LONG_BREAK
+
+
 # --- settings are read at the start ------------------------------------------
 
 

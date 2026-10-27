@@ -117,7 +117,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - When an interval completes, the engine enters a waiting state that exposes the upcoming interval (kind, category, length); no time is counted.
   - `confirm()` starts the upcoming interval.
 
-- [ ] **1.18 Engine: transition modes "auto" and "mixed"**
+- [x] **1.18 Engine: transition modes "auto" and "mixed"**
   - `auto`: the next interval starts immediately after a completed interval.
   - `mixed`: a break starts automatically after a work interval; after a break the engine waits for confirmation before the next work interval.
 
