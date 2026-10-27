@@ -123,7 +123,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
 
 ### Recording
 
-- [ ] **1.19 Session and interval repository**
+- [x] **1.19 Session and interval repository**
   - Create a flow session; start an interval (position, kind, category, planned seconds, start time); finish an interval (status, actual seconds, end time); finish a session (status, end time).
   - Intervals of a session are returned in order.
   - `last_flow_category_id()` returns the category of the most recent flow, or `None` when there was no flow.

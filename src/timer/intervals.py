@@ -44,6 +44,18 @@ class FinishedInterval(BaseInterval):
     status: IntervalStatus
 
 
+@dataclass(frozen=True)
+class IntervalEntity(BaseInterval):
+    """An interval as stored in the database; unfinished fields are None while it runs."""
+
+    id: int
+    position: int
+    started_at: datetime
+    actual_seconds: int | None
+    ended_at: datetime | None
+    status: IntervalStatus | None
+
+
 def next_kind(finished: Sequence[IntervalKind], settings: Settings) -> IntervalKind:
     """Return the kind of the interval that follows the finished ones of a session.
 
