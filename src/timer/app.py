@@ -1,9 +1,8 @@
 import ttkbootstrap as ttk
+from timer.ui.main_window import MainWindow
 
 
 def main():
     root = ttk.Window(themename="darkly")
-    ttk.Label(root, text="Привет!").pack(padx=40, pady=20)
+    MainWindow(root)
     root.mainloop()
-
-

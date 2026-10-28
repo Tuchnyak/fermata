@@ -139,7 +139,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
 
 ### UI
 
-- [ ] **1.22 App shell and navigation**
+- [x] **1.22 App shell and navigation**
   - A main window titled "Timer" shows the home screen and a navigation bar (Categories, Settings).
   - Opening a secondary screen shows it inside the same window with a Back button; Back returns home.
   - Navigation state is tested without Tk; manual check: the window opens and navigation works.
