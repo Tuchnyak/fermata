@@ -144,7 +144,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - Opening a secondary screen shows it inside the same window with a Back button; Back returns home.
   - Navigation state is tested without Tk; manual check: the window opens and navigation works.
 
-- [ ] **1.23 Hotkeys**
+- [x] **1.23 Hotkeys**
   - `Space` toggles pause (starts the flow when idle), `Enter` confirms the next interval, `Esc` goes back.
   - Hotkeys are ignored while a text field has focus, so typing a space in a name does not pause the timer.
   - The key mapping is tested without Tk; manual check: the keys work in the window.
