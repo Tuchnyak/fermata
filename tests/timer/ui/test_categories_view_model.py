@@ -29,6 +29,13 @@ def names(categories_view_model):
     return [category.name for category in categories_view_model.categories()]
 
 
+def category_named(categories_view_model, name):
+    for category in categories_view_model.categories():
+        if category.name == name:
+            return category
+    raise AssertionError(f"No category named {name}")
+
+
 def test_the_list_holds_the_system_category_at_first(categories_view_model):
     (category,) = categories_view_model.categories()
 
@@ -100,3 +107,140 @@ def test_the_default_color_is_valid_and_can_be_used_as_it_is(categories_view_mod
 )
 def test_the_strings_of_the_screen_exist_in_the_catalog(key):
     assert t(key)
+
+
+# --- rename ------------------------------------------------------------------
+
+
+def test_a_renamed_category_is_listed_under_its_new_name_in_its_new_place(
+    categories_view_model,
+):
+    categories_view_model.add("Apple", "#112233")
+    categories_view_model.add("Banana", "#445566")
+    banana = category_named(categories_view_model, "Banana")
+
+    message = categories_view_model.rename(banana.id, "Aardvark")
+
+    assert message is None
+    assert names(categories_view_model) == ["None", "Aardvark", "Apple"]
+    assert category_named(categories_view_model, "Aardvark").color == "#445566"
+
+
+def test_the_new_name_is_trimmed(categories_view_model):
+    categories_view_model.add("Work", "#112233")
+    work = category_named(categories_view_model, "Work")
+
+    categories_view_model.rename(work.id, "  Job \t")
+
+    assert names(categories_view_model) == ["None", "Job"]
+
+
+def test_a_category_may_change_the_case_of_its_own_name(categories_view_model):
+    categories_view_model.add("Work", "#112233")
+    work = category_named(categories_view_model, "Work")
+
+    message = categories_view_model.rename(work.id, "WORK")
+
+    assert message is None
+    assert names(categories_view_model) == ["None", "WORK"]
+
+
+@pytest.mark.parametrize(
+    ("new_name", "key"),
+    [
+        ("", "category.name_empty"),
+        ("   ", "category.name_empty"),
+        ("apple", "category.name_taken"),
+        ("none", "category.name_taken"),
+    ],
+)
+def test_a_rejected_new_name_gives_the_message_and_changes_nothing(
+    categories_view_model, new_name, key
+):
+    categories_view_model.add("Apple", "#112233")
+    categories_view_model.add("Banana", "#445566")
+    banana = category_named(categories_view_model, "Banana")
+
+    message = categories_view_model.rename(banana.id, new_name)
+
+    assert message == t(key)
+    assert names(categories_view_model) == ["None", "Apple", "Banana"]
+
+
+# --- recolor -----------------------------------------------------------------
+
+
+def test_a_recolored_category_is_listed_with_its_new_color(categories_view_model):
+    categories_view_model.add("Work", "#112233")
+    work = category_named(categories_view_model, "Work")
+
+    message = categories_view_model.recolor(work.id, "#aabbcc")
+
+    assert message is None
+    assert category_named(categories_view_model, "Work").color == "#aabbcc"
+
+
+def test_a_rejected_color_gives_the_message_and_changes_nothing(categories_view_model):
+    categories_view_model.add("Work", "#112233")
+    work = category_named(categories_view_model, "Work")
+
+    message = categories_view_model.recolor(work.id, "red")
+
+    assert message == t("category.color_invalid")
+    assert category_named(categories_view_model, "Work").color == "#112233"
+
+
+# --- archive -----------------------------------------------------------------
+
+
+def test_an_archived_category_is_no_longer_listed(categories_view_model):
+    categories_view_model.add("Apple", "#112233")
+    categories_view_model.add("Banana", "#445566")
+    apple = category_named(categories_view_model, "Apple")
+
+    message = categories_view_model.archive(apple.id)
+
+    assert message is None
+    assert names(categories_view_model) == ["None", "Banana"]
+
+
+# --- the system category -----------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        lambda view_model, category_id: view_model.rename(category_id, "Nothing"),
+        lambda view_model, category_id: view_model.recolor(category_id, "#aabbcc"),
+        lambda view_model, category_id: view_model.archive(category_id),
+    ],
+    ids=["rename", "recolor", "archive"],
+)
+def test_the_system_category_cannot_be_changed(categories_view_model, change):
+    system = category_named(categories_view_model, "None")
+
+    message = change(categories_view_model, system.id)
+
+    assert message == t("category.system_readonly")
+    assert categories_view_model.categories() == [system]
+
+
+# --- strings -----------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "categories.rename",
+        "categories.recolor",
+        "categories.archive",
+        "categories.rename_title",
+        "categories.rename_prompt",
+    ],
+)
+def test_the_strings_of_the_row_controls_exist_in_the_catalog(key):
+    assert t(key)
+
+
+def test_the_archive_question_names_the_category():
+    assert "Work" in t("categories.archive_confirm", name="Work")

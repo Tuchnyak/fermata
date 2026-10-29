@@ -1,13 +1,29 @@
-"""The categories screen: the list of active categories and the form that adds one."""
+"""The categories screen: the list of active categories with their controls, and the form
+that adds one."""
 
 import tkinter
-from tkinter import colorchooser
+from functools import partial
 
 import ttkbootstrap as ttk
 from timer.i18n import t
+from timer.storage.categories import Category
 from timer.ui.categories_view_model import DEFAULT_COLOR, CategoriesViewModel
+from ttkbootstrap.dialogs import Messagebox, Querybox
+from ttkbootstrap.dialogs.colorchooser import ColorChooserDialog
 
 SWATCH_SIZE = 16
+
+
+class _ColorChooserDialog(ColorChooserDialog):
+    """The library's color chooser without its screen color dropper."""
+
+    def create_buttonbox(self, master: tkinter.Misc) -> None:
+        super().create_buttonbox(master)
+        # The dropper is the only label of the button box the library builds.
+        button_box = master.winfo_children()[-1]
+        for child in button_box.winfo_children():
+            if isinstance(child, ttk.Label):
+                child.destroy()
 
 
 class CategoriesScreen(ttk.Frame):
@@ -35,20 +51,24 @@ class CategoriesScreen(ttk.Frame):
 
         self._color_swatch = self._create_swatch(form, self._color)
         self._color_swatch.pack(side="left")
-        # Buttons do not take focus: Space on a focused button would press it as well as
-        # act as a hotkey.
-        ttk.Button(
-            form,
-            text=t("categories.choose_color"),
-            command=self._choose_color,
-            takefocus=False,
+        self._create_button(
+            form, t("categories.choose_color"), self._choose_color
         ).pack(side="left", padx=8)
-        ttk.Button(
-            form, text=t("categories.add"), command=self._add, takefocus=False
-        ).pack(side="left")
+        self._create_button(form, t("categories.add"), self._add).pack(side="left")
 
         self._error = ttk.Label(self, bootstyle="danger")
         self._error.pack(fill="x", pady=(8, 0))
+
+    def _create_button(self, parent, text, command, disabled=False) -> ttk.Button:
+        # Buttons do not take focus: Space on a focused button would press it as well as
+        # act as a hotkey.
+        return ttk.Button(
+            parent,
+            text=text,
+            command=command,
+            takefocus=False,
+            state="disabled" if disabled else "normal",
+        )
 
     def _create_swatch(self, parent: tkinter.Misc, color: str) -> tkinter.Canvas:
         swatch = tkinter.Canvas(
@@ -58,35 +78,91 @@ class CategoriesScreen(ttk.Frame):
             background=self._background,
             highlightthickness=0,
         )
-        swatch.create_oval(1, 1, SWATCH_SIZE - 1, SWATCH_SIZE - 1, fill=color, outline="")
+        self._paint_swatch(swatch, color)
         return swatch
+
+    def _paint_swatch(self, swatch: tkinter.Canvas, color: str) -> None:
+        swatch.delete("all")
+        swatch.create_oval(1, 1, SWATCH_SIZE - 1, SWATCH_SIZE - 1, fill=color, outline="")
 
     def _refresh_list(self) -> None:
         for child in self._list.winfo_children():
             child.destroy()
         for category in self._view_model.categories():
-            row = ttk.Frame(self._list)
-            row.pack(fill="x", pady=2)
-            self._create_swatch(row, category.color).pack(side="left")
-            ttk.Label(row, text=category.name).pack(side="left", padx=8)
+            self._build_row(category)
+
+    def _build_row(self, category: Category) -> None:
+        row = ttk.Frame(self._list)
+        row.pack(fill="x", pady=2)
+        self._create_swatch(row, category.color).pack(side="left")
+        ttk.Label(row, text=category.name).pack(side="left", padx=8, fill="x", expand=True)
+
+        # The system category cannot be changed, so its controls are disabled.
+        controls = (
+            (t("categories.rename"), self._rename),
+            (t("categories.recolor"), self._recolor),
+            (t("categories.archive"), self._archive),
+        )
+        for text, command in controls:
+            self._create_button(
+                row, text, partial(command, category), disabled=category.is_system
+            ).pack(side="left", padx=(8, 0))
 
     def _choose_color(self) -> None:
-        _, chosen_color = colorchooser.askcolor(
-            color=self._color, title=t("categories.color_dialog_title"), parent=self
-        )
-        if chosen_color is None:  # the dialog was cancelled
+        chosen_color = self._ask_color(self._color)
+        if chosen_color is None:
             return
         self._color = chosen_color
-        self._color_swatch.delete("all")
-        self._color_swatch.create_oval(
-            1, 1, SWATCH_SIZE - 1, SWATCH_SIZE - 1, fill=self._color, outline=""
+        self._paint_swatch(self._color_swatch, self._color)
+
+    def _ask_color(self, current_color: str) -> str | None:
+        dialog = _ColorChooserDialog(
+            parent=self,
+            title=t("categories.color_dialog_title"),
+            initialcolor=current_color,
         )
+        dialog.show()
+        choice = dialog.result  # None when the dialog was cancelled
+        return None if choice is None else choice.hex.lower()
 
     def _add(self) -> None:
         message = self._view_model.add(self._name_variable.get(), self._color)
+        if self._show_result(message):
+            self._name_variable.set("")
+
+    def _rename(self, category: Category) -> None:
+        new_name = Querybox.get_string(
+            prompt=t("categories.rename_prompt"),
+            title=t("categories.rename_title"),
+            initialvalue=category.name,
+            parent=self,
+        )
+        if new_name is not None:
+            self._show_result(self._view_model.rename(category.id, new_name))
+
+    def _recolor(self, category: Category) -> None:
+        new_color = self._ask_color(category.color)
+        if new_color is not None:
+            self._show_result(self._view_model.recolor(category.id, new_color))
+
+    def _archive(self, category: Category) -> None:
+        answer = Messagebox.yesno(
+            message=t("categories.archive_confirm", name=category.name),
+            title=t("categories.archive"),
+            parent=self,
+            localize=False,
+        )
+        if answer == "Yes":
+            self._show_result(self._view_model.archive(category.id))
+
+    def _show_result(self, message: str | None) -> bool:
+        """Show the message of a rejected change, or refresh the list after a change.
+
+        Return True if the change was made.
+        """
         if message is not None:
             self._error.configure(text=message)
-            return
+            return False
         self._error.configure(text="")
-        self._name_variable.set("")
         self._refresh_list()
+        return True

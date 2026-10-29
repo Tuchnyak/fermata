@@ -159,7 +159,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - Lists active categories with their color; `None` is shown too.
   - A form adds a category with a name and a color chosen in a color dialog; validation errors are shown next to the form.
 
-- [ ] **1.25 Categories screen: edit and archive**
+- [x] **1.25 Categories screen: edit and archive**
   - A category can be renamed, recolored and archived from the list.
   - The `None` category has these controls disabled.
 
