@@ -13,6 +13,8 @@ from timer.ui.categories_screen import CategoriesScreen
 from timer.ui.categories_view_model import CategoriesViewModel
 from timer.ui.hotkeys import HotkeyHandler
 from timer.ui.navigation import Navigation, Screen
+from timer.ui.settings_screen import SettingsScreen
+from timer.ui.settings_view_model import SettingsViewModel
 
 NAVIGATION_BAR_SCREENS = (Screen.CATEGORIES, Screen.SETTINGS)
 
@@ -28,13 +30,15 @@ class MainWindow:
         navigation: Navigation,
         hotkey_handler: HotkeyHandler,
         categories_view_model: CategoriesViewModel,
+        settings_view_model: SettingsViewModel,
     ):
         self._root = root
         self._navigation = navigation
         self._hotkey_handler = hotkey_handler
         self._categories_view_model = categories_view_model
+        self._settings_view_model = settings_view_model
         root.title(window_title())
-        root.geometry("640x420")
+        root.geometry("720x600")
         self._header = ttk.Frame(root, padding=8)
         self._header.pack(fill="x")
         self._content = ttk.Frame(root, padding=8)
@@ -74,6 +78,8 @@ class MainWindow:
             ttk.Label(self._header, text=title, font=("TkDefaultFont", 14)).pack(
                 side="left", padx=16
             )
+            actions = ttk.Frame(self._header)
+            actions.pack(side="right")
         else:
             for screen in NAVIGATION_BAR_SCREENS:
                 ttk.Button(
@@ -85,6 +91,10 @@ class MainWindow:
 
         if self._navigation.current == Screen.CATEGORIES:
             CategoriesScreen(self._content, self._categories_view_model).pack(
+                fill="both", expand=True
+            )
+        elif self._navigation.current == Screen.SETTINGS:
+            SettingsScreen(self._content, self._settings_view_model, actions).pack(
                 fill="both", expand=True
             )
         else:

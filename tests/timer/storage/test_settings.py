@@ -5,6 +5,13 @@ from timer.i18n import t
 from timer.storage.db import Db
 from timer.storage.migrate import MIGRATIONS_DIR, migrate
 from timer.storage.settings import Settings, SettingsRepository
+from timer.storage.settings_rules import (
+    LONG_BREAK_EVERY_RANGE,
+    LONG_BREAK_MINUTES_RANGE,
+    SHORT_BREAK_MINUTES_RANGE,
+    TRANSITION_MODES,
+    WORK_MINUTES_RANGE,
+)
 from timer.validation import ValidationError
 
 DEFAULT_SETTINGS = Settings(
@@ -129,34 +136,43 @@ def test_values_are_stored_as_plain_text_for_own_queries(db, settings_repository
 
 # --- validation --------------------------------------------------------------
 
+MINUTE_LIMITS = [
+    ("work_minutes", 1, 120),
+    ("short_break_minutes", 1, 30),
+    ("long_break_minutes", 1, 60),
+]
 MINUTE_KEYS = ["work_minutes", "short_break_minutes", "long_break_minutes"]
 
 
-@pytest.mark.parametrize("key", MINUTE_KEYS)
-@pytest.mark.parametrize("value", [1, 60, 180])
-def test_minutes_from_1_to_180_are_accepted(settings_repository, key, value):
-    settings_repository.set(key, value)
-
-    assert getattr(settings_repository.get_all(), key) == value
-
-
-@pytest.mark.parametrize("key", MINUTE_KEYS)
-@pytest.mark.parametrize("value", [0, -1, 181, 1000])
-def test_minutes_out_of_range_are_rejected(settings_repository, key, value):
-    with pytest.raises(ValidationError) as error:
+@pytest.mark.parametrize(("key", "lowest", "highest"), MINUTE_LIMITS)
+def test_minutes_within_the_limits_of_the_setting_are_accepted(
+    settings_repository, key, lowest, highest
+):
+    for value in (lowest, (lowest + highest) // 2, highest):
         settings_repository.set(key, value)
 
-    assert error.value.key == "setting.minutes_invalid"
+        assert getattr(settings_repository.get_all(), key) == value
 
 
-@pytest.mark.parametrize("value", [1, 4, 20])
+@pytest.mark.parametrize(("key", "lowest", "highest"), MINUTE_LIMITS)
+def test_minutes_outside_the_limits_of_the_setting_are_rejected(
+    settings_repository, key, lowest, highest
+):
+    for value in (lowest - 1, -1, highest + 1, highest * 10):
+        with pytest.raises(ValidationError) as error:
+            settings_repository.set(key, value)
+
+        assert error.value.key == f"setting.{key}_invalid"
+
+
+@pytest.mark.parametrize("value", [1, 4, 10])
 def test_long_break_every_from_1_to_20_is_accepted(settings_repository, value):
     settings_repository.set("long_break_every", value)
 
     assert settings_repository.get_all().long_break_every == value
 
 
-@pytest.mark.parametrize("value", [0, -1, 21, 100])
+@pytest.mark.parametrize("value", [0, -1, 11, 100])
 def test_long_break_every_out_of_range_is_rejected(settings_repository, value):
     with pytest.raises(ValidationError) as error:
         settings_repository.set("long_break_every", value)
@@ -241,7 +257,9 @@ def test_rejected_value_keeps_the_previous_one(settings_repository):
     "key",
     [
         "setting.unknown_key",
-        "setting.minutes_invalid",
+        "setting.work_minutes_invalid",
+        "setting.short_break_minutes_invalid",
+        "setting.long_break_minutes_invalid",
         "setting.long_break_every_invalid",
         "setting.transition_mode_invalid",
         "setting.blink_invalid",
@@ -249,3 +267,83 @@ def test_rejected_value_keeps_the_previous_one(settings_repository):
 )
 def test_error_messages_exist_in_the_catalog(key):
     assert t(key)
+
+
+# --- set_many ----------------------------------------------------------------
+
+
+def test_set_many_stores_all_the_values(settings_repository):
+    settings_repository.set_many(
+        {"work_minutes": 30, "long_break_every": 3, "transition_mode": "auto", "blink": False}
+    )
+
+    assert settings_repository.get_all() == replace(
+        DEFAULT_SETTINGS,
+        work_minutes=30,
+        long_break_every=3,
+        transition_mode="auto",
+        blink=False,
+    )
+
+
+def test_set_many_stores_nothing_when_one_value_is_invalid(db, settings_repository):
+    with pytest.raises(ValidationError) as error:
+        settings_repository.set_many(
+            {"work_minutes": 30, "short_break_minutes": 0, "blink": False}
+        )
+
+    assert error.value.key == "setting.short_break_minutes_invalid"
+    assert stored_settings(db) == []
+
+
+def test_set_many_keeps_the_previous_values_when_one_value_is_invalid(settings_repository):
+    settings_repository.set("work_minutes", 40)
+
+    with pytest.raises(ValidationError):
+        settings_repository.set_many({"work_minutes": 30, "long_break_every": 99})
+
+    assert settings_repository.get_all().work_minutes == 40
+
+
+def test_set_many_rejects_an_unknown_key_and_stores_nothing(db, settings_repository):
+    with pytest.raises(ValidationError) as error:
+        settings_repository.set_many({"work_minutes": 30, "theme": "dark"})
+
+    assert error.value.key == "setting.unknown_key"
+    assert stored_settings(db) == []
+
+
+def test_set_many_with_no_changes_does_nothing(db, settings_repository):
+    settings_repository.set_many({})
+
+    assert stored_settings(db) == []
+
+
+# --- limits shown to the user ------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("key", "limits", "expected"),
+    [
+        ("work_minutes", WORK_MINUTES_RANGE, (1, 120)),
+        ("short_break_minutes", SHORT_BREAK_MINUTES_RANGE, (1, 30)),
+        ("long_break_minutes", LONG_BREAK_MINUTES_RANGE, (1, 60)),
+        ("long_break_every", LONG_BREAK_EVERY_RANGE, (1, 10)),
+    ],
+)
+def test_the_limits_are_those_the_rules_enforce(
+    settings_repository, key, limits, expected
+):
+    assert limits == expected
+    lowest, highest = limits
+    settings_repository.set(key, lowest)
+    settings_repository.set(key, highest)
+    for outside in (lowest - 1, highest + 1):
+        with pytest.raises(ValidationError):
+            settings_repository.set(key, outside)
+
+
+def test_the_transition_modes_are_the_ones_the_rules_accept(settings_repository):
+    assert TRANSITION_MODES == ("auto", "confirm", "mixed")
+    for mode in TRANSITION_MODES:
+        settings_repository.set("transition_mode", mode)

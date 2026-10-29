@@ -82,7 +82,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - Theme and sound settings arrive with their own stages.
 
 - [x] **1.11 Settings validation**
-  - Minutes must be 1–180 and N must be 1–20.
+  - Work interval must be 1–120 minutes, short break 1–30, long break 1–60, and N 1–10.
   - Transition mode must be one of `auto`, `confirm`, `mixed`.
   - An invalid value or an unknown key raises an error and stores nothing.
 
@@ -163,8 +163,8 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - A category can be renamed, recolored and archived from the list.
   - The `None` category has these controls disabled.
 
-- [ ] **1.26 Settings screen**
-  - Fields for the four timer values with their limits, the transition mode as three options each with the explanation from spec §4.3, and the blink checkbox.
+- [x] **1.26 Settings screen**
+  - Sliders with tick marks for the four timer values, all of the same length at the right edge (time in steps of 5 minutes from 5 up to the limit, N in steps of 1), the transition mode as three options each with the explanation from spec §4.3, and the blink checkbox.
   - Values are stored with an explicit Save button; invalid input is rejected with a message.
 
 - [ ] **1.27 Home screen: start a flow**

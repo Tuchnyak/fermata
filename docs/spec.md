@@ -285,5 +285,5 @@ Decided by default while writing; to be confirmed before implementing the relate
 2. Skipping a break moves straight to the next work interval.
 3. Stop asks for confirmation in Flow too, not only in scenarios.
 4. Flow is not resumed after an interruption; the interrupted interval is recorded as `interrupted`.
-5. Value limits: durations 1–180 min, N 1–20, row count 1–20, repeat 1–20. Enforced in application code, not in the schema.
+5. Value limits: work interval 1–120 min, short break 1–30 min, long break 1–60 min, N 1–10, row count 1–20, repeat 1–20. Enforced in application code, not in the schema. The settings screen offers time values in steps of 5 minutes (from 5), N in steps of 1.
 6. Deleting a scenario keeps its sessions in history (the scenario name comes from the snapshot; sessions do not reference the scenario).

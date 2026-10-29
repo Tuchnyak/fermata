@@ -7,6 +7,15 @@ its rule here.
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from functools import partial
+
+
+# The limits and the modes are also what the settings screen offers.
+WORK_MINUTES_RANGE = (1, 120)
+SHORT_BREAK_MINUTES_RANGE = (1, 30)
+LONG_BREAK_MINUTES_RANGE = (1, 60)
+LONG_BREAK_EVERY_RANGE = (1, 10)
+TRANSITION_MODES = ("auto", "confirm", "mixed")
 
 
 @dataclass(frozen=True)
@@ -15,21 +24,18 @@ class Rule:
     error_key: str
 
 
-def _is_integer_between(value: object, lowest: int, highest: int) -> bool:
+def _is_integer_within(value: object, limits: tuple[int, int]) -> bool:
+    lowest, highest = limits
     # `type(...) is int` keeps `True` out: bool is a subclass of int.
     return type(value) is int and lowest <= value <= highest
 
 
-def _is_minutes(value: object) -> bool:
-    return _is_integer_between(value, 1, 180)
-
-
-def _is_long_break_every(value: object) -> bool:
-    return _is_integer_between(value, 1, 20)
+def _integer_rule(limits: tuple[int, int], error_key: str) -> Rule:
+    return Rule(partial(_is_integer_within, limits=limits), error_key)
 
 
 def _is_transition_mode(value: object) -> bool:
-    return value in ("auto", "confirm", "mixed")
+    return value in TRANSITION_MODES
 
 
 def _is_blink(value: object) -> bool:
@@ -37,10 +43,16 @@ def _is_blink(value: object) -> bool:
 
 
 RULES = {
-    "work_minutes": Rule(_is_minutes, "setting.minutes_invalid"),
-    "short_break_minutes": Rule(_is_minutes, "setting.minutes_invalid"),
-    "long_break_minutes": Rule(_is_minutes, "setting.minutes_invalid"),
-    "long_break_every": Rule(_is_long_break_every, "setting.long_break_every_invalid"),
+    "work_minutes": _integer_rule(WORK_MINUTES_RANGE, "setting.work_minutes_invalid"),
+    "short_break_minutes": _integer_rule(
+        SHORT_BREAK_MINUTES_RANGE, "setting.short_break_minutes_invalid"
+    ),
+    "long_break_minutes": _integer_rule(
+        LONG_BREAK_MINUTES_RANGE, "setting.long_break_minutes_invalid"
+    ),
+    "long_break_every": _integer_rule(
+        LONG_BREAK_EVERY_RANGE, "setting.long_break_every_invalid"
+    ),
     "transition_mode": Rule(_is_transition_mode, "setting.transition_mode_invalid"),
     "blink": Rule(_is_blink, "setting.blink_invalid"),
 }

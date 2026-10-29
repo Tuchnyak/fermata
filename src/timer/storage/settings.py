@@ -56,6 +56,12 @@ class SettingsRepository:
                 setting_values[field.name] = _decode(field.type, text)
         return Settings(**setting_values)
 
+    def set_many(self, changes: dict[str, Value]) -> None:
+        """Store all the values or, if one is rejected, none of them."""
+        with self._db.transaction():
+            for key, value in changes.items():
+                self.set(key, value)
+
     def set(self, key: str, value: Value) -> None:
         rule = RULES.get(key)
         if rule is None:

@@ -34,10 +34,10 @@ Only settings the user has changed are stored; a missing key means the applicati
 
 | Key | Value | Default |
 |---|---|---|
-| `work_minutes` | work interval length, 1–180 | 25 |
-| `short_break_minutes` | short break length, 1–180 | 5 |
-| `long_break_minutes` | long break length, 1–180 | 15 |
-| `long_break_every` | N: long break after every N-th work interval, 1–20 | 4 |
+| `work_minutes` | work interval length, 1–120 | 25 |
+| `short_break_minutes` | short break length, 1–30 | 5 |
+| `long_break_minutes` | long break length, 1–60 | 15 |
+| `long_break_every` | N: long break after every N-th work interval, 1–10 | 4 |
 | `transition_mode` | `auto`, `confirm` or `mixed` | `confirm` |
 | `blink` | blink the current circle, `1` / `0` | 1 |
 
