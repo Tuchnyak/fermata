@@ -245,6 +245,8 @@ The database schema is documented so the user can query history directly (`sqlit
 Everything is stored in one SQLite database (`sqlite3` from the standard library):
 `$XDG_DATA_HOME/timer/timer.db`, by default `~/.local/share/timer/timer.db`.
 
+That is the database of a release. A run from source (development) uses `timer-dev` instead of `timer`, so development never touches the data of an installed release. The environment variable `TIMER_DATA_DIR`, when set to an absolute path, replaces the whole directory in either build.
+
 It holds settings, categories, scenarios, the state of the current session and history. The complete schema is created in stage 1 (stage 2 adds code for scenarios, not tables) and documented in `docs/schema.md`.
 
 | Entity | Content |

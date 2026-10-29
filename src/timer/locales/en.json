@@ -1,5 +1,6 @@
 {
   "app.title": "Timer",
+  "app.title_dev": "Timer (dev)",
   "screen.home": "Home",
   "screen.categories": "Categories",
   "screen.settings": "Settings",

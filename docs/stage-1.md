@@ -23,7 +23,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - Later pieces add their own keys to the catalog.
 
 - [x] **1.2 Data directory**
-  - `data_dir()` returns `$XDG_DATA_HOME/timer` when the variable is set, otherwise `~/.local/share/timer`.
+  - `data_dir()` returns `$XDG_DATA_HOME/timer` when the variable is set, otherwise `~/.local/share/timer` (for a release build; see 1.24a for development).
   - The directory is created if missing; calling again does not fail.
   - `db_path()` is `<data_dir>/timer.db`.
 
@@ -148,6 +148,12 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - `Space` toggles pause (starts the flow when idle), `Enter` confirms the next interval, `Esc` goes back.
   - Hotkeys are ignored while a text field has focus, so typing a space in a name does not pause the timer.
   - The key mapping is tested without Tk; manual check: the keys work in the window.
+
+- [x] **1.24a Data directory for development**
+  - A release (frozen executable) keeps its data in `<base>/timer`; running from source keeps it in `<base>/timer-dev`, where `<base>` is `$XDG_DATA_HOME` or `~/.local/share`. The two never share a database, so a release can be used while the application is being developed.
+  - `TIMER_DATA_DIR`, when set to an absolute path, is the data directory as it is, in either build (for one-off experiments with a clean database).
+  - The window of a run from source is titled "Timer (dev)", a release's "Timer".
+  - `docs/spec.md` and `docs/schema.md` describe the two directories.
 
 - [ ] **1.24 Categories screen: list and add**
   - Lists active categories with their color; `None` is shown too.

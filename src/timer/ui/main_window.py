@@ -7,11 +7,16 @@ import tkinter
 from functools import partial
 
 import ttkbootstrap as ttk
+from timer.build import is_release
 from timer.i18n import t
 from timer.ui.hotkeys import HotkeyHandler
 from timer.ui.navigation import Navigation, Screen
 
 NAVIGATION_BAR_SCREENS = (Screen.CATEGORIES, Screen.SETTINGS)
+
+
+def window_title() -> str:
+    return t("app.title") if is_release() else t("app.title_dev")
 
 
 class MainWindow:
@@ -21,7 +26,7 @@ class MainWindow:
         self._root = root
         self._navigation = navigation
         self._hotkey_handler = hotkey_handler
-        root.title(t("app.title"))
+        root.title(window_title())
         root.geometry("640x420")
         self._header = ttk.Frame(root, padding=8)
         self._header.pack(fill="x")
