@@ -6,8 +6,10 @@ from timer.storage.categories import CategoryRepository
 from timer.storage.db import Db
 from timer.storage.migrate import MIGRATIONS_DIR, migrate
 from timer.storage.paths import db_path
+from timer.storage.sessions import SessionRepository
 from timer.storage.settings import Settings, SettingsRepository
 from timer.ui.categories_view_model import CategoriesViewModel
+from timer.ui.home_view_model import HomeViewModel
 from timer.ui.hotkeys import HotkeyHandler
 from timer.ui.main_window import MainWindow
 from timer.ui.navigation import Navigation
@@ -20,13 +22,17 @@ def main():
 
     root = ttk.Window(themename="darkly")
     navigation = Navigation()
+    category_repository = CategoryRepository(db)
+    # Temporary wiring: the engine reads the default settings and has no recorder yet (1.30).
     engine = Engine(get_settings=Settings, clock=lambda: datetime.now(UTC))
-    # Temporary wiring: the engine reads the default settings and has no recorder yet (1.30),
-    # and the home screen supplies the start of a flow in 1.27.
-    hotkey_handler = HotkeyHandler(engine, navigation, start_flow=lambda: None)
-    categories_view_model = CategoriesViewModel(CategoryRepository(db))
-    settings_view_model = SettingsViewModel(SettingsRepository(db))
+    home_view_model = HomeViewModel(category_repository, SessionRepository(db), engine)
+    hotkey_handler = HotkeyHandler(engine, navigation, start_flow=home_view_model.start)
     MainWindow(
-        root, navigation, hotkey_handler, categories_view_model, settings_view_model
+        root,
+        navigation,
+        hotkey_handler,
+        CategoriesViewModel(category_repository),
+        SettingsViewModel(SettingsRepository(db)),
+        home_view_model,
     )
     root.mainloop()

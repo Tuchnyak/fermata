@@ -5,12 +5,15 @@ Only the screens' placeholders exist so far; the real screens replace them piece
 
 import tkinter
 from functools import partial
+from tkinter import ttk as tk_ttk
 
 import ttkbootstrap as ttk
 from timer.build import is_release
 from timer.i18n import t
 from timer.ui.categories_screen import CategoriesScreen
 from timer.ui.categories_view_model import CategoriesViewModel
+from timer.ui.home_screen import HomeScreen
+from timer.ui.home_view_model import HomeViewModel
 from timer.ui.hotkeys import HotkeyHandler
 from timer.ui.navigation import Navigation, Screen
 from timer.ui.settings_screen import SettingsScreen
@@ -31,12 +34,14 @@ class MainWindow:
         hotkey_handler: HotkeyHandler,
         categories_view_model: CategoriesViewModel,
         settings_view_model: SettingsViewModel,
+        home_view_model: HomeViewModel,
     ):
         self._root = root
         self._navigation = navigation
         self._hotkey_handler = hotkey_handler
         self._categories_view_model = categories_view_model
         self._settings_view_model = settings_view_model
+        self._home_view_model = home_view_model
         root.title(window_title())
         root.geometry("720x600")
         self._header = ttk.Frame(root, padding=8)
@@ -55,7 +60,13 @@ class MainWindow:
             self._show_current_screen()
 
     def _text_field_has_focus(self) -> bool:
-        return isinstance(self._root.focus_get(), (tkinter.Entry, tkinter.Text))
+        try:
+            widget = self._root.focus_get()
+        except KeyError:  # the focus is in the drop-down list of a combo box
+            return False
+        if isinstance(widget, tk_ttk.Combobox) and str(widget.cget("state")) == "readonly":
+            return False  # a list to choose from, nothing is typed into it
+        return isinstance(widget, (tkinter.Entry, tkinter.Text))
 
     def _open(self, screen: Screen) -> None:
         self._navigation.open(screen)
@@ -98,6 +109,6 @@ class MainWindow:
                 fill="both", expand=True
             )
         else:
-            ttk.Label(self._content, text=title, font=("TkDefaultFont", 24)).pack(
-                expand=True
+            HomeScreen(self._content, self._home_view_model).pack(
+                fill="both", expand=True
             )

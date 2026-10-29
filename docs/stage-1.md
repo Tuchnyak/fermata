@@ -167,7 +167,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - Sliders with tick marks for the four timer values, all of the same length at the right edge (time in steps of 5 minutes from 5 up to the limit, N in steps of 1), the transition mode as three options each with the explanation from spec §4.3, and the blink checkbox.
   - Values are stored with an explicit Save button; invalid input is rejected with a message.
 
-- [ ] **1.27 Home screen: start a flow**
+- [x] **1.27 Home screen: start a flow**
   - A category selector shows active categories, preselected with the category of the previous flow if it is still active, otherwise `None`.
   - A Start button (and `Space`) starts the flow.
   - The preselection logic is tested without Tk.

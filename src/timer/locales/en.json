@@ -5,6 +5,8 @@
   "screen.categories": "Categories",
   "screen.settings": "Settings",
   "nav.back": "Back",
+  "home.category": "Category",
+  "home.start": "Start",
   "categories.name": "Name",
   "categories.choose_color": "Choose color…",
   "categories.add": "Add",
