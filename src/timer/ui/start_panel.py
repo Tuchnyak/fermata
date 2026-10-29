@@ -1,4 +1,4 @@
-"""The home screen: the choice of a category and the Start button."""
+"""The home screen while no flow runs: the choice of a category and the Start button."""
 
 import tkinter
 
@@ -7,7 +7,7 @@ from timer.i18n import t
 from timer.ui.home_view_model import HomeViewModel
 
 
-class HomeScreen(ttk.Frame):
+class StartPanel(ttk.Frame):
     def __init__(self, parent: tkinter.Misc, view_model: HomeViewModel):
         super().__init__(parent)
         self._view_model = view_model

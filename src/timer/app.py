@@ -13,6 +13,7 @@ from timer.ui.home_view_model import HomeViewModel
 from timer.ui.hotkeys import HotkeyHandler
 from timer.ui.main_window import MainWindow
 from timer.ui.navigation import Navigation
+from timer.ui.running_view_model import RunningViewModel
 from timer.ui.settings_view_model import SettingsViewModel
 
 
@@ -34,5 +35,6 @@ def main():
         CategoriesViewModel(category_repository),
         SettingsViewModel(SettingsRepository(db)),
         home_view_model,
+        RunningViewModel(engine, category_repository),
     )
     root.mainloop()

@@ -7,7 +7,7 @@ from timer.storage.db import Db
 from timer.storage.migrate import MIGRATIONS_DIR, migrate
 from timer.storage.sessions import SessionRepository
 from timer.storage.settings import Settings
-from timer.ui.home_view_model import HomeViewModel
+from timer.ui.home_view_model import HomeMode, HomeViewModel
 
 
 @pytest.fixture
@@ -64,6 +64,40 @@ def record_flow(session_repository, category, started_at):
             started_at=started_at,
         ),
     )
+
+
+# --- what the home screen shows ---------------------------------------------------
+
+
+def test_the_home_screen_is_idle_before_a_flow_starts(home_view_model):
+    assert home_view_model.mode() == HomeMode.IDLE
+
+
+def test_the_home_screen_shows_the_running_flow(home_view_model):
+    home_view_model.start()
+
+    assert home_view_model.mode() == HomeMode.RUNNING
+
+
+def test_the_home_screen_is_idle_again_after_the_flow_is_stopped(
+    home_view_model, engine
+):
+    home_view_model.start()
+
+    engine.stop()
+
+    assert home_view_model.mode() == HomeMode.IDLE
+
+
+def test_the_home_screen_waits_when_an_interval_has_ended_and_confirmation_is_awaited(
+    home_view_model, engine, clock
+):
+    home_view_model.start()
+
+    clock.advance(25 * 60)
+    engine.tick()
+
+    assert home_view_model.mode() == HomeMode.WAITING
 
 
 # --- the categories to choose from -------------------------------------------

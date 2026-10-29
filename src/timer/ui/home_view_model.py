@@ -1,8 +1,16 @@
 """What the home screen shows and does, without any Tk: the category to start a flow with."""
 
+from enum import Enum, auto
+
 from timer.engine import Engine
 from timer.storage.categories import Category, CategoryRepository
 from timer.storage.sessions import SessionRepository
+
+
+class HomeMode(Enum):
+    IDLE = auto()
+    RUNNING = auto()
+    WAITING = auto()
 
 
 class HomeViewModel:
@@ -16,6 +24,13 @@ class HomeViewModel:
         self._session_repository = session_repository
         self._engine = engine
         self._selected_category_id = self._preselected_category_id()
+
+    def mode(self) -> HomeMode:
+        if self._engine.current_interval is not None:
+            return HomeMode.RUNNING
+        if self._engine.upcoming_interval is not None:
+            return HomeMode.WAITING
+        return HomeMode.IDLE
 
     def categories(self) -> list[Category]:
         return self._category_repository.list_active()
