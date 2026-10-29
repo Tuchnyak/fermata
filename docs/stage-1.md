@@ -155,7 +155,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - The window of a run from source is titled "Timer (dev)", a release's "Timer".
   - `docs/spec.md` and `docs/schema.md` describe the two directories.
 
-- [ ] **1.24 Categories screen: list and add**
+- [x] **1.24 Categories screen: list and add**
   - Lists active categories with their color; `None` is shown too.
   - A form adds a category with a name and a color chosen in a color dialog; validation errors are shown next to the form.
 

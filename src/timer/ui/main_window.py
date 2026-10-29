@@ -9,6 +9,8 @@ from functools import partial
 import ttkbootstrap as ttk
 from timer.build import is_release
 from timer.i18n import t
+from timer.ui.categories_screen import CategoriesScreen
+from timer.ui.categories_view_model import CategoriesViewModel
 from timer.ui.hotkeys import HotkeyHandler
 from timer.ui.navigation import Navigation, Screen
 
@@ -21,11 +23,16 @@ def window_title() -> str:
 
 class MainWindow:
     def __init__(
-        self, root: ttk.Window, navigation: Navigation, hotkey_handler: HotkeyHandler
+        self,
+        root: ttk.Window,
+        navigation: Navigation,
+        hotkey_handler: HotkeyHandler,
+        categories_view_model: CategoriesViewModel,
     ):
         self._root = root
         self._navigation = navigation
         self._hotkey_handler = hotkey_handler
+        self._categories_view_model = categories_view_model
         root.title(window_title())
         root.geometry("640x420")
         self._header = ttk.Frame(root, padding=8)
@@ -76,4 +83,11 @@ class MainWindow:
                     takefocus=False,
                 ).pack(side="left", padx=(0, 8))
 
-        ttk.Label(self._content, text=title, font=("TkDefaultFont", 24)).pack(expand=True)
+        if self._navigation.current == Screen.CATEGORIES:
+            CategoriesScreen(self._content, self._categories_view_model).pack(
+                fill="both", expand=True
+            )
+        else:
+            ttk.Label(self._content, text=title, font=("TkDefaultFont", 24)).pack(
+                expand=True
+            )
