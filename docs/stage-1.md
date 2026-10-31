@@ -179,7 +179,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
 - [ ] **1.29 Waiting-for-confirmation screen**
   - While the engine waits, the screen shows what comes next (e.g. "Next: Work · 4") and a Next button (`Enter`).
 
-- [ ] **1.30 Wire up the app**
+- [x] **1.30 Wire up the app**
   - `uv run timer` opens the main window using the real database in the data directory: creates it, applies migrations and runs startup recovery first.
   - Closing the window during an interval and starting again leaves that interval marked `interrupted`.
 
