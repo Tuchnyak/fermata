@@ -9,6 +9,7 @@ from enum import StrEnum
 
 class Screen(StrEnum):
     HOME = "home"
+    SCENARIOS = "scenarios"
     CATEGORIES = "categories"
     SETTINGS = "settings"
 

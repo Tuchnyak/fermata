@@ -81,3 +81,25 @@ def planned_seconds(kind: IntervalKind, settings: Settings) -> int:
     else:
         minutes = settings.long_break_minutes
     return minutes * 60
+
+
+@dataclass(frozen=True)
+class SessionSummary:
+    """How a scenario session went: its work intervals done and skipped."""
+
+    done_count: int
+    skipped_count: int
+
+
+def summarize(finished: Sequence[FinishedInterval]) -> SessionSummary:
+    """Count the work intervals of a session by how they ended; breaks and stops are left out."""
+    done_count = 0
+    skipped_count = 0
+    for interval in finished:
+        if interval.kind != IntervalKind.WORK:
+            continue
+        if interval.status == IntervalStatus.COMPLETED:
+            done_count += 1
+        elif interval.status == IntervalStatus.SKIPPED:
+            skipped_count += 1
+    return SessionSummary(done_count, skipped_count)

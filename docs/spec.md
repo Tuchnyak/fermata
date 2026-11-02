@@ -156,17 +156,18 @@ A row of circles, one circle per work interval of the session. Short breaks are 
 |---|---|
 | Done | Filled with the category color |
 | Skipped | Muted (faded) fill of the category color |
-| Current | Theme accent color; blinks (can be turned off in Settings) |
+| Current | Edged with the category color, the fill blinks between the full color and a dimmed one (can be turned off in Settings, then the fill stays dimmed) |
 | Future | Outline in the category color |
 
-A long break is shown as a gap two empty circles wide, so work intervals are visually grouped between long breaks.
+A long break is shown as a gap one empty circle wide, so work intervals are visually grouped between long breaks.
 
 ## 10. Resume after interruption
 
 - The session state is saved to the database at every interval transition.
 - If the app was closed during a scenario session (crash, reboot, closed window), on next start it asks: "Resume scenario "X" from interval 4 of 6?".
-  - **Yes**: the session continues; the interrupted work interval starts again from the beginning.
-  - **No**: the session is ended as stopped.
+  - **Yes**: the session continues; the interrupted work interval starts again from the beginning. The interrupted interval stays in the history as `interrupted`, the new one is a new row of the same session. If the app was closed in a break or while waiting for confirmation, the next work interval starts at once and the break is not repeated.
+  - **No**: the session is ended as stopped (when it ended stays unknown).
+  - Only the latest session is offered, and only a scenario session; a question closed without an answer is asked again at the next start. A flow is never resumed.
 
 ## 11. Main window
 
@@ -247,6 +248,8 @@ Everything is stored in one SQLite database (`sqlite3` from the standard library
 
 That is the database of a release. A run from source (development) uses `timer-dev` instead of `timer`, so development never touches the data of an installed release. The environment variable `TIMER_DATA_DIR`, when set to an absolute path, replaces the whole directory in either build.
 
+A run from source also runs its clock twice as fast, so that intervals can be tested quickly; the window title says "(dev, ×2)". `uv run timer --real-time` restores the normal speed. A release has neither the speed-up nor the option. The times stored in a development database are the sped-up ones, so which session is the latest is decided by the order of creation, not by the time.
+
 It holds settings, categories, scenarios, the state of the current session and history. The complete schema is created in stage 1 (stage 2 adds code for scenarios, not tables) and documented in `docs/schema.md`.
 
 | Entity | Content |
@@ -279,7 +282,7 @@ Not part of the product unless a real need appears (see roadmap backlog for the 
 
 ## 19. Assumptions to confirm
 
-Decided while writing. Items 1–5 and 7–9 are confirmed and implemented in Stage 1; item 6 waits for Stage 2:
+Decided while writing. All of them are confirmed and implemented: items 1–5 and 7–9 in Stage 1, items 6 and 10–13 in Stage 2:
 
 1. Skipped work intervals count toward N for long breaks (the break pattern stays as previewed).
 2. Skipping a break moves straight to the next work interval.
@@ -290,3 +293,7 @@ Decided while writing. Items 1–5 and 7–9 are confirmed and implemented in St
 7. The timer settings are read when an interval starts, so a change applies to the intervals that start afterwards; the transition mode is read when an interval ends.
 8. Stop asks for confirmation also while the app waits for the next interval, where it ends the flow.
 9. The timer counts by the system (wall) clock, not a monotonic one: the remaining time is computed from the clock, so it does not drift, and an interval keeps running while the computer sleeps. A manual change of the system time shifts the countdown.
+10. A scenario row holds 1–20 work intervals and a scenario repeats 1–20 times; the number of rows is not limited beyond at least one. The overrides have the ranges of the matching global settings; the editor lets each one be switched on separately.
+11. Skipping the last work interval of a scenario ends the session like completing it: no break follows, and the interval counts as skipped in the summary.
+12. The summary of a scenario is shown on the home screen only when it ran to its end, and stays there until the next session starts; Stop shows no summary.
+13. A scenario can be started only while the timer is idle. Editing or deleting it while its session runs is allowed and changes nothing for that session, which uses its snapshot: the overrides in the snapshot are fixed, the values that are not overridden are read from the global settings when an interval starts.

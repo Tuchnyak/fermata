@@ -17,18 +17,25 @@ from timer.ui.hotkeys import HotkeyHandler
 from timer.ui.navigation import Navigation, Screen
 from timer.ui.running_panel import RunningPanel
 from timer.ui.running_view_model import RunningViewModel
+from timer.ui.scenarios_screen import ScenariosScreen
+from timer.ui.scenarios_view_model import ScenariosViewModel
 from timer.ui.settings_screen import SettingsScreen
 from timer.ui.settings_view_model import SettingsViewModel
 from timer.ui.start_panel import StartPanel
 from timer.ui.waiting_panel import WaitingPanel
 from timer.ui.waiting_view_model import WaitingViewModel
 
-NAVIGATION_BAR_SCREENS = (Screen.CATEGORIES, Screen.SETTINGS)
+NAVIGATION_BAR_SCREENS = (Screen.SCENARIOS, Screen.CATEGORIES, Screen.SETTINGS)
 TICK_MILLISECONDS = 200  # how often the engine is ticked and the countdown redrawn
 
 
-def window_title() -> str:
-    return t("app.title") if is_release() else t("app.title_dev")
+def window_title(speed: int = 1) -> str:
+    """"Timer"; a run from source says so, and what speed its clock goes at if not the normal."""
+    if is_release():
+        return t("app.title")
+    if speed != 1:
+        return t("app.title_dev_speed", speed=speed)
+    return t("app.title_dev")
 
 
 class MainWindow:
@@ -42,6 +49,7 @@ class MainWindow:
         home_view_model: HomeViewModel,
         running_view_model: RunningViewModel,
         waiting_view_model: WaitingViewModel,
+        scenarios_view_model: ScenariosViewModel,
     ):
         self._root = root
         self._navigation = navigation
@@ -51,10 +59,11 @@ class MainWindow:
         self._home_view_model = home_view_model
         self._running_view_model = running_view_model
         self._waiting_view_model = waiting_view_model
+        self._scenarios_view_model = scenarios_view_model
         self._shown_home_mode: HomeMode | None = None
         self._running_panel: RunningPanel | None = None
         root.title(window_title())
-        root.geometry("720x600")
+        root.geometry("720x680")
         self._header = ttk.Frame(root, padding=8)
         self._header.pack(fill="x")
         self._content = ttk.Frame(root, padding=8)
@@ -131,7 +140,11 @@ class MainWindow:
                     takefocus=False,
                 ).pack(side="left", padx=(0, 8))
 
-        if self._navigation.current == Screen.CATEGORIES:
+        if self._navigation.current == Screen.SCENARIOS:
+            ScenariosScreen(
+                self._content, self._scenarios_view_model, actions, self._go_back
+            ).pack(fill="both", expand=True)
+        elif self._navigation.current == Screen.CATEGORIES:
             CategoriesScreen(self._content, self._categories_view_model).pack(
                 fill="both", expand=True
             )

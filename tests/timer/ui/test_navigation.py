@@ -2,7 +2,7 @@ import pytest
 from timer.i18n import t
 from timer.ui.navigation import Navigation, Screen
 
-SECONDARY_SCREENS = [Screen.CATEGORIES, Screen.SETTINGS]
+SECONDARY_SCREENS = [Screen.SCENARIOS, Screen.CATEGORIES, Screen.SETTINGS]
 
 
 def test_the_home_screen_is_shown_first():

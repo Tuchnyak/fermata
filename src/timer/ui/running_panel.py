@@ -4,6 +4,7 @@ import tkinter
 
 import ttkbootstrap as ttk
 from timer.i18n import t
+from timer.ui.progress_row import ProgressRow
 from timer.ui.running_view_model import RunningViewModel
 from ttkbootstrap.dialogs import Messagebox
 
@@ -17,7 +18,7 @@ class RunningPanel(ttk.Frame):
         self._view_model = view_model
 
         center = ttk.Frame(self)
-        center.pack(expand=True)
+        center.pack(expand=True, fill="x")
         title_row = ttk.Frame(center)
         title_row.pack()
         # A circle in the color of the category stands before the title of a work interval.
@@ -35,10 +36,16 @@ class RunningPanel(ttk.Frame):
         self._number.pack(pady=(4, 0))
         self._countdown = ttk.Label(center, font=("TkDefaultFont", 72, "bold"))
         self._countdown.pack(pady=24)
+        # The circle row is shown for a scenario only, between the countdown and the buttons.
+        progress_place = ttk.Frame(center)
+        progress_place.pack(fill="x", padx=24)
+        self._progress_row = ProgressRow(progress_place, centered=True)
+        self._progress_row.set_blink(view_model.blink())
+        self._progress_row_is_shown = False
 
         # The buttons do not take focus, so that Space on them is only the hotkey.
         buttons = ttk.Frame(center)
-        buttons.pack()
+        buttons.pack(pady=(24, 0))
         self._pause_button = ttk.Button(
             buttons, command=self._toggle_pause, width=10, takefocus=False
         )
@@ -65,14 +72,21 @@ class RunningPanel(ttk.Frame):
         """Show the state of the engine now; called several times a second."""
         self._title.configure(text=self._view_model.title())
         self._show_color(self._view_model.color())
-        self._number.configure(
-            text=t(
-                "running.work_interval_number",
-                number=self._view_model.work_interval_number(),
-            )
-        )
+        self._number.configure(text=self._view_model.number_text())
         self._countdown.configure(text=self._view_model.countdown())
+        self._show_progress(self._view_model.progress_items())
         self._pause_button.configure(text=self._view_model.pause_button_text())
+
+    def _show_progress(self, items) -> None:
+        if items is None:
+            if self._progress_row_is_shown:
+                self._progress_row.pack_forget()
+                self._progress_row_is_shown = False
+            return
+        if not self._progress_row_is_shown:
+            self._progress_row.pack(fill="x")
+            self._progress_row_is_shown = True
+        self._progress_row.show(items)
 
     def _show_color(self, color: str | None) -> None:
         if color == self._shown_color:

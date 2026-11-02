@@ -5,15 +5,48 @@ import math
 
 from timer.engine import Engine
 from timer.i18n import t
-from timer.intervals import IntervalKind, RunningInterval
+from timer.intervals import IntervalKind, IntervalStatus, RunningInterval
 from timer.logic import format_time
+from timer.scenarios import Scenario
 from timer.storage.categories import Category, CategoryRepository
+from timer.storage.settings import SettingsRepository
+from timer.ui.progress import CircleState, ProgressItem, progress_items
 
 
 class RunningViewModel:
-    def __init__(self, engine: Engine, category_repository: CategoryRepository):
+    def __init__(
+        self,
+        engine: Engine,
+        category_repository: CategoryRepository,
+        settings_repository: SettingsRepository,
+    ):
         self._engine = engine
         self._category_repository = category_repository
+        self._settings_repository = settings_repository
+        self._colored_scenario: Scenario | None = None
+        self._colors: list[str] = []
+
+    def number_text(self) -> str:
+        number = self.work_interval_number()
+        scenario = self._engine.scenario
+        if scenario is None:
+            return t("running.work_interval_number", number=number)
+        total = len(scenario.work_category_ids())
+        return t("running.work_interval_of_total", number=number, total=total)
+
+    def progress_items(self) -> list[ProgressItem] | None:
+        """The circle row of a scenario session; None for a flow."""
+        scenario = self._engine.scenario
+        if scenario is None:
+            return None
+        colors = self._colors_of(scenario)
+        long_break_every = scenario.effective_settings(
+            self._settings_repository.get_all()
+        ).long_break_every
+        return progress_items(colors, self._circle_states(len(colors)), long_break_every)
+
+    def blink(self) -> bool:
+        return self._settings_repository.get_all().blink
 
     def title(self) -> str:
         interval = self._current_interval()
@@ -62,6 +95,33 @@ class RunningViewModel:
 
     def stop(self) -> None:
         self._engine.stop()
+
+    def _colors_of(self, scenario: Scenario) -> list[str]:
+        # The categories of a session do not change, so they are looked up once.
+        if self._colored_scenario is not scenario:
+            colors = []
+            for category_id in scenario.work_category_ids():
+                category = self._category_repository.get_by_id(category_id)
+                assert category is not None
+                colors.append(category.color)
+            self._colored_scenario = scenario
+            self._colors = colors
+        return self._colors
+
+    def _circle_states(self, count: int) -> list[CircleState]:
+        states = []
+        for interval in self._engine.finished_intervals:
+            if interval.kind != IntervalKind.WORK:
+                continue
+            if interval.status == IntervalStatus.COMPLETED:
+                states.append(CircleState.DONE)
+            else:
+                states.append(CircleState.SKIPPED)
+        current_interval = self._engine.current_interval
+        if current_interval is not None and current_interval.kind == IntervalKind.WORK:
+            states.append(CircleState.CURRENT)
+        states.extend([CircleState.FUTURE] * (count - len(states)))
+        return states
 
     def _category_of(self, interval: RunningInterval) -> Category:
         assert interval.category_id is not None

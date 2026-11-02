@@ -7,6 +7,7 @@ from timer.intervals import (
     IntervalStatus,
     RunningInterval,
 )
+from timer.scenarios import Scenario, ScenarioRow, from_snapshot
 from timer.storage.categories import CategoryRepository
 from timer.storage.db import Db
 from timer.storage.migrate import MIGRATIONS_DIR, migrate
@@ -345,6 +346,21 @@ def test_the_most_recent_flow_decides(
     assert session_repository.last_flow_category_id() == reading_category_id
 
 
+def test_the_latest_session_is_the_one_created_last_whatever_its_time(
+    session_repository, work_category_id, reading_category_id
+):
+    # The time of a session can be earlier than that of a session before it: the clock of a
+    # development run goes faster than the real one and starts again at every launch.
+    earlier = session_repository.create_flow(LATER)
+    session_repository.start_interval(
+        earlier, 1, work_interval(work_category_id, started_at=LATER)
+    )
+    later = session_repository.create_flow(STARTED)
+    session_repository.start_interval(later, 1, work_interval(reading_category_id))
+
+    assert session_repository.last_flow_category_id() == reading_category_id
+
+
 def test_scenario_sessions_are_ignored(
     db, session_repository, work_category_id, reading_category_id
 ):
@@ -516,3 +532,103 @@ def test_a_clean_database_stays_as_it_is(db, session_repository):
     session_repository.interrupt_running_sessions()
 
     assert all_rows(db) == rows_before == ([], [])
+
+
+# --- scenario sessions -------------------------------------------------------------
+
+
+def test_a_scenario_session_keeps_its_name_and_snapshot(db, session_repository, work_category_id):
+    scenario = Scenario("Work day", (ScenarioRow(work_category_id, 2),), repeat_count=3)
+
+    session_id = session_repository.create_scenario_session(STARTED, scenario)
+
+    session = db.query_one(
+        "SELECT * FROM session WHERE id = ?", (session_id,), mapper=dict
+    )
+    assert (session["kind"], session["status"]) == ("scenario", "running")
+    assert session["started_at"] == "2026-01-01T12:00:00Z"
+    assert session["scenario_name"] == "Work day"
+    assert from_snapshot(session["scenario_snapshot"]) == scenario
+
+
+# --- interrupted scenario sessions -------------------------------------------------
+
+
+def interrupted_scenario_session(db, session_repository, work_category_id, scenario):
+    session_id = session_repository.create_scenario_session(STARTED, scenario)
+    session_repository.start_interval(session_id, 1, work_interval(work_category_id))
+    session_repository.interrupt_running_sessions()
+    return session_id
+
+
+@pytest.fixture
+def scenario(work_category_id):
+    return Scenario("Day", (ScenarioRow(work_category_id, 2),))
+
+
+def test_there_is_no_interrupted_scenario_session_in_a_clean_database(session_repository):
+    assert session_repository.latest_interrupted_scenario_session() is None
+
+
+def test_an_interrupted_scenario_session_comes_with_its_scenario_and_intervals(
+    db, session_repository, work_category_id, scenario
+):
+    session_id = interrupted_scenario_session(db, session_repository, work_category_id, scenario)
+
+    interrupted = session_repository.latest_interrupted_scenario_session()
+
+    assert interrupted.session_id == session_id
+    assert interrupted.scenario == scenario
+    assert [(i.position, i.status) for i in interrupted.intervals] == [
+        (1, IntervalStatus.INTERRUPTED)
+    ]
+
+
+def test_a_flow_is_not_an_interrupted_scenario_session(db, session_repository, work_category_id):
+    session_repository.create_flow(STARTED)
+    session_repository.interrupt_running_sessions()
+
+    assert session_repository.latest_interrupted_scenario_session() is None
+
+
+def test_a_newer_session_hides_an_older_interrupted_one(
+    db, session_repository, work_category_id, scenario
+):
+    interrupted_scenario_session(db, session_repository, work_category_id, scenario)
+    newer = session_repository.create_flow(LATER)
+    session_repository.finish_session(newer, status=SessionStatus.STOPPED, ended_at=LATER)
+
+    assert session_repository.latest_interrupted_scenario_session() is None
+
+
+def test_the_latest_session_is_found_whatever_its_time(
+    db, session_repository, work_category_id, scenario
+):
+    interrupted_scenario_session(db, session_repository, work_category_id, scenario)
+    session_id = session_repository.create_scenario_session(STARTED - timedelta(hours=1), scenario)
+    session_repository.interrupt_running_sessions()
+
+    assert session_repository.latest_interrupted_scenario_session().session_id == session_id
+
+
+def test_reopening_makes_the_session_run_again(
+    db, session_repository, work_category_id, scenario
+):
+    session_id = interrupted_scenario_session(db, session_repository, work_category_id, scenario)
+
+    session_repository.reopen_session(session_id)
+
+    row = db.query_one("SELECT status, ended_at FROM session", mapper=dict)
+    assert row == {"status": "running", "ended_at": None}
+
+
+def test_stopping_an_interrupted_session_leaves_its_end_unknown(
+    db, session_repository, work_category_id, scenario
+):
+    session_id = interrupted_scenario_session(db, session_repository, work_category_id, scenario)
+
+    session_repository.stop_interrupted_session(session_id)
+
+    row = db.query_one("SELECT status, ended_at FROM session", mapper=dict)
+    assert row == {"status": "stopped", "ended_at": None}
+    assert session_repository.latest_interrupted_scenario_session() is None

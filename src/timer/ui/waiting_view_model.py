@@ -15,7 +15,12 @@ class WaitingViewModel:
             return t("waiting.next_short_break")
         if interval.kind == IntervalKind.LONG_BREAK:
             return t("waiting.next_long_break")
-        return t("waiting.next_work", number=self._upcoming_work_interval_number())
+        number = self._upcoming_work_interval_number()
+        scenario = self._engine.scenario
+        if scenario is None:
+            return t("waiting.next_work", number=number)
+        total = len(scenario.work_category_ids())
+        return t("waiting.next_work_of_total", number=number, total=total)
 
     def confirm(self) -> None:
         self._engine.confirm()

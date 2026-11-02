@@ -1,18 +1,30 @@
 import pytest
 from timer.engine import Engine
 from timer.i18n import t
+from timer.scenarios import Scenario, ScenarioRow
 from timer.storage.categories import CategoryRepository
 from timer.storage.db import Db
 from timer.storage.migrate import MIGRATIONS_DIR, migrate
-from timer.storage.settings import Settings
+from timer.storage.settings import SettingsRepository
+from timer.ui.progress import Circle, CircleState, LongBreakGap
 from timer.ui.running_view_model import RunningViewModel
 
 
 @pytest.fixture
-def category_repository():
+def db():
     db = Db.open(":memory:")
     migrate(db, MIGRATIONS_DIR)
+    return db
+
+
+@pytest.fixture
+def category_repository(db):
     return CategoryRepository(db)
+
+
+@pytest.fixture
+def settings_repository(db):
+    return SettingsRepository(db)
 
 
 @pytest.fixture
@@ -21,13 +33,13 @@ def work_category(category_repository):
 
 
 @pytest.fixture
-def engine(clock):
-    return Engine(get_settings=Settings, clock=clock)
+def engine(clock, settings_repository):
+    return Engine(get_settings=settings_repository.get_all, clock=clock)
 
 
 @pytest.fixture
-def running_view_model(engine, category_repository):
-    return RunningViewModel(engine, category_repository)
+def running_view_model(engine, category_repository, settings_repository):
+    return RunningViewModel(engine, category_repository, settings_repository)
 
 
 @pytest.fixture
@@ -226,3 +238,131 @@ def test_the_strings_of_the_running_screen_exist_in_the_catalog(key):
 
 def test_the_label_of_the_work_interval_number_shows_the_number():
     assert "3" in t("running.work_interval_number", number=3)
+
+
+# --- a scenario session ----------------------------------------------------------
+
+
+@pytest.fixture
+def personal_category(category_repository):
+    return category_repository.create("Personal", "#445566")
+
+
+@pytest.fixture
+def example(work_category, personal_category):
+    """The example of the spec: (Work × 2, Personal × 1) × 2, six work intervals."""
+    return Scenario(
+        "Work day",
+        (ScenarioRow(work_category.id, 2), ScenarioRow(personal_category.id, 1)),
+        repeat_count=2,
+    )
+
+
+def circle(state, color="#112233"):
+    return Circle(state, color)
+
+
+def states(items):
+    return [item.state for item in items if isinstance(item, Circle)]
+
+
+def test_a_flow_counts_its_work_intervals_without_a_total(running_view_model, running_flow):
+    assert running_view_model.number_text() == "Work interval 1"
+
+
+def test_a_scenario_counts_its_work_intervals_out_of_the_total(running_view_model, engine, example):
+    engine.start_scenario(example)
+
+    assert running_view_model.number_text() == "Work interval 1/6"
+
+
+def test_a_break_carries_the_number_of_the_work_interval_before_it_in_a_scenario(
+    running_view_model, engine, example
+):
+    engine.start_scenario(example)
+    engine.skip()
+
+    assert running_view_model.number_text() == "Work interval 1/6"
+
+
+def test_a_flow_has_no_circle_row(running_view_model, running_flow):
+    assert running_view_model.progress_items() is None
+
+
+def test_a_scenario_starts_with_the_first_circle_current_and_a_gap_after_the_fourth(
+    running_view_model, engine, example
+):
+    engine.start_scenario(example)
+
+    work, personal = "#112233", "#445566"
+    assert running_view_model.progress_items() == [
+        circle(CircleState.CURRENT, work),
+        circle(CircleState.FUTURE, work),
+        circle(CircleState.FUTURE, personal),
+        circle(CircleState.FUTURE, work),
+        LongBreakGap(),
+        circle(CircleState.FUTURE, work),
+        circle(CircleState.FUTURE, personal),
+    ]
+
+
+def test_a_completed_work_interval_is_done_and_no_circle_is_current_during_the_break(
+    running_view_model, engine, example, clock
+):
+    engine.start_scenario(example)
+    clock.advance(25 * 60)
+    engine.tick()
+    engine.confirm()  # the break starts
+
+    assert states(running_view_model.progress_items()) == [
+        CircleState.DONE,
+        *[CircleState.FUTURE] * 5,
+    ]
+
+
+def test_a_skipped_work_interval_is_skipped(running_view_model, engine, example):
+    engine.start_scenario(example)
+    engine.skip()
+
+    assert states(running_view_model.progress_items())[0] == CircleState.SKIPPED
+
+
+def test_the_next_work_interval_is_current(running_view_model, engine, example):
+    engine.start_scenario(example)
+    engine.skip()  # the work interval; the break runs
+    engine.skip()  # the break; the second work interval runs
+
+    assert states(running_view_model.progress_items())[:3] == [
+        CircleState.SKIPPED,
+        CircleState.CURRENT,
+        CircleState.FUTURE,
+    ]
+
+
+def test_the_gaps_follow_the_long_break_setting_of_the_scenario(
+    running_view_model, engine, example
+):
+    scenario = Scenario("Pairs", example.rows, repeat_count=2, long_break_every=2)
+    engine.start_scenario(scenario)
+
+    shape = "".join(
+        "G" if isinstance(item, LongBreakGap) else "C"
+        for item in running_view_model.progress_items()
+    )
+    assert shape == "CCGCCGCC"
+
+
+def test_the_circle_row_is_the_same_across_calls(running_view_model, engine, example):
+    engine.start_scenario(example)
+
+    assert running_view_model.progress_items() == running_view_model.progress_items()
+
+
+def test_the_current_circle_blinks_by_default(running_view_model):
+    assert running_view_model.blink() is True
+
+
+def test_blinking_can_be_turned_off_in_the_settings(running_view_model, settings_repository):
+    settings_repository.set("blink", False)
+
+    assert running_view_model.blink() is False

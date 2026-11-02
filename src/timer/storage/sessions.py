@@ -5,6 +5,7 @@ Times are stored as ISO-8601 UTC text with whole seconds, e.g. `2026-10-19T09:00
 """
 
 import sqlite3
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
 
@@ -14,7 +15,17 @@ from timer.intervals import (
     IntervalStatus,
     RunningInterval,
 )
+from timer.scenarios import Scenario, from_snapshot, to_snapshot
 from timer.storage.db import Db
+
+
+@dataclass(frozen=True)
+class InterruptedSession:
+    """A scenario session that an app closed in the middle left behind, as stored."""
+
+    session_id: int
+    scenario: Scenario
+    intervals: list[IntervalEntity]
 
 
 class SessionStatus(StrEnum):
@@ -57,6 +68,20 @@ class SessionRepository:
             "INSERT INTO session (kind, status, started_at)"
             " VALUES ('flow', :status, :started_at)",
             {"status": SessionStatus.RUNNING, "started_at": _to_text(started_at)},
+        )
+        assert session_id is not None
+        return session_id
+
+    def create_scenario_session(self, started_at: datetime, scenario: Scenario) -> int:
+        session_id = self._db.insert(
+            "INSERT INTO session (kind, status, started_at, scenario_name, scenario_snapshot)"
+            " VALUES ('scenario', :status, :started_at, :name, :snapshot)",
+            {
+                "status": SessionStatus.RUNNING,
+                "started_at": _to_text(started_at),
+                "name": scenario.name,
+                "snapshot": to_snapshot(scenario),
+            },
         )
         assert session_id is not None
         return session_id
@@ -132,6 +157,50 @@ class SessionRepository:
                 parameters,
             )
 
+    def latest_interrupted_scenario_session(self) -> InterruptedSession | None:
+        """The latest session, if it is a scenario session that an app closed in the middle.
+
+        Only the latest session counts: a newer one means the older was left behind. The latest
+        is the one created last, not the one with the latest time: the clock may have gone
+        back, or been sped up in a run from source.
+        """
+        latest = self._db.query_one(
+            "SELECT id, kind, status, scenario_snapshot FROM session"
+            " ORDER BY id DESC LIMIT 1",
+            mapper=dict,
+        )
+        if latest is None or latest["kind"] != "scenario":
+            return None
+        if latest["status"] != SessionStatus.INTERRUPTED:
+            return None
+        return InterruptedSession(
+            session_id=latest["id"],
+            scenario=from_snapshot(latest["scenario_snapshot"]),
+            intervals=self.list_intervals(latest["id"]),
+        )
+
+    def reopen_session(self, session_id: int) -> None:
+        """Make an interrupted session run again."""
+        updated_count = self._db.execute(
+            "UPDATE session SET status = :running, ended_at = NULL WHERE id = :id",
+            {"running": SessionStatus.RUNNING, "id": session_id},
+        )
+        if updated_count == 0:
+            raise LookupError(f"No session with id {session_id}")
+
+    def stop_interrupted_session(self, session_id: int) -> None:
+        """End an interrupted session as stopped; when it ended stays unknown."""
+        updated_count = self._db.execute(
+            "UPDATE session SET status = :stopped WHERE id = :id AND status = :interrupted",
+            {
+                "stopped": SessionStatus.STOPPED,
+                "interrupted": SessionStatus.INTERRUPTED,
+                "id": session_id,
+            },
+        )
+        if updated_count == 0:
+            raise LookupError(f"No interrupted session with id {session_id}")
+
     def list_intervals(self, session_id: int) -> list[IntervalEntity]:
         return self._db.query(
             "SELECT * FROM interval WHERE session_id = ? ORDER BY position",
@@ -146,7 +215,7 @@ class SessionRepository:
             "SELECT category_id FROM interval"
             " WHERE kind = 'work' AND session_id = ("
             "   SELECT id FROM session WHERE kind = 'flow'"
-            "   ORDER BY started_at DESC, id DESC LIMIT 1)"
+            "   ORDER BY id DESC LIMIT 1)"
             " ORDER BY position LIMIT 1",
             mapper=lambda row: row["category_id"],
         )
