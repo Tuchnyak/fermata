@@ -183,7 +183,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - `uv run timer` opens the main window using the real database in the data directory: creates it, applies migrations and runs startup recovery first.
   - Closing the window during an interval and starting again leaves that interval marked `interrupted`.
 
-- [ ] **1.31 Close-out**
+- [x] **1.31 Close-out**
   - `docs/schema.md` matches the final schema; spec §19 is updated with the confirmed decisions; `AGENTS.md` layout section matches the code; the roadmap marks Stage 1 done.
   - Final manual check by the owner: a flow runs by the global rules in all three transition modes, history rows are written, and a restart loses no data.
 

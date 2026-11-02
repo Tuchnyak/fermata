@@ -279,7 +279,7 @@ Not part of the product unless a real need appears (see roadmap backlog for the 
 
 ## 19. Assumptions to confirm
 
-Decided by default while writing; to be confirmed before implementing the related stage:
+Decided while writing. Items 1–5 and 7–9 are confirmed and implemented in Stage 1; item 6 waits for Stage 2:
 
 1. Skipped work intervals count toward N for long breaks (the break pattern stays as previewed).
 2. Skipping a break moves straight to the next work interval.
@@ -287,3 +287,6 @@ Decided by default while writing; to be confirmed before implementing the relate
 4. Flow is not resumed after an interruption; the interrupted interval is recorded as `interrupted`.
 5. Value limits: work interval 1–120 min, short break 1–30 min, long break 1–60 min, N 1–10, row count 1–20, repeat 1–20. Enforced in application code, not in the schema. The settings screen offers time values in steps of 5 minutes (from 5), N in steps of 1.
 6. Deleting a scenario keeps its sessions in history (the scenario name comes from the snapshot; sessions do not reference the scenario).
+7. The timer settings are read when an interval starts, so a change applies to the intervals that start afterwards; the transition mode is read when an interval ends.
+8. Stop asks for confirmation also while the app waits for the next interval, where it ends the flow.
+9. The timer counts by the system (wall) clock, not a monotonic one: the remaining time is computed from the clock, so it does not drift, and an interval keeps running while the computer sleeps. A manual change of the system time shifts the countdown.

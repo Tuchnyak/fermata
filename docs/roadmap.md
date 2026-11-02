@@ -13,6 +13,8 @@ Sound always stays the last functional stage: new intermediate features are inse
 
 Breakdown into pieces with progress: [stage-1.md](stage-1.md).
 
+**Status: done.**
+
 - SQLite storage: database location and the complete schema (settings, categories, scenarios, sessions, intervals); schema documented in `docs/schema.md`.
 - Localization helper `t(key)` with English strings; all UI text goes through it from the start.
 - Categories: manage list and colors, system `None`, archiving.
