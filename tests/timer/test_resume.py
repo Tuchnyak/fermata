@@ -16,6 +16,7 @@ AUTO = dict(
     long_break_every="4",
     transition_mode="auto",
     blink=True,
+    sound=True,
 )
 
 

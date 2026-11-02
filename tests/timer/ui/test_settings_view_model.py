@@ -33,6 +33,7 @@ def form_values(**changes):
         "long_break_every": "4",
         "transition_mode": "confirm",
         "blink": True,
+        "sound": True,
     }
     return values | changes
 
@@ -160,3 +161,11 @@ def test_the_labels_of_the_form_exist_in_the_catalog(key):
 def test_every_transition_mode_has_a_name_and_an_explanation(mode):
     assert t(f"settings.mode.{mode}.name")
     assert t(f"settings.mode.{mode}.description")
+
+
+def test_sound_is_saved_with_the_other_settings(db, settings_view_model):
+    message = settings_view_model.save(**form_values(sound=False))
+
+    assert message is None
+    assert settings_view_model.settings().sound is False
+    assert stored_rows(db) == [("sound", "0")]

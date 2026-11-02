@@ -42,6 +42,10 @@ The scenario tables already exist (schema v1, Stage 1); this stage adds the code
 
 Done when: the example scenario `(Work × 2, Personal × 1) × 2` can be built, run, interrupted, resumed and finished with a correct summary.
 
+## Interim release 0.2 — sound and a local build
+
+An out-of-order detour for the owner's own use: a first cut of sound (end of work, end of break, one switch) and a local Linux build, released on the branch `release/v0.2.0`. Breakdown: [release-0.2.md](release-0.2.md). The rest of sound stays in Stage 5, the rest of packaging in Stage 6.
+
 ## Stage 3 — Themes and fullscreen
 
 - Six themes: Light, Dark, Catppuccin Latte / Frappé / Macchiato / Mocha; switching in Settings.

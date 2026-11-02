@@ -38,7 +38,7 @@ def _is_transition_mode(value: object) -> bool:
     return value in TRANSITION_MODES
 
 
-def _is_blink(value: object) -> bool:
+def _is_flag(value: object) -> bool:
     return type(value) is bool
 
 
@@ -54,5 +54,6 @@ RULES = {
         LONG_BREAK_EVERY_RANGE, "setting.long_break_every_invalid"
     ),
     "transition_mode": Rule(_is_transition_mode, "setting.transition_mode_invalid"),
-    "blink": Rule(_is_blink, "setting.blink_invalid"),
+    "blink": Rule(_is_flag, "setting.blink_invalid"),
+    "sound": Rule(_is_flag, "setting.sound_invalid"),
 }

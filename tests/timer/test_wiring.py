@@ -1,5 +1,6 @@
 import pytest
 from timer.intervals import IntervalKind
+from timer.sound import SoundEvent
 from timer.storage.db import Db
 from timer.wiring import build_components
 
@@ -9,9 +10,22 @@ def database_path(tmp_path):
     return tmp_path / "timer.db"
 
 
+class RecordingPlayer:
+    def __init__(self):
+        self.played = []
+
+    def play(self, sound):
+        self.played.append(sound)
+
+
 @pytest.fixture
-def components(database_path, clock):
-    return build_components(database_path, clock)
+def player():
+    return RecordingPlayer()
+
+
+@pytest.fixture
+def components(database_path, clock, player):
+    return build_components(database_path, clock, player)
 
 
 def stored_sessions(database_path):
@@ -85,6 +99,7 @@ def test_settings_saved_in_the_ui_apply_to_the_next_flow(components):
         long_break_every="4",
         transition_mode="confirm",
         blink=True,
+        sound=True,
     )
     assert message is None
 
@@ -129,3 +144,61 @@ def test_a_scenario_started_from_the_ui_is_written_as_a_scenario_session(
         "running",
         "Day",
     )
+
+
+def test_the_end_of_a_work_interval_plays_its_sound(components, clock, player):
+    start_flow(components)
+
+    clock.advance(components.engine.remaining_seconds())
+    components.engine.tick()
+
+    assert player.played == [SoundEvent.WORK_END]
+
+
+def test_the_end_of_a_break_plays_its_sound(components, clock, player):
+    start_flow(components)
+    clock.advance(components.engine.remaining_seconds())
+    components.engine.tick()
+    components.engine.confirm()  # the break starts
+    player.played.clear()
+
+    clock.advance(components.engine.remaining_seconds())
+    components.engine.tick()
+
+    assert player.played == [SoundEvent.BREAK_END]
+
+
+def test_skipping_and_stopping_are_silent(components, player):
+    start_flow(components)
+
+    components.engine.skip()
+    components.engine.stop()
+
+    assert player.played == []
+
+
+def test_the_switch_in_the_settings_silences_the_sounds(components, clock, player):
+    components.settings_view_model.save(
+        work_minutes="25",
+        short_break_minutes="5",
+        long_break_minutes="15",
+        long_break_every="4",
+        transition_mode="confirm",
+        blink=True,
+        sound=False,
+    )
+    start_flow(components)
+
+    clock.advance(components.engine.remaining_seconds())
+    components.engine.tick()
+
+    assert player.played == []
+
+
+def test_a_sound_is_still_recorded_with_the_history(components, clock, database_path, player):
+    start_flow(components)
+
+    clock.advance(components.engine.remaining_seconds())
+    components.engine.tick()
+
+    assert [row["status"] for row in stored_intervals(database_path)] == ["completed"]

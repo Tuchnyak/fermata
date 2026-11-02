@@ -234,6 +234,7 @@ The database schema is documented so the user can query history directly (`sqlit
 - A calm, unobtrusive sound on every interval transition.
 - One global on/off switch.
 - Tkinter has no cross-platform audio; the playback method (library or a system command such as `paplay`) is chosen at that stage.
+- First cut (interim release 0.2): one sound for the end of a work interval and one for the end of a break, played when the time runs out; Skip and Stop are silent. The files are chosen by the owner and kept in `src/timer/sounds/`. On Linux a system command plays them in the background: the first of `paplay`, `pw-play`, `ffplay`, `aplay` that is installed and knows the format. No file or no player means no sound. The Settings check box "Sound notifications" is the global switch.
 
 ## 15. Localization
 

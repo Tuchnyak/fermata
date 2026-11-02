@@ -24,6 +24,7 @@ class Settings:
     long_break_every: int = 4
     transition_mode: str = "confirm"
     blink: bool = True
+    sound: bool = True
 
 
 def _encode(value: Value) -> str:
