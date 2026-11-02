@@ -55,6 +55,8 @@ class CategoryRepository:
         return replace(category, name=new_name, color=new_color)
 
     def archive(self, category_id: int) -> None:
+        if self._is_used_by_scenario(category_id):
+            raise ValidationError("category.used_by_scenario")
         self._set_archived(category_id, True)
 
     def unarchive(self, category_id: int) -> None:
@@ -73,6 +75,16 @@ class CategoryRepository:
         others = [category for category in active if not category.is_system]
         others.sort(key=lambda category: category.name.casefold())
         return system + others
+
+    def _is_used_by_scenario(self, category_id: int) -> bool:
+        return (
+            self._db.query_one(
+                "SELECT 1 AS used FROM scenario_row WHERE category_id = ? LIMIT 1",
+                (category_id,),
+                mapper=lambda row: row["used"],
+            )
+            is not None
+        )
 
     def _get_changeable(self, category_id: int) -> Category:
         category = self.get_by_id(category_id)

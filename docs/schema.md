@@ -102,6 +102,8 @@ One execution from Start to the end: a flow or a scenario.
 | `scenario_name` | TEXT | name of the scenario at the start; NULL for a flow |
 | `scenario_snapshot` | TEXT | copy of the scenario at the start, JSON; NULL for a flow |
 
+`scenario_snapshot` is JSON, e.g. `{"name": "Work day", "rows": [{"category_id": 2, "count": 2}, {"category_id": 3, "count": 1}], "repeat_count": 2, "work_minutes": null, "short_break_minutes": null, "long_break_minutes": null, "long_break_every": null}`; the four timer values are `null` when the scenario does not override them. Categories are referenced by id (they are archived, never deleted).
+
 A scenario session has both `scenario_name` and `scenario_snapshot`, a flow has neither. A session does not reference the scenario, so deleting or editing a scenario never changes history.
 
 ### `interval`

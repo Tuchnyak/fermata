@@ -15,7 +15,7 @@ Larger pieces than in Stage 1, one owner approval per piece:
 
 ## Pieces
 
-- [ ] **2.1 Scenario storage and rules**
+- [x] **2.1 Scenario storage and rules**
   - `Scenario` (name, rows of category × count, repeat count, four optional timer overrides) and `ScenarioRepository`: create, update, get, list, delete.
   - Validation: the name is trimmed, not empty, unique with Unicode case folding; at least one row; row count and repeat count 1–20; every category exists and is not archived; an override has the range of the matching global setting (spec §19.5).
   - Pure helpers: the flat list of work categories (rows × repeat), the effective settings (global with the overrides applied), the total duration (all work intervals plus the breaks between them, no break after the last one), the snapshot as JSON text and back.
