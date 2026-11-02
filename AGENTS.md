@@ -44,10 +44,11 @@ uv add <pkg>       # add a dependency (--dev for tooling)
 The agent develops, the owner acts as product manager and reviewer.
 
 - Each roadmap stage gets its own branch: `<type>/stage-<N>-<topic>`, e.g. `feat/stage-1-core`.
-- A stage is split into atomic pieces. For each piece (ATDD):
-  1. Write the acceptance tests and present them together with their red run; the owner approves them before implementation. For new code the tests come with a stub: the names the tests use, with `raise NotImplementedError` bodies and deliberately wrong values (e.g. enum members), so every test fails on the missing behavior, not on an import error. The stub is not committed on its own; the implementation replaces it.
-  2. Implement until the tests pass.
-  3. Present the result: what changed, how it was verified, how to check it.
-  4. Commit only after the owner's explicit approval.
+- A stage is split into pieces, each one a runnable slice (a few per stage), listed with checkboxes in `docs/stage-<N>.md`. For each piece (ATDD):
+  1. State the decisions the owner is likely to have an opinion on (names, formats, behavior) and wait for "ok" or corrections.
+  2. Write the acceptance tests and see them fail first: for new code a stub with the names the tests use, `raise NotImplementedError` bodies and deliberately wrong values (e.g. enum members), so every test fails on the missing behavior, not on an import error. The stub is not committed on its own.
+  3. Implement until the tests pass.
+  4. Present one report: the tests, what changed, the green run and a manual check list. The owner reviews the tests as acceptance tests and approves the piece as a whole.
+  5. Commit only after the owner's explicit approval; several commits per piece are fine, and the checkbox is ticked in the last one.
 - Commit messages use Conventional Commits prefixes: `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, `chore:`.
 - A finished stage is merged into `master` with a merge commit (`git merge --no-ff`) so the commits of its pieces stay in history.
