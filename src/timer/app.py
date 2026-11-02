@@ -1,11 +1,12 @@
-from datetime import UTC, datetime
-
 import ttkbootstrap as ttk
+from timer.arguments import parse_arguments
+from timer.build import is_release
+from timer.clock import make_clock, speed_of
 from timer.i18n import t
 from timer.resume import Resumption
 from timer.storage.paths import db_path
 from timer.ui.hotkeys import HotkeyHandler
-from timer.ui.main_window import MainWindow
+from timer.ui.main_window import MainWindow, window_title
 from timer.ui.navigation import Navigation
 from timer.wiring import build_components
 from ttkbootstrap.dialogs import Messagebox
@@ -28,7 +29,9 @@ def ask_to_resume(root: ttk.Window, resumption: Resumption) -> None:
 
 
 def main():
-    components = build_components(db_path(), clock=lambda: datetime.now(UTC))
+    arguments = parse_arguments(release=is_release())
+    clock = make_clock(release=is_release(), real_time=arguments.real_time)
+    components = build_components(db_path(), clock)
 
     root = ttk.Window(themename="darkly")
     navigation = Navigation()
@@ -46,6 +49,8 @@ def main():
         components.waiting_view_model,
         components.scenarios_view_model,
     )
+    speed = speed_of(release=is_release(), real_time=arguments.real_time)
+    root.title(window_title(speed))
     if components.resumption is not None:
         root.after(ASK_DELAY_MILLISECONDS, ask_to_resume, root, components.resumption)
     root.mainloop()

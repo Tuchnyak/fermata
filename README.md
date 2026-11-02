@@ -13,8 +13,11 @@ Status: early development. See the [specification](docs/spec.md) and the [roadma
 ## Run
 
 ```
-uv run timer
+uv run timer               # from source: the clock goes twice as fast, to test quickly
+uv run timer --real-time   # from source, at the normal speed
 ```
+
+A run from source keeps its data apart from an installed release and shows "(dev, ×2)" in the window title while the clock is sped up.
 
 ## Test
 

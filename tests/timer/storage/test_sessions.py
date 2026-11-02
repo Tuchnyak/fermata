@@ -346,6 +346,21 @@ def test_the_most_recent_flow_decides(
     assert session_repository.last_flow_category_id() == reading_category_id
 
 
+def test_the_latest_session_is_the_one_created_last_whatever_its_time(
+    session_repository, work_category_id, reading_category_id
+):
+    # The time of a session can be earlier than that of a session before it: the clock of a
+    # development run goes faster than the real one and starts again at every launch.
+    earlier = session_repository.create_flow(LATER)
+    session_repository.start_interval(
+        earlier, 1, work_interval(work_category_id, started_at=LATER)
+    )
+    later = session_repository.create_flow(STARTED)
+    session_repository.start_interval(later, 1, work_interval(reading_category_id))
+
+    assert session_repository.last_flow_category_id() == reading_category_id
+
+
 def test_scenario_sessions_are_ignored(
     db, session_repository, work_category_id, reading_category_id
 ):
@@ -584,6 +599,16 @@ def test_a_newer_session_hides_an_older_interrupted_one(
     session_repository.finish_session(newer, status=SessionStatus.STOPPED, ended_at=LATER)
 
     assert session_repository.latest_interrupted_scenario_session() is None
+
+
+def test_the_latest_session_is_found_whatever_its_time(
+    db, session_repository, work_category_id, scenario
+):
+    interrupted_scenario_session(db, session_repository, work_category_id, scenario)
+    session_id = session_repository.create_scenario_session(STARTED - timedelta(hours=1), scenario)
+    session_repository.interrupt_running_sessions()
+
+    assert session_repository.latest_interrupted_scenario_session().session_id == session_id
 
 
 def test_reopening_makes_the_session_run_again(

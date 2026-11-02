@@ -29,8 +29,13 @@ NAVIGATION_BAR_SCREENS = (Screen.SCENARIOS, Screen.CATEGORIES, Screen.SETTINGS)
 TICK_MILLISECONDS = 200  # how often the engine is ticked and the countdown redrawn
 
 
-def window_title() -> str:
-    return t("app.title") if is_release() else t("app.title_dev")
+def window_title(speed: int = 1) -> str:
+    """"Timer"; a run from source says so, and what speed its clock goes at if not the normal."""
+    if is_release():
+        return t("app.title")
+    if speed != 1:
+        return t("app.title_dev_speed", speed=speed)
+    return t("app.title_dev")
 
 
 class MainWindow:

@@ -160,11 +160,13 @@ class SessionRepository:
     def latest_interrupted_scenario_session(self) -> InterruptedSession | None:
         """The latest session, if it is a scenario session that an app closed in the middle.
 
-        Only the latest session counts: a newer one means the older was left behind.
+        Only the latest session counts: a newer one means the older was left behind. The latest
+        is the one created last, not the one with the latest time: the clock may have gone
+        back, or been sped up in a run from source.
         """
         latest = self._db.query_one(
             "SELECT id, kind, status, scenario_snapshot FROM session"
-            " ORDER BY started_at DESC, id DESC LIMIT 1",
+            " ORDER BY id DESC LIMIT 1",
             mapper=dict,
         )
         if latest is None or latest["kind"] != "scenario":
@@ -213,7 +215,7 @@ class SessionRepository:
             "SELECT category_id FROM interval"
             " WHERE kind = 'work' AND session_id = ("
             "   SELECT id FROM session WHERE kind = 'flow'"
-            "   ORDER BY started_at DESC, id DESC LIMIT 1)"
+            "   ORDER BY id DESC LIMIT 1)"
             " ORDER BY position LIMIT 1",
             mapper=lambda row: row["category_id"],
         )

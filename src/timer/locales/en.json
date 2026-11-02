@@ -1,6 +1,7 @@
 {
   "app.title": "Timer",
   "app.title_dev": "Timer (dev)",
+  "app.title_dev_speed": "Timer (dev, ×{speed})",
   "screen.home": "Home",
   "screen.scenarios": "Scenarios",
   "screen.categories": "Categories",

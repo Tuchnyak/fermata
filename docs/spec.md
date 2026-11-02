@@ -248,6 +248,8 @@ Everything is stored in one SQLite database (`sqlite3` from the standard library
 
 That is the database of a release. A run from source (development) uses `timer-dev` instead of `timer`, so development never touches the data of an installed release. The environment variable `TIMER_DATA_DIR`, when set to an absolute path, replaces the whole directory in either build.
 
+A run from source also runs its clock twice as fast, so that intervals can be tested quickly; the window title says "(dev, ×2)". `uv run timer --real-time` restores the normal speed. A release has neither the speed-up nor the option. The times stored in a development database are the sped-up ones, so which session is the latest is decided by the order of creation, not by the time.
+
 It holds settings, categories, scenarios, the state of the current session and history. The complete schema is created in stage 1 (stage 2 adds code for scenarios, not tables) and documented in `docs/schema.md`.
 
 | Entity | Content |
