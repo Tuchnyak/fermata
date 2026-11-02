@@ -10,9 +10,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from timer.engine import Engine
+from timer.engine import Engine, FlowEvent
 from timer.recorder import Recorder
 from timer.resume import Resumption
+from timer.sound import SOUNDS_DIR, SoundNotifier, SoundPlayer
 from timer.storage.categories import CategoryRepository
 from timer.storage.db import Db
 from timer.storage.migrate import MIGRATIONS_DIR, migrate
@@ -39,8 +40,20 @@ class Components:
     resumption: Resumption | None  # set when a scenario session is left to resume
 
 
+def _broadcast(*listeners: Callable[[FlowEvent], None]) -> Callable[[FlowEvent], None]:
+    """One listener that hands each event to all the given ones, in order."""
+
+    def listener(event: FlowEvent) -> None:
+        for each in listeners:
+            each(event)
+
+    return listener
+
+
 def build_components(
-    database_path: str | Path, clock: Callable[[], datetime]
+    database_path: str | Path,
+    clock: Callable[[], datetime],
+    sound_player: SoundPlayer | None = None,
 ) -> Components:
     db = Db.open(database_path)
     migrate(db, MIGRATIONS_DIR)
@@ -52,10 +65,13 @@ def build_components(
     session_repository.interrupt_running_sessions()
 
     recorder = Recorder(db, session_repository)
+    notifier = SoundNotifier(
+        settings_repository.get_all, sound_player or SoundPlayer(SOUNDS_DIR)
+    )
     engine = Engine(
         get_settings=settings_repository.get_all,
         clock=clock,
-        on_flow_event=recorder.record,
+        on_flow_event=_broadcast(recorder.record, notifier),
     )
     interrupted = session_repository.latest_interrupted_scenario_session()
     resumption = None

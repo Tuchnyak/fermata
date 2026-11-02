@@ -32,6 +32,7 @@ class SettingsViewModel:
         long_break_every: str,
         transition_mode: str,
         blink: bool,
+        sound: bool,
     ) -> str | None:
         entered: dict[str, Value] = {
             "work_minutes": _to_number(work_minutes),
@@ -40,6 +41,7 @@ class SettingsViewModel:
             "long_break_every": _to_number(long_break_every),
             "transition_mode": transition_mode,
             "blink": blink,
+            "sound": sound,
         }
         # Only what differs from the current settings is stored (see docs/schema.md).
         current = self.settings()

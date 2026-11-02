@@ -1,4 +1,4 @@
-"""The settings screen: the timer values, the transition mode and the blink flag.
+"""The settings screen: the timer values, the transition mode, the blink flag and the sound flag.
 
 Nothing is stored until the Save button is pressed.
 """
@@ -57,11 +57,12 @@ class SettingsScreen(ttk.Frame):
         self._sliders: dict[str, NumberSlider] = {}
         self._mode_variable = tkinter.StringVar()
         self._blink_variable = tkinter.BooleanVar()
+        self._sound_variable = tkinter.BooleanVar()
 
         self._build_save_button(actions)
         self._build_number_fields()
         self._build_transition_modes()
-        self._build_blink()
+        self._build_flags()
         self._load_settings()
 
     def _build_save_button(self, actions: ttk.Frame) -> None:
@@ -107,13 +108,14 @@ class SettingsScreen(ttk.Frame):
                 wraplength=520,
             ).pack(anchor="w", padx=(40, 0))
 
-    def _build_blink(self) -> None:
-        ttk.Checkbutton(
-            self,
-            text=t("settings.blink"),
-            variable=self._blink_variable,
-            takefocus=False,
-        ).pack(anchor="w", pady=(16, 0))
+    def _build_flags(self) -> None:
+        for key, variable in (
+            ("settings.blink", self._blink_variable),
+            ("settings.sound", self._sound_variable),
+        ):
+            ttk.Checkbutton(
+                self, text=t(key), variable=variable, takefocus=False
+            ).pack(anchor="w", pady=(16, 0))
 
     def _load_settings(self) -> None:
         settings = self._view_model.settings()
@@ -121,6 +123,7 @@ class SettingsScreen(ttk.Frame):
             slider.set(getattr(settings, key))
         self._mode_variable.set(settings.transition_mode)
         self._blink_variable.set(settings.blink)
+        self._sound_variable.set(settings.sound)
 
     def _save(self) -> None:
         numbers = {}
@@ -130,6 +133,7 @@ class SettingsScreen(ttk.Frame):
             **numbers,
             transition_mode=self._mode_variable.get(),
             blink=self._blink_variable.get(),
+            sound=self._sound_variable.get(),
         )
         if message is None:
             self._load_settings()  # shows the values as they were stored

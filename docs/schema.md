@@ -40,6 +40,7 @@ Only settings the user has changed are stored; a missing key means the applicati
 | `long_break_every` | N: long break after every N-th work interval, 1–10 | 4 |
 | `transition_mode` | `auto`, `confirm` or `mixed` | `confirm` |
 | `blink` | blink the current circle, `1` / `0` | 1 |
+| `sound` | play a sound when a work interval or a break ends, `1` / `0` | 1 |
 
 The limits are enforced by the application when a setting is written, not by the schema.
 

@@ -109,6 +109,28 @@ def test_all_values_can_be_stored_together(settings_repository):
     )
 
 
+def test_sound_is_on_by_default(settings_repository):
+    assert settings_repository.get_all().sound is True
+
+
+def test_sound_can_be_turned_off_and_on(settings_repository):
+    settings_repository.set("sound", False)
+
+    assert settings_repository.get_all().sound is False
+
+    settings_repository.set("sound", True)
+
+    assert settings_repository.get_all().sound is True
+
+
+@pytest.mark.parametrize("value", ["yes", 1, 0, None])
+def test_sound_must_be_a_boolean(db, settings_repository, value):
+    with pytest.raises(ValidationError) as error:
+        settings_repository.set("sound", value)
+
+    assert error.value.key == "setting.sound_invalid"
+
+
 def test_values_survive_reopening_the_database(tmp_path):
     path = tmp_path / "test.db"
     first = Db.open(path)
