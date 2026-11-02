@@ -45,7 +45,7 @@ Larger pieces than in Stage 1, one owner approval per piece:
   - Yes: the same session continues from the snapshot; the interrupted work interval starts again from the beginning and is recorded as a new interval, the interrupted one stays `interrupted`. No: the session ends as `stopped`. A flow is never resumed.
   - Verified by simulating a crash in the middle of a work interval and of a break, then starting again.
 
-- [ ] **2.6 Close-out**
+- [x] **2.6 Close-out**
   - `docs/schema.md`, `docs/spec.md` §19 and `AGENTS.md` match the code; the roadmap marks Stage 2 done.
   - Final manual check by the owner: the example scenario `(Work × 2, Personal × 1) × 2` is built, run, interrupted, resumed and finished with a correct summary.
   - After the owner's approval the branch is merged into `master` with `git merge --no-ff`.

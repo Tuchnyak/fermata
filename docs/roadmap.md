@@ -27,6 +27,10 @@ Done when: a flow runs by the global rules, survives a restart without data loss
 
 ## Stage 2 — Scenarios
 
+Breakdown into pieces with progress: [stage-2.md](stage-2.md).
+
+**Status: done.**
+
 The scenario tables already exist (schema v1, Stage 1); this stage adds the code and the UI.
 
 - Scenario model: rows (category × count), repeat count, timer overrides.

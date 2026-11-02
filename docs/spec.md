@@ -280,7 +280,7 @@ Not part of the product unless a real need appears (see roadmap backlog for the 
 
 ## 19. Assumptions to confirm
 
-Decided while writing. Items 1–5 and 7–9 are confirmed and implemented in Stage 1; item 6 waits for Stage 2:
+Decided while writing. All of them are confirmed and implemented: items 1–5 and 7–9 in Stage 1, items 6 and 10–13 in Stage 2:
 
 1. Skipped work intervals count toward N for long breaks (the break pattern stays as previewed).
 2. Skipping a break moves straight to the next work interval.
@@ -291,3 +291,7 @@ Decided while writing. Items 1–5 and 7–9 are confirmed and implemented in St
 7. The timer settings are read when an interval starts, so a change applies to the intervals that start afterwards; the transition mode is read when an interval ends.
 8. Stop asks for confirmation also while the app waits for the next interval, where it ends the flow.
 9. The timer counts by the system (wall) clock, not a monotonic one: the remaining time is computed from the clock, so it does not drift, and an interval keeps running while the computer sleeps. A manual change of the system time shifts the countdown.
+10. A scenario row holds 1–20 work intervals and a scenario repeats 1–20 times; the number of rows is not limited beyond at least one. The overrides have the ranges of the matching global settings; the editor lets each one be switched on separately.
+11. Skipping the last work interval of a scenario ends the session like completing it: no break follows, and the interval counts as skipped in the summary.
+12. The summary of a scenario is shown on the home screen only when it ran to its end, and stays there until the next session starts; Stop shows no summary.
+13. A scenario can be started only while the timer is idle. Editing or deleting it while its session runs is allowed and changes nothing for that session, which uses its snapshot: the overrides in the snapshot are fixed, the values that are not overridden are read from the global settings when an interval starts.

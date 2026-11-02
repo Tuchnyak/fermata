@@ -21,9 +21,10 @@ uv add <pkg>       # add a dependency (--dev for tooling)
 ## Layout
 
 - `src/timer/` — application package; entry point `timer.app:main`.
-  - `engine.py`, `intervals.py`, `recorder.py` — timer logic; the engine has no UI and no database, the recorder writes its events to the database.
+  - `engine.py`, `intervals.py`, `scenarios.py` — timer logic with no UI and no database: the engine, the interval rules, the scenario value types.
+  - `recorder.py`, `resume.py` — the recorder writes the engine's events to the database; `resume.py` offers a scenario session left behind by a closed app and carries out the answer.
   - `storage/` — SQLite: the `Db` helper, migrations (`storage/migrations/NNN_*.sql`), repositories, the data directory.
-  - `ui/` — Tkinter. `*_view_model.py` hold the logic of a screen without Tk and are tested; `*_screen.py`, `*_panel.py` and `main_window.py` are the Tk widgets.
+  - `ui/` — Tkinter. `*_view_model.py` (and the pure `progress.py`, `scenario_summary.py`) hold the logic of a screen without Tk and are tested; `*_screen.py`, `*_panel.py`, `scenario_editor.py`, `progress_row.py` and `main_window.py` are the Tk widgets.
   - `wiring.py` — builds everything except Tk (database, engine, view models); `i18n.py` with `locales/en.json` is `t(key)`.
 - `tests/` — pytest tests, mirroring `src/` (e.g. `tests/timer/ui/test_hotkeys.py`).
 - `docs/` — project documentation, in English.

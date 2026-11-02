@@ -96,9 +96,9 @@ One execution from Start to the end: a flow or a scenario.
 |---|---|---|
 | `id` | INTEGER | primary key |
 | `kind` | TEXT | `flow` or `scenario` |
-| `status` | TEXT | `running`, `completed`, `stopped` or `interrupted` (app closed) |
+| `status` | TEXT | `running`, `completed` (a scenario ran to its end), `stopped` or `interrupted` (app closed); an interrupted scenario session that is resumed becomes `running` again |
 | `started_at` | TEXT | not null |
-| `ended_at` | TEXT | NULL while running or when the app was closed |
+| `ended_at` | TEXT | NULL while running or when the app was closed; also NULL for an interrupted session the user then declined to resume (`stopped`, end unknown) |
 | `scenario_name` | TEXT | name of the scenario at the start; NULL for a flow |
 | `scenario_snapshot` | TEXT | copy of the scenario at the start, JSON; NULL for a flow |
 
@@ -121,7 +121,7 @@ One circle: a work interval or a break. Together they are the history.
 | `actual_seconds` | INTEGER | worked time without pauses; NULL while running and for `interrupted` |
 | `started_at` | TEXT | not null |
 | `ended_at` | TEXT | NULL while running |
-| `status` | TEXT | NULL while running, then `completed`, `skipped`, `stopped` (session stopped during it) or `interrupted` (app closed during it) |
+| `status` | TEXT | NULL while running, then `completed`, `skipped`, `stopped` (session stopped during it) or `interrupted` (app closed during it; a resumed session starts a new row for the work interval, the interrupted one stays) |
 
 ## View
 
