@@ -18,8 +18,6 @@ OUTLINE_WIDTH = 2
 FADE_AMOUNT = 0.6  # how far a skipped circle moves towards the background
 BLINK_FADE_AMOUNT = 0.7  # the current circle dims this far, towards the background, and back
 BLINK_MILLISECONDS = 600
-WHITE = "#ffffff"
-RIM_LIGHTENING = 0.55  # how far the edge of the current circle goes towards white
 
 
 class ProgressRow(tkinter.Canvas):
@@ -68,7 +66,8 @@ class ProgressRow(tkinter.Canvas):
 
     def _draw(self) -> None:
         width = self.winfo_width()
-        dim = self._blink and self._current_is_dim
+        # Without blinking the current circle stays dimmed: at the full color it would look done.
+        dim = self._current_is_dim or not self._blink
         if self._drawn == (width, self._items, dim):
             return
         self._drawn = (width, self._items, dim)
@@ -91,15 +90,26 @@ class ProgressRow(tkinter.Canvas):
         left, top = x + OUTLINE_WIDTH // 2, y + OUTLINE_WIDTH // 2
         right = x + CIRCLE_SIZE - OUTLINE_WIDTH // 2
         bottom = y + CIRCLE_SIZE - OUTLINE_WIDTH // 2
+        # The outline is drawn centered on the edge, so it reaches out by half its width: every
+        # circle has one, or a filled circle would come out smaller than an outlined one.
         if circle.state == CircleState.DONE:
-            self.create_oval(left, top, right, bottom, fill=circle.color, outline="")
+            self.create_oval(
+                left,
+                top,
+                right,
+                bottom,
+                fill=circle.color,
+                outline=circle.color,
+                width=OUTLINE_WIDTH,
+            )
         elif circle.state == CircleState.SKIPPED:
             muted = faded(circle.color, self._background, FADE_AMOUNT)
-            self.create_oval(left, top, right, bottom, fill=muted, outline="")
+            self.create_oval(
+                left, top, right, bottom, fill=muted, outline=muted, width=OUTLINE_WIDTH
+            )
         elif circle.state == CircleState.CURRENT:
-            # A circle filled with the color of the category and edged with a lighter tint of it,
-            # which sets it apart from a done circle. Blinking dims the fill, so the circle is
-            # always drawn.
+            # The edge is in the color of the category, like a done circle's; the fill is what
+            # sets it apart: it is dimmed, and blinking brings it to the full color and back.
             fill = circle.color
             if dim:
                 fill = faded(circle.color, self._background, BLINK_FADE_AMOUNT)
@@ -109,7 +119,7 @@ class ProgressRow(tkinter.Canvas):
                 right,
                 bottom,
                 fill=fill,
-                outline=faded(circle.color, WHITE, RIM_LIGHTENING),
+                outline=circle.color,
                 width=OUTLINE_WIDTH,
             )
         else:
