@@ -6,7 +6,7 @@ the engine never counts ticks: the remaining time is always computed from the cl
 `get_settings` each time an interval starts, so a change applies only to later intervals.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
@@ -112,6 +112,23 @@ class Engine:
         self._emit(
             flow_started=True, scenario=scenario, started_interval=self._current_interval
         )
+
+    def resume_scenario(
+        self, scenario: Scenario, finished_intervals: Sequence[FinishedInterval]
+    ) -> None:
+        """Go on with a scenario session after the app was closed in the middle of it.
+
+        `finished_intervals` are the intervals that ended, completed or skipped. The next work
+        interval starts at once and from the beginning; a break that was interrupted is not
+        repeated.
+        """
+        self._flow_category_id = None
+        self._begin_session(scenario)
+        self._finished_intervals = list(finished_intervals)
+        category_id = scenario.work_category_ids()[self._finished_work_count()]
+        work_seconds = planned_seconds(IntervalKind.WORK, self._settings())
+        self._begin_interval(BaseInterval(IntervalKind.WORK, category_id, work_seconds))
+        self._emit(started_interval=self._current_interval)
 
     def summary(self) -> SessionSummary | None:
         """How the scenario session went, once it has run to its end; otherwise None."""

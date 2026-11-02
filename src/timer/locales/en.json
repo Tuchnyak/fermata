@@ -48,6 +48,8 @@
   "scenarios.editor.cancel": "Cancel",
   "scenarios.editor.save": "Save",
   "scenarios.editor.save_and_start": "Save & start",
+  "resume.title": "Resume scenario",
+  "resume.question": "Resume scenario \"{name}\" from interval {number} of {total}?",
   "scenario.number_invalid": "Counts must be whole numbers.",
   "categories.name": "Name",
   "categories.choose_color": "Choose color…",

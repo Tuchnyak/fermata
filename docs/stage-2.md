@@ -40,7 +40,7 @@ Larger pieces than in Stage 1, one owner approval per piece:
   - When the session finishes, a summary is shown (e.g. "Scenario complete: 5 done, 1 skipped"), then the timer returns to idle.
   - Editing or deleting a scenario during its session is allowed and changes nothing for the running session.
 
-- [ ] **2.5 Resume after interruption**
+- [x] **2.5 Resume after interruption**
   - On start, after startup recovery, a scenario session that was interrupted asks "Resume scenario "X" from interval 4 of 6?" (§10).
   - Yes: the same session continues from the snapshot; the interrupted work interval starts again from the beginning and is recorded as a new interval, the interrupted one stays `interrupted`. No: the session ends as `stopped`. A flow is never resumed.
   - Verified by simulating a crash in the middle of a work interval and of a break, then starting again.

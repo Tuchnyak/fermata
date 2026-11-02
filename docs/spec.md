@@ -165,8 +165,9 @@ A long break is shown as a gap one empty circle wide, so work intervals are visu
 
 - The session state is saved to the database at every interval transition.
 - If the app was closed during a scenario session (crash, reboot, closed window), on next start it asks: "Resume scenario "X" from interval 4 of 6?".
-  - **Yes**: the session continues; the interrupted work interval starts again from the beginning.
-  - **No**: the session is ended as stopped.
+  - **Yes**: the session continues; the interrupted work interval starts again from the beginning. The interrupted interval stays in the history as `interrupted`, the new one is a new row of the same session. If the app was closed in a break or while waiting for confirmation, the next work interval starts at once and the break is not repeated.
+  - **No**: the session is ended as stopped (when it ended stays unknown).
+  - Only the latest session is offered, and only a scenario session; a question closed without an answer is asked again at the next start. A flow is never resumed.
 
 ## 11. Main window
 

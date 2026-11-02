@@ -18,6 +18,12 @@ class Recorder:
         self._interval_id: int | None = None
         self._position = 0  # the position of the last interval started in the session
 
+    def resume(self, session_id: int, last_position: int) -> None:
+        """Go on writing into a session that was interrupted, after its last interval."""
+        self._session_id = session_id
+        self._interval_id = None
+        self._position = last_position
+
     def record(self, event: FlowEvent) -> None:
         # The new state is kept in locals and stored only after the transaction has
         # succeeded, so a failed step does not leave the recorder pointing at rows that
