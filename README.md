@@ -19,6 +19,14 @@ uv run timer --real-time   # from source, at the normal speed
 
 A run from source keeps its data apart from an installed release and shows "(dev, ×2)" in the window title while the clock is sped up.
 
+## Install for local use
+
+```
+./scripts/install-local.sh
+```
+
+Builds a single executable with PyInstaller and installs it as `~/.local/bin/timer` with an entry in the application menu. It is built for the machine it is built on. The installed program is a release: its data is in `~/.local/share/timer` (separate from the data of a run from source), its clock is the real one, and sounds come from `src/timer/sounds/`. Run the script again after changing the code to update it. To remove the program, delete `~/.local/bin/timer` and `~/.local/share/applications/timer.desktop`; the data stays until you delete `~/.local/share/timer`.
+
 ## Test
 
 ```

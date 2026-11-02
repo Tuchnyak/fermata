@@ -16,6 +16,7 @@ uv sync            # set up .venv from uv.lock
 uv run timer       # run the app; from source its clock goes 2x faster (see --real-time)
 uv run timer --real-time   # run from source at the normal speed
 uv run pytest      # run tests
+./scripts/install-local.sh   # build and install the program for this user (see README)
 uv add <pkg>       # add a dependency (--dev for tooling)
 ```
 

@@ -17,7 +17,7 @@ Accepted like the pieces of [stage-2.md](stage-2.md): decisions first, tests and
   - A system command plays the file in the background, no new dependency: the first of `paplay`, `pw-play`, `ffplay`, `aplay` that is installed and knows the format (`mp3` only `ffplay`). No player, or a failing one, means no sound; the timer is not affected.
   - The setting `sound` (default on, spec §4.1) has a check box in Settings; it is read when a sound is due, so a change applies at once.
 
-- [ ] **R.2 Local build**
+- [x] **R.2 Local build**
   - `scripts/install-local.sh` builds the application with PyInstaller (already a dev dependency) into one executable, with the translations, the migrations and the sounds inside, and installs it as `~/.local/bin/timer` with a launcher entry in the application menu.
   - The executable is a release for the program: data in `~/.local/share/timer` (apart from the development data), the normal clock, no `--real-time` option. The database is the one every later release uses: migrations are only ever added, and an older program refuses a newer database without touching it.
   - Verified by starting the built executable on an empty data directory and by the owner starting it from the menu.
