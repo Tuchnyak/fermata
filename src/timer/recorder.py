@@ -28,7 +28,12 @@ class Recorder:
 
         with self._db.transaction():
             if event.flow_started:
-                session_id = self._session_repository.create_flow(event.at)
+                if event.scenario is None:
+                    session_id = self._session_repository.create_flow(event.at)
+                else:
+                    session_id = self._session_repository.create_scenario_session(
+                        event.at, event.scenario
+                    )
                 position = 0
             assert session_id is not None
 
@@ -50,8 +55,14 @@ class Recorder:
                 )
 
             if event.flow_ended:
+                if event.session_completed:
+                    assert finished is not None
+                    # The end of the last interval, which a late tick must not stretch.
+                    status, ended_at = SessionStatus.COMPLETED, finished.ended_at
+                else:
+                    status, ended_at = SessionStatus.STOPPED, event.at
                 self._session_repository.finish_session(
-                    session_id, status=SessionStatus.STOPPED, ended_at=event.at
+                    session_id, status=status, ended_at=ended_at
                 )
 
         self._session_id = session_id

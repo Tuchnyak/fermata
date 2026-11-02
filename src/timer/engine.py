@@ -16,9 +16,12 @@ from timer.intervals import (
     IntervalKind,
     IntervalStatus,
     RunningInterval,
+    SessionSummary,
     next_kind,
     planned_seconds,
+    summarize,
 )
+from timer.scenarios import Scenario
 from timer.storage.settings import Settings
 
 
@@ -31,6 +34,8 @@ class FlowEvent:
     finished_interval: FinishedInterval | None = None
     started_interval: RunningInterval | None = None
     flow_ended: bool = False
+    scenario: Scenario | None = None  # set on the event that starts a scenario session
+    session_completed: bool = False  # a scenario ran to its end (with `flow_ended`)
 
 
 class Engine:
@@ -46,6 +51,8 @@ class Engine:
         self._current_interval: RunningInterval | None = None
         self._finished_intervals: list[FinishedInterval] = []
         self._flow_category_id: int | None = None
+        self._scenario: Scenario | None = None  # None while a flow runs
+        self._summary: SessionSummary | None = None
         self._is_waiting = False  # an interval has ended and `confirm()` is awaited
         self._paused_at: datetime | None = None
         self._paused_seconds = 0.0  # the pauses already over, in the current interval
@@ -88,10 +95,22 @@ class Engine:
 
     def start_flow(self, category_id: int) -> None:
         self._flow_category_id = category_id
-        self._finished_intervals = []
-        work_seconds = planned_seconds(IntervalKind.WORK, self._get_settings())
-        self._begin_interval(BaseInterval(IntervalKind.WORK, category_id, work_seconds))
+        self._begin_session(scenario=None)
+        self._begin_interval(self._plan_next_interval())
         self._emit(flow_started=True, started_interval=self._current_interval)
+
+    def start_scenario(self, scenario: Scenario) -> None:
+        """Run the work intervals of the scenario, with its overrides, until the last one."""
+        self._flow_category_id = None
+        self._begin_session(scenario)
+        self._begin_interval(self._plan_next_interval())
+        self._emit(
+            flow_started=True, scenario=scenario, started_interval=self._current_interval
+        )
+
+    def summary(self) -> SessionSummary | None:
+        """How the scenario session went, once it has run to its end; otherwise None."""
+        return self._summary
 
     def confirm(self) -> None:
         """Start the upcoming interval; does nothing unless the engine is waiting."""
@@ -105,11 +124,9 @@ class Engine:
         if self._current_interval is None:
             return
         self._end_current_interval_early(IntervalStatus.SKIPPED)
-        self._begin_interval(self._plan_next_interval())
-        self._emit(
-            finished_interval=self._finished_intervals[-1],
-            started_interval=self._current_interval,
-        )
+        if not self._finish_scenario_if_all_work_is_done():
+            self._begin_interval(self._plan_next_interval())
+        self._emit_end_of_step()
 
     def stop(self) -> None:
         """End the running interval early and the flow with it."""
@@ -139,10 +156,7 @@ class Engine:
         if self.remaining_seconds() > 0:
             return
         self._complete_current_interval()
-        self._emit(
-            finished_interval=self._finished_intervals[-1],
-            started_interval=self._current_interval,
-        )
+        self._emit_end_of_step()
 
     def _emit(
         self,
@@ -151,6 +165,8 @@ class Engine:
         finished_interval: FinishedInterval | None = None,
         started_interval: RunningInterval | None = None,
         flow_ended: bool = False,
+        scenario: Scenario | None = None,
+        session_completed: bool = False,
     ) -> None:
         if self._on_flow_event is None:
             return
@@ -161,8 +177,25 @@ class Engine:
                 finished_interval=finished_interval,
                 started_interval=started_interval,
                 flow_ended=flow_ended,
+                scenario=scenario,
+                session_completed=session_completed,
             )
         )
+
+    def _emit_end_of_step(self) -> None:
+        """Report a step that finished an interval: skip, or a tick that found it elapsed."""
+        finished_interval = self._finished_intervals[-1]
+        if self._summary is not None:
+            self._emit(
+                finished_interval=finished_interval,
+                flow_ended=True,
+                session_completed=True,
+            )
+        else:
+            self._emit(
+                finished_interval=finished_interval,
+                started_interval=self._current_interval,
+            )
 
     def _worked_seconds(self, interval: RunningInterval) -> float:
         counted_until = self._paused_at if self._paused_at is not None else self._clock()
@@ -171,10 +204,45 @@ class Engine:
 
     def _plan_next_interval(self) -> BaseInterval:
         finished_kinds = [interval.kind for interval in self._finished_intervals]
-        settings = self._get_settings()
+        settings = self._settings()
         kind = next_kind(finished_kinds, settings)
-        category_id = self._flow_category_id if kind == IntervalKind.WORK else None
+        category_id = self._next_work_category_id() if kind == IntervalKind.WORK else None
         return BaseInterval(kind, category_id, planned_seconds(kind, settings))
+
+    def _settings(self) -> Settings:
+        """The global settings, with the overrides of the running scenario applied."""
+        settings = self._get_settings()
+        if self._scenario is None:
+            return settings
+        return self._scenario.effective_settings(settings)
+
+    def _next_work_category_id(self) -> int | None:
+        if self._scenario is None:
+            return self._flow_category_id
+        return self._scenario.work_category_ids()[self._finished_work_count()]
+
+    def _finished_work_count(self) -> int:
+        count = 0
+        for interval in self._finished_intervals:
+            if interval.kind == IntervalKind.WORK:
+                count += 1
+        return count
+
+    def _begin_session(self, scenario: Scenario | None) -> None:
+        self._scenario = scenario
+        self._finished_intervals = []
+        self._summary = None
+
+    def _finish_scenario_if_all_work_is_done(self) -> bool:
+        """End the scenario session when its last work interval has ended; no break follows."""
+        if self._scenario is None:
+            return False
+        if self._finished_intervals[-1].kind != IntervalKind.WORK:
+            return False
+        if self._finished_work_count() < len(self._scenario.work_category_ids()):
+            return False
+        self._summary = summarize(self._finished_intervals)
+        return True
 
     def _begin_interval(self, plan: BaseInterval) -> None:
         self._current_interval = RunningInterval(
@@ -205,6 +273,8 @@ class Engine:
             ended_at=ended_at,
             actual_seconds=interval.planned_seconds,
         )
+        if self._finish_scenario_if_all_work_is_done():
+            return
         if self._next_interval_starts_by_itself(interval.kind):
             self._begin_interval(self._plan_next_interval())
         else:

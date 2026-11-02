@@ -22,7 +22,7 @@ Larger pieces than in Stage 1, one owner approval per piece:
   - `CategoryRepository.archive` is refused while a scenario row uses the category (the rule left open in 1.9).
   - Deleting a scenario deletes its rows; sessions in history keep their snapshot.
 
-- [ ] **2.2 Scenario session in the engine and the recorder**
+- [x] **2.2 Scenario session in the engine and the recorder**
   - `Engine.start_scenario(scenario)` runs the work intervals of the scenario in order, with the effective settings of the snapshot; breaks follow the global rules (§5), long breaks strictly by N.
   - No break after the last work interval: when it ends, completed or skipped, the session finishes at once. The engine exposes what the summary needs (done and skipped counts).
   - Pause, skip, stop and the three transition modes work as in a flow.

@@ -7,6 +7,7 @@ from timer.intervals import (
     IntervalStatus,
     RunningInterval,
 )
+from timer.scenarios import Scenario, ScenarioRow, from_snapshot
 from timer.storage.categories import CategoryRepository
 from timer.storage.db import Db
 from timer.storage.migrate import MIGRATIONS_DIR, migrate
@@ -516,3 +517,20 @@ def test_a_clean_database_stays_as_it_is(db, session_repository):
     session_repository.interrupt_running_sessions()
 
     assert all_rows(db) == rows_before == ([], [])
+
+
+# --- scenario sessions -------------------------------------------------------------
+
+
+def test_a_scenario_session_keeps_its_name_and_snapshot(db, session_repository, work_category_id):
+    scenario = Scenario("Work day", (ScenarioRow(work_category_id, 2),), repeat_count=3)
+
+    session_id = session_repository.create_scenario_session(STARTED, scenario)
+
+    session = db.query_one(
+        "SELECT * FROM session WHERE id = ?", (session_id,), mapper=dict
+    )
+    assert (session["kind"], session["status"]) == ("scenario", "running")
+    assert session["started_at"] == "2026-01-01T12:00:00Z"
+    assert session["scenario_name"] == "Work day"
+    assert from_snapshot(session["scenario_snapshot"]) == scenario

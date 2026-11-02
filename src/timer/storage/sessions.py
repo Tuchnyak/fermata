@@ -14,6 +14,7 @@ from timer.intervals import (
     IntervalStatus,
     RunningInterval,
 )
+from timer.scenarios import Scenario, to_snapshot
 from timer.storage.db import Db
 
 
@@ -57,6 +58,20 @@ class SessionRepository:
             "INSERT INTO session (kind, status, started_at)"
             " VALUES ('flow', :status, :started_at)",
             {"status": SessionStatus.RUNNING, "started_at": _to_text(started_at)},
+        )
+        assert session_id is not None
+        return session_id
+
+    def create_scenario_session(self, started_at: datetime, scenario: Scenario) -> int:
+        session_id = self._db.insert(
+            "INSERT INTO session (kind, status, started_at, scenario_name, scenario_snapshot)"
+            " VALUES ('scenario', :status, :started_at, :name, :snapshot)",
+            {
+                "status": SessionStatus.RUNNING,
+                "started_at": _to_text(started_at),
+                "name": scenario.name,
+                "snapshot": to_snapshot(scenario),
+            },
         )
         assert session_id is not None
         return session_id
