@@ -14,11 +14,13 @@ from timer.recorder import Recorder
 from timer.storage.categories import CategoryRepository
 from timer.storage.db import Db
 from timer.storage.migrate import MIGRATIONS_DIR, migrate
+from timer.storage.scenarios import ScenarioRepository
 from timer.storage.sessions import SessionRepository
 from timer.storage.settings import SettingsRepository
 from timer.ui.categories_view_model import CategoriesViewModel
 from timer.ui.home_view_model import HomeViewModel
 from timer.ui.running_view_model import RunningViewModel
+from timer.ui.scenarios_view_model import ScenariosViewModel
 from timer.ui.settings_view_model import SettingsViewModel
 from timer.ui.waiting_view_model import WaitingViewModel
 
@@ -31,6 +33,7 @@ class Components:
     home_view_model: HomeViewModel
     running_view_model: RunningViewModel
     waiting_view_model: WaitingViewModel
+    scenarios_view_model: ScenariosViewModel
 
 
 def build_components(
@@ -41,6 +44,7 @@ def build_components(
     category_repository = CategoryRepository(db)
     settings_repository = SettingsRepository(db)
     session_repository = SessionRepository(db)
+    scenario_repository = ScenarioRepository(db)
 
     session_repository.interrupt_running_sessions()
 
@@ -57,4 +61,7 @@ def build_components(
         home_view_model=HomeViewModel(category_repository, session_repository, engine),
         running_view_model=RunningViewModel(engine, category_repository),
         waiting_view_model=WaitingViewModel(engine),
+        scenarios_view_model=ScenariosViewModel(
+            scenario_repository, category_repository, settings_repository, engine
+        ),
     )

@@ -111,3 +111,21 @@ def test_an_interval_left_running_is_interrupted_by_the_next_start(
         ("interrupted", None)
     ]
     assert restarted.engine.current_interval is None
+
+
+def test_a_scenario_started_from_the_ui_is_written_as_a_scenario_session(
+    database_path, components
+):
+    components.categories_view_model.add("Study", "#112233")
+    editor = components.scenarios_view_model.new_editor()
+    editor.set_name("Day")
+    assert editor.save() is None
+
+    components.scenarios_view_model.start(editor.saved_scenario_id)
+
+    (session,) = stored_sessions(database_path)
+    assert (session["kind"], session["status"], session["scenario_name"]) == (
+        "scenario",
+        "running",
+        "Day",
+    )

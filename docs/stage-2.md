@@ -29,14 +29,14 @@ Larger pieces than in Stage 1, one owner approval per piece:
   - The recorder writes a scenario session (kind, scenario name, snapshot) with its intervals, and `completed` as the session status when the scenario ran to the end.
   - A flow behaves exactly as before.
 
-- [ ] **2.3 Progress circles, scenarios screen and editor**
-  - A pure model of the circle row (§9): one circle per work interval with the states done, skipped, current and future, the category color, and a gap two circles wide where a long break falls; plus the `Canvas` widget that draws it (the current circle blinks unless turned off in Settings).
-  - The scenarios screen: the list of scenarios with create, edit, delete (with confirmation) and start. A new "Scenarios" button in the navigation bar.
-  - The editor (§7.2): name, rows with category selector, count, move up/down and delete, repeat count, live preview (the circle row, the number of work intervals and the total duration like `~3h 05m`), the collapsed section with the four overrides, and Cancel, Save and Save & start. Validation errors are shown in the form.
+- [x] **2.3 Progress circles, scenarios screen and editor**
+  - A pure model of the circle row (§9): one circle per work interval with the states done, skipped, current and future, the category color, and a gap one circle wide where a long break falls (never after the last circle); the lines wrap to the width of the window. The `Canvas` widget draws it; the blinking of the current circle comes with the running screen in 2.4.
+  - The scenarios screen: the list of scenarios with their size (`6 work intervals · ~3h 05m`), create, edit, delete (with confirmation) and start (disabled while a session runs). A new "Scenarios" button in the navigation bar.
+  - The editor (§7.2): name, rows with category selector, count, move up/down and delete, repeat count, live preview (the circle row, the number of work intervals and the total duration), the collapsed section with the four overrides (each one switched on by its own check box, a field with arrow buttons; switched off means the global value), and Cancel, Save and Save & start in the window header next to Back. Validation errors are shown in the form.
 
 - [ ] **2.4 Running a scenario in the window**
   - The idle screen offers Flow or Scenario (§11): a category selector for Flow, a scenario selector for Scenario; Start and `Space` start the chosen one.
-  - The running screen of a scenario shows `WORK · 3/6` and the circle row where a flow shows the work interval counter; the waiting screen names the next interval as `Next: Work · 4/6`.
+  - The running screen of a scenario shows `WORK · 3/6` and the circle row (the current circle blinks unless turned off in Settings) where a flow shows the work interval counter; the waiting screen names the next interval as `Next: Work · 4/6`.
   - When the session finishes, a summary is shown (e.g. "Scenario complete: 5 done, 1 skipped"), then the timer returns to idle.
   - Editing or deleting a scenario during its session is allowed and changes nothing for the running session.
 

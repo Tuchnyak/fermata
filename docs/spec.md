@@ -159,7 +159,7 @@ A row of circles, one circle per work interval of the session. Short breaks are 
 | Current | Theme accent color; blinks (can be turned off in Settings) |
 | Future | Outline in the category color |
 
-A long break is shown as a gap two empty circles wide, so work intervals are visually grouped between long breaks.
+A long break is shown as a gap one empty circle wide, so work intervals are visually grouped between long breaks.
 
 ## 10. Resume after interruption
 
