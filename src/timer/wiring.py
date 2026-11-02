@@ -20,6 +20,7 @@ from timer.ui.categories_view_model import CategoriesViewModel
 from timer.ui.home_view_model import HomeViewModel
 from timer.ui.running_view_model import RunningViewModel
 from timer.ui.settings_view_model import SettingsViewModel
+from timer.ui.waiting_view_model import WaitingViewModel
 
 
 @dataclass(frozen=True)
@@ -29,6 +30,7 @@ class Components:
     settings_view_model: SettingsViewModel
     home_view_model: HomeViewModel
     running_view_model: RunningViewModel
+    waiting_view_model: WaitingViewModel
 
 
 def build_components(
@@ -54,4 +56,5 @@ def build_components(
         settings_view_model=SettingsViewModel(settings_repository),
         home_view_model=HomeViewModel(category_repository, session_repository, engine),
         running_view_model=RunningViewModel(engine, category_repository),
+        waiting_view_model=WaitingViewModel(engine),
     )

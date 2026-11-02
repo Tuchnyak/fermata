@@ -20,6 +20,8 @@ from timer.ui.running_view_model import RunningViewModel
 from timer.ui.settings_screen import SettingsScreen
 from timer.ui.settings_view_model import SettingsViewModel
 from timer.ui.start_panel import StartPanel
+from timer.ui.waiting_panel import WaitingPanel
+from timer.ui.waiting_view_model import WaitingViewModel
 
 NAVIGATION_BAR_SCREENS = (Screen.CATEGORIES, Screen.SETTINGS)
 TICK_MILLISECONDS = 200  # how often the engine is ticked and the countdown redrawn
@@ -39,6 +41,7 @@ class MainWindow:
         settings_view_model: SettingsViewModel,
         home_view_model: HomeViewModel,
         running_view_model: RunningViewModel,
+        waiting_view_model: WaitingViewModel,
     ):
         self._root = root
         self._navigation = navigation
@@ -47,6 +50,7 @@ class MainWindow:
         self._settings_view_model = settings_view_model
         self._home_view_model = home_view_model
         self._running_view_model = running_view_model
+        self._waiting_view_model = waiting_view_model
         self._shown_home_mode: HomeMode | None = None
         self._running_panel: RunningPanel | None = None
         root.title(window_title())
@@ -143,7 +147,11 @@ class MainWindow:
         if self._shown_home_mode == HomeMode.RUNNING:
             self._running_panel = RunningPanel(self._content, self._running_view_model)
             self._running_panel.pack(fill="both", expand=True)
-        else:  # idle; while waiting for confirmation this shows the same until 1.29
+        elif self._shown_home_mode == HomeMode.WAITING:
+            WaitingPanel(self._content, self._waiting_view_model).pack(
+                fill="both", expand=True
+            )
+        else:
             StartPanel(self._content, self._home_view_model).pack(
                 fill="both", expand=True
             )

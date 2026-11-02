@@ -176,7 +176,7 @@ Branch: `feat/stage-1-core`. A piece is ticked when the owner has approved it an
   - Shows the interval name (the category name for a work interval, `SHORT BREAK` or `LONG BREAK`), the work interval number, the countdown as `mm:ss`, and Pause/Resume, Skip and Stop buttons.
   - The countdown is refreshed several times per second from the engine's clock; Stop asks for confirmation.
 
-- [ ] **1.29 Waiting-for-confirmation screen**
+- [x] **1.29 Waiting-for-confirmation screen**
   - While the engine waits, the screen shows what comes next (e.g. "Next: Work · 4") and a Next button (`Enter`).
 
 - [x] **1.30 Wire up the app**

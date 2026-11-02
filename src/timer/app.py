@@ -24,5 +24,6 @@ def main():
         components.settings_view_model,
         components.home_view_model,
         components.running_view_model,
+        components.waiting_view_model,
     )
     root.mainloop()
