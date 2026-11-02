@@ -16,13 +16,17 @@ CIRCLE_SIZE = 20
 SPACING = 8
 OUTLINE_WIDTH = 2
 FADE_AMOUNT = 0.6  # how far a skipped circle moves towards the background
+BLINK_FADE_AMOUNT = 0.7  # the current circle dims this far, towards the background, and back
+BLINK_MILLISECONDS = 600
+WHITE = "#ffffff"
+RIM_LIGHTENING = 0.55  # how far the edge of the current circle goes towards white
 
 
 class ProgressRow(tkinter.Canvas):
-    def __init__(self, parent: tkinter.Misc):
+    def __init__(self, parent: tkinter.Misc, centered: bool = False):
+        self._centered = centered
         style = ttk.Style()
         self._background = style.lookup("TFrame", "background")
-        self._accent = style.colors.primary
         super().__init__(
             parent,
             height=CIRCLE_SIZE + 2,
@@ -30,28 +34,60 @@ class ProgressRow(tkinter.Canvas):
             highlightthickness=0,
         )
         self._items: Sequence[ProgressItem] = []
-        self._drawn: tuple[int, Sequence[ProgressItem]] | None = None
+        self._drawn: tuple[int, Sequence[ProgressItem], bool] | None = None
+        self._blink = False
+        self._current_is_dim = False
+        self._blink_job: str | None = None
         self.bind("<Configure>", lambda event: self._draw())
 
     def show(self, items: Sequence[ProgressItem]) -> None:
         self._items = items
         self._draw()
 
+    def set_blink(self, enabled: bool) -> None:
+        """Make the current circle blink, or stop it."""
+        self._blink = enabled
+        self._current_is_dim = False
+        if enabled and self._blink_job is None:
+            self._blink_job = self.after(BLINK_MILLISECONDS, self._blink_step)
+        self._draw()
+
+    def destroy(self) -> None:
+        if self._blink_job is not None:
+            self.after_cancel(self._blink_job)
+            self._blink_job = None
+        super().destroy()
+
+    def _blink_step(self) -> None:
+        self._blink_job = None
+        if not self._blink:
+            return
+        self._current_is_dim = not self._current_is_dim
+        self._draw()
+        self._blink_job = self.after(BLINK_MILLISECONDS, self._blink_step)
+
     def _draw(self) -> None:
         width = self.winfo_width()
-        if self._drawn == (width, self._items):
+        dim = self._blink and self._current_is_dim
+        if self._drawn == (width, self._items, dim):
             return
-        self._drawn = (width, self._items)
+        self._drawn = (width, self._items, dim)
 
         self.delete("all")
         placements = arrange(self._items, width, CIRCLE_SIZE, SPACING)
+        left_margin = 0
+        if self._centered and placements:
+            block_width = max(placement.x for placement in placements) + CIRCLE_SIZE + 2
+            left_margin = max(0, (width - block_width) // 2)
         for placement in placements:
-            self._draw_circle(placement.x + 1, placement.y + 1, placement.circle)
+            self._draw_circle(
+                left_margin + placement.x + 1, placement.y + 1, placement.circle, dim
+            )
         if placements:
             lines_height = max(placement.y for placement in placements) + CIRCLE_SIZE + 2
             self.configure(height=lines_height)
 
-    def _draw_circle(self, x: int, y: int, circle: Circle) -> None:
+    def _draw_circle(self, x: int, y: int, circle: Circle, dim: bool) -> None:
         left, top = x + OUTLINE_WIDTH // 2, y + OUTLINE_WIDTH // 2
         right = x + CIRCLE_SIZE - OUTLINE_WIDTH // 2
         bottom = y + CIRCLE_SIZE - OUTLINE_WIDTH // 2
@@ -61,7 +97,21 @@ class ProgressRow(tkinter.Canvas):
             muted = faded(circle.color, self._background, FADE_AMOUNT)
             self.create_oval(left, top, right, bottom, fill=muted, outline="")
         elif circle.state == CircleState.CURRENT:
-            self.create_oval(left, top, right, bottom, fill=self._accent, outline="")
+            # A circle filled with the color of the category and edged with a lighter tint of it,
+            # which sets it apart from a done circle. Blinking dims the fill, so the circle is
+            # always drawn.
+            fill = circle.color
+            if dim:
+                fill = faded(circle.color, self._background, BLINK_FADE_AMOUNT)
+            self.create_oval(
+                left,
+                top,
+                right,
+                bottom,
+                fill=fill,
+                outline=faded(circle.color, WHITE, RIM_LIGHTENING),
+                width=OUTLINE_WIDTH,
+            )
         else:
             self.create_oval(
                 left, top, right, bottom, outline=circle.color, width=OUTLINE_WIDTH

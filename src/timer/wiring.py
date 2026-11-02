@@ -58,8 +58,12 @@ def build_components(
         engine=engine,
         categories_view_model=CategoriesViewModel(category_repository),
         settings_view_model=SettingsViewModel(settings_repository),
-        home_view_model=HomeViewModel(category_repository, session_repository, engine),
-        running_view_model=RunningViewModel(engine, category_repository),
+        home_view_model=HomeViewModel(
+            category_repository, session_repository, engine, scenario_repository
+        ),
+        running_view_model=RunningViewModel(
+            engine, category_repository, settings_repository
+        ),
         waiting_view_model=WaitingViewModel(engine),
         scenarios_view_model=ScenariosViewModel(
             scenario_repository, category_repository, settings_repository, engine

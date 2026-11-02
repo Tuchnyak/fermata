@@ -1,6 +1,7 @@
 import pytest
 from timer.engine import Engine
 from timer.intervals import IntervalKind
+from timer.scenarios import Scenario, ScenarioRow
 from timer.storage.settings import Settings
 from timer.ui.waiting_view_model import WaitingViewModel
 
@@ -73,6 +74,25 @@ def test_a_skipped_work_interval_is_counted_in_the_numbering(
     run_to_the_end(engine, clock)
 
     assert waiting_view_model.next_title() == "Next: Work · 2"
+
+
+def test_a_scenario_names_the_next_work_interval_out_of_the_total(
+    waiting_view_model, engine, clock
+):
+    scenario = Scenario("Day", (ScenarioRow(2, 2), ScenarioRow(3, 1)), repeat_count=2)
+    engine.start_scenario(scenario)
+    confirm_to_the_end(engine, clock, 1)
+    run_to_the_end(engine, clock)
+
+    assert waiting_view_model.next_title() == "Next: Work · 2/6"
+
+
+def test_a_break_in_a_scenario_is_named_without_numbers(waiting_view_model, engine, clock):
+    scenario = Scenario("Day", (ScenarioRow(2, 2),))
+    engine.start_scenario(scenario)
+    run_to_the_end(engine, clock)
+
+    assert waiting_view_model.next_title() == "Next: Short break"
 
 
 # --- the buttons -----------------------------------------------------------------

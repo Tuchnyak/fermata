@@ -156,7 +156,7 @@ A row of circles, one circle per work interval of the session. Short breaks are 
 |---|---|
 | Done | Filled with the category color |
 | Skipped | Muted (faded) fill of the category color |
-| Current | Theme accent color; blinks (can be turned off in Settings) |
+| Current | Filled with the category color and edged with a lighter tint of it; the fill blinks (can be turned off in Settings) |
 | Future | Outline in the category color |
 
 A long break is shown as a gap one empty circle wide, so work intervals are visually grouped between long breaks.

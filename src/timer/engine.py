@@ -63,6 +63,11 @@ class Engine:
         return self._current_interval
 
     @property
+    def scenario(self) -> Scenario | None:
+        """The scenario of the current or last session; None for a flow and before any."""
+        return self._scenario
+
+    @property
     def finished_intervals(self) -> list[FinishedInterval]:
         """The intervals that have ended, in order. Provides copy of a list."""
         return list(self._finished_intervals)

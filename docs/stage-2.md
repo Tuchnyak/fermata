@@ -34,7 +34,7 @@ Larger pieces than in Stage 1, one owner approval per piece:
   - The scenarios screen: the list of scenarios with their size (`6 work intervals · ~3h 05m`), create, edit, delete (with confirmation) and start (disabled while a session runs). A new "Scenarios" button in the navigation bar.
   - The editor (§7.2): name, rows with category selector, count, move up/down and delete, repeat count, live preview (the circle row, the number of work intervals and the total duration), the collapsed section with the four overrides (each one switched on by its own check box, a field with arrow buttons; switched off means the global value), and Cancel, Save and Save & start in the window header next to Back. Validation errors are shown in the form.
 
-- [ ] **2.4 Running a scenario in the window**
+- [x] **2.4 Running a scenario in the window**
   - The idle screen offers Flow or Scenario (§11): a category selector for Flow, a scenario selector for Scenario; Start and `Space` start the chosen one.
   - The running screen of a scenario shows `WORK · 3/6` and the circle row (the current circle blinks unless turned off in Settings) where a flow shows the work interval counter; the waiting screen names the next interval as `Next: Work · 4/6`.
   - When the session finishes, a summary is shown (e.g. "Scenario complete: 5 done, 1 skipped"), then the timer returns to idle.

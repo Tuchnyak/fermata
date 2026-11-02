@@ -370,3 +370,32 @@ def test_stopping_a_scenario_ends_the_session_but_not_as_completed(
 
     (event,) = events
     assert (event.flow_ended, event.session_completed) == (True, False)
+
+
+# --- the scenario of the session ---------------------------------------------------
+
+
+def test_there_is_no_scenario_before_a_session_and_during_a_flow(engine):
+    assert engine.scenario is None
+
+    engine.start_flow(WORK)
+
+    assert engine.scenario is None
+
+
+def test_the_scenario_is_the_one_of_the_session_and_outlives_it(auto_engine, example, clock):
+    auto_engine.start_scenario(example)
+
+    assert auto_engine.scenario == example
+
+    run_until_the_session_ends(auto_engine, clock)
+
+    assert auto_engine.scenario == example
+
+
+def test_a_flow_forgets_the_scenario(engine, example):
+    engine.start_scenario(example)
+
+    engine.start_flow(WORK)
+
+    assert engine.scenario is None

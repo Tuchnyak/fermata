@@ -167,3 +167,24 @@ def test_the_editor_for_an_existing_scenario_holds_it(scenarios_view_model, exam
 
     assert editor.name() == "Work day"
     assert editor.repeat_count() == 2
+
+
+# --- a running session and its scenario ------------------------------------------
+
+
+def test_deleting_the_scenario_of_a_running_session_changes_nothing_for_the_session(
+    scenarios_view_model, engine, example, work, personal, clock
+):
+    scenarios_view_model.start(example.id)
+
+    scenarios_view_model.delete(example.id)
+
+    categories = []
+    for _ in range(11):  # six work intervals and the five breaks between them
+        if engine.current_interval is None:
+            engine.confirm()
+        if engine.current_interval.kind.value == "work":
+            categories.append(engine.current_interval.category_id)
+        clock.advance(engine.remaining_seconds())
+        engine.tick()
+    assert categories == [work.id, work.id, personal.id, work.id, work.id, personal.id]
