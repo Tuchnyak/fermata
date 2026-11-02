@@ -188,16 +188,24 @@ A long break is shown as a gap one empty circle wide, so work intervals are visu
 Idle state, instead of the controls:
 
 ```
-   ( ) Flow       category: [ Work ▾ ]
-   (•) Scenario:  [ Work day ▾ ]
-                 [ ▶ Start ]
+   Flow                          Scenario
+   ──────────────────────        ──────────────────────
+   Category                      Scenario
+   [ Work             ▾ ]        [ Work day         ▾ ]
+
+        [ Start ]                     [ Start ]
 ```
+
+- Two columns, each with its own Start button: the Flow column chooses a category, the Scenario column a saved scenario (disabled while there is none). `Space` starts the kind touched last, a flow at first.
+- After a scenario that ran to its end, a summary line stands above the columns (§7.4) until the next session starts.
 
 - The center shows the interval (for work intervals — the category name; for breaks `SHORT BREAK` or `LONG BREAK`), the work interval number, a large countdown and the circle row (scenario) or work interval counter (flow).
 - Scenarios, Categories, History and Settings open **inside the main window** with a Back button. No secondary windows.
 - One layout that **scales with the window**: the countdown and fonts grow with the window size.
 - **Fullscreen board** (`[⛶]` / `F11`): only the interval, the countdown and the progress; controls are hidden, hotkeys keep working. `Esc` exits.
 - The window remembers its size and position between launches.
+- The application shows its **version** in the UI (in Settings) and prints it for `--version`; it is the version of `pyproject.toml`.
+- The application has an **icon**: the window icon and the icon of its launcher entry. The picture is chosen by the owner.
 
 ## 12. Themes
 

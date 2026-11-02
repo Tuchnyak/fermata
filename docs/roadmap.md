@@ -64,6 +64,8 @@ An out-of-order detour for the owner's own use: a first cut of sound (end of wor
 ## Stage 6 — Packaging and CI
 
 - PyInstaller build for Linux.
+- Version in the UI: shown in Settings and printed by `--version`, read from the package metadata (the build has to carry it); no second place where the number is written.
+- Application icon: one picture (from the owner) used as the window icon and as the icon of the launcher entry that the local installer writes; the build carries it.
 - CI pipeline; builds for other OS only if they become needed.
 
 ## Backlog
