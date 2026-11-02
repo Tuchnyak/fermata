@@ -22,7 +22,7 @@ Accepted like the pieces of [stage-2.md](stage-2.md): decisions first, tests and
   - The executable is a release for the program: data in `~/.local/share/timer` (apart from the development data), the normal clock, no `--real-time` option. The database is the one every later release uses: migrations are only ever added, and an older program refuses a newer database without touching it.
   - Verified by starting the built executable on an empty data directory and by the owner starting it from the menu.
 
-- [ ] **R.3 Release 0.2.0**
+- [x] **R.3 Release 0.2.0**
   - The branch `release/v0.2.0` is made from `master` after R.1 and R.2 are merged; its first commit sets the version `0.2.0` in `pyproject.toml` (`chore: release 0.2.0`). The installed build is made from that branch. Later fixes of this release go on the same branch.
   - Nothing is published or pushed.
 
