@@ -13,6 +13,7 @@ from timer.i18n import t
 from timer.ui.categories_screen import CategoriesScreen
 from timer.ui.categories_view_model import CategoriesViewModel
 from timer.ui.home_view_model import HomeMode, HomeViewModel
+from timer.ui.fullscreen import Fullscreen, shows_board
 from timer.ui.hotkeys import HotkeyHandler
 from timer.ui.navigation import Navigation, Screen
 from timer.ui.running_panel import RunningPanel
@@ -24,9 +25,11 @@ from timer.ui.settings_view_model import SettingsViewModel
 from timer.ui.start_panel import StartPanel
 from timer.ui.waiting_panel import WaitingPanel
 from timer.ui.waiting_view_model import WaitingViewModel
+from timer.window_geometry import MIN_SIZE, placement_offset, startup_geometry, without_offset
 
 NAVIGATION_BAR_SCREENS = (Screen.SCENARIOS, Screen.CATEGORIES, Screen.SETTINGS)
 TICK_MILLISECONDS = 200  # how often the engine is ticked and the countdown redrawn
+PLACEMENT_MILLISECONDS = 300  # by then the window manager has placed the window
 
 
 def window_title(speed: int = 1) -> str:
@@ -50,6 +53,7 @@ class MainWindow:
         running_view_model: RunningViewModel,
         waiting_view_model: WaitingViewModel,
         scenarios_view_model: ScenariosViewModel,
+        fullscreen: Fullscreen,
     ):
         self._root = root
         self._navigation = navigation
@@ -60,10 +64,20 @@ class MainWindow:
         self._running_view_model = running_view_model
         self._waiting_view_model = waiting_view_model
         self._scenarios_view_model = scenarios_view_model
+        self._fullscreen = fullscreen
         self._shown_home_mode: HomeMode | None = None
         self._running_panel: RunningPanel | None = None
+        self._normal_geometry = ""  # of the normal window, taken when it goes fullscreen
+        self._placement_offset = (0, 0)
         root.title(window_title())
-        root.geometry("720x680")
+        self._asked_geometry = startup_geometry(
+            settings_view_model.settings().window_geometry,
+            root.winfo_screenwidth(),
+            root.winfo_screenheight(),
+        )
+        root.geometry(self._asked_geometry)
+        root.minsize(*MIN_SIZE)
+        root.protocol("WM_DELETE_WINDOW", self._on_close)
         self._header = ttk.Frame(root, padding=8)
         self._header.pack(fill="x")
         self._content = ttk.Frame(root, padding=8)
@@ -71,6 +85,13 @@ class MainWindow:
         root.bind("<Key>", self._on_key)
         self._show_current_screen()
         root.after(TICK_MILLISECONDS, self._on_tick)
+        root.after(PLACEMENT_MILLISECONDS, self._measure_placement)
+
+    def _measure_placement(self) -> None:
+        if not self._fullscreen.is_on:
+            self._placement_offset = placement_offset(
+                self._asked_geometry, self._root.geometry()
+            )
 
     def _on_tick(self) -> None:
         # The engine is ticked whatever screen is shown, so that intervals end on time.
@@ -89,10 +110,13 @@ class MainWindow:
 
     def _on_key(self, event: tkinter.Event) -> None:
         screen_before = self._navigation.current
+        fullscreen_before = self._fullscreen.is_on
         self._hotkey_handler.handle_key(
             event.keysym, text_field_focused=self._text_field_has_focus()
         )
-        if self._navigation.current != screen_before:
+        if self._fullscreen.is_on != fullscreen_before:
+            self._apply_fullscreen()
+        elif self._navigation.current != screen_before:
             self._show_current_screen()
         else:
             self._refresh_home_screen()
@@ -105,6 +129,24 @@ class MainWindow:
         if isinstance(widget, tk_ttk.Combobox) and str(widget.cget("state")) == "readonly":
             return False  # a list to choose from, nothing is typed into it
         return isinstance(widget, (tkinter.Entry, tkinter.Text))
+
+    def _toggle_fullscreen(self) -> None:
+        self._fullscreen.toggle()
+        self._apply_fullscreen()
+
+    def _apply_fullscreen(self) -> None:
+        if self._fullscreen.is_on:
+            self._normal_geometry = self._root.geometry()
+        self._root.attributes("-fullscreen", self._fullscreen.is_on)
+        self._show_current_screen()
+
+    def _on_close(self) -> None:
+        # Fullscreen is never remembered: a window closed in it keeps its normal geometry.
+        geometry = self._normal_geometry if self._fullscreen.is_on else self._root.geometry()
+        self._settings_view_model.remember_window_geometry(
+            without_offset(geometry, self._placement_offset)
+        )
+        self._root.destroy()
 
     def _open(self, screen: Screen) -> None:
         self._navigation.open(screen)
@@ -121,8 +163,16 @@ class MainWindow:
             for child in frame.winfo_children():
                 child.destroy()
 
+        board = shows_board(self._fullscreen, self._navigation.current)
+        if board:
+            self._header.pack_forget()
+        elif not self._header.winfo_ismapped():
+            self._header.pack(fill="x", before=self._content)
+
         title = t(f"screen.{self._navigation.current}")
-        if self._navigation.can_go_back:
+        if board:
+            actions = None
+        elif self._navigation.can_go_back:
             ttk.Button(
                 self._header, text=t("nav.back"), command=self._go_back, takefocus=False
             ).pack(side="left")
@@ -139,6 +189,12 @@ class MainWindow:
                     command=partial(self._open, screen),
                     takefocus=False,
                 ).pack(side="left", padx=(0, 8))
+            ttk.Button(
+                self._header,
+                text=t("nav.fullscreen"),
+                command=self._toggle_fullscreen,
+                takefocus=False,
+            ).pack(side="right")
 
         if self._navigation.current == Screen.SCENARIOS:
             ScenariosScreen(
@@ -153,15 +209,17 @@ class MainWindow:
                 fill="both", expand=True
             )
         else:
-            self._show_home_content()
+            self._show_home_content(board)
 
-    def _show_home_content(self) -> None:
+    def _show_home_content(self, board: bool) -> None:
         self._shown_home_mode = self._home_view_model.mode()
         if self._shown_home_mode == HomeMode.RUNNING:
-            self._running_panel = RunningPanel(self._content, self._running_view_model)
+            self._running_panel = RunningPanel(
+                self._content, self._running_view_model, board
+            )
             self._running_panel.pack(fill="both", expand=True)
         elif self._shown_home_mode == HomeMode.WAITING:
-            WaitingPanel(self._content, self._waiting_view_model).pack(
+            WaitingPanel(self._content, self._waiting_view_model, board).pack(
                 fill="both", expand=True
             )
         else:

@@ -63,6 +63,14 @@ class NumberSlider(ttk.Frame):
         self._readout = ttk.Label(self, width=4, anchor="e")
         self._readout.grid(row=0, column=1, rowspan=2, padx=(8, 0))
 
+    def refresh_colors(self) -> None:
+        """Take the colors of the theme in force now, after the theme was changed."""
+        style = ttk.Style()
+        self._tick_color = style.lookup("TLabel", "foreground")
+        self._ticks.configure(background=style.lookup("TFrame", "background"))
+        self._drawn_positions = []  # draw the ticks again
+        self._draw_ticks()
+
     def get(self) -> str:
         return str(round(self._value.get()))
 

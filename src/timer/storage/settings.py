@@ -25,6 +25,8 @@ class Settings:
     transition_mode: str = "confirm"
     blink: bool = True
     sound: bool = True
+    theme: str = "dark"
+    window_geometry: str = ""  # "" until the window has been closed once
 
 
 def _encode(value: Value) -> str:

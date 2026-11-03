@@ -9,6 +9,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from functools import partial
 
+from timer.window_geometry import parse_geometry
+
 
 # The limits and the modes are also what the settings screen offers.
 WORK_MINUTES_RANGE = (1, 120)
@@ -16,6 +18,14 @@ SHORT_BREAK_MINUTES_RANGE = (1, 30)
 LONG_BREAK_MINUTES_RANGE = (1, 60)
 LONG_BREAK_EVERY_RANGE = (1, 10)
 TRANSITION_MODES = ("auto", "confirm", "mixed")
+THEME_IDS = (
+    "light",
+    "dark",
+    "catppuccin_latte",
+    "catppuccin_frappe",
+    "catppuccin_macchiato",
+    "catppuccin_mocha",
+)
 
 
 @dataclass(frozen=True)
@@ -38,8 +48,16 @@ def _is_transition_mode(value: object) -> bool:
     return value in TRANSITION_MODES
 
 
+def _is_theme(value: object) -> bool:
+    return value in THEME_IDS
+
+
 def _is_flag(value: object) -> bool:
     return type(value) is bool
+
+
+def _is_window_geometry(value: object) -> bool:
+    return parse_geometry(value) is not None
 
 
 RULES = {
@@ -56,4 +74,6 @@ RULES = {
     "transition_mode": Rule(_is_transition_mode, "setting.transition_mode_invalid"),
     "blink": Rule(_is_flag, "setting.blink_invalid"),
     "sound": Rule(_is_flag, "setting.sound_invalid"),
+    "theme": Rule(_is_theme, "setting.theme_invalid"),
+    "window_geometry": Rule(_is_window_geometry, "setting.window_geometry_invalid"),
 }

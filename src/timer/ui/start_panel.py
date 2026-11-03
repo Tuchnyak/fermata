@@ -10,9 +10,10 @@ from functools import partial
 import ttkbootstrap as ttk
 from timer.i18n import t
 from timer.ui.home_view_model import HomeViewModel, StartKind
+from timer.ui.scale_watcher import ScaleWatcher
+from timer.ui.scaling import sizes_for
 
 COLUMN_GAP = 48
-HEADING_FONT = ("TkDefaultFont", 20, "bold")
 START_BUTTON_WIDTH = 14
 START_BUTTON_STYLES = {StartKind.FLOW: "success-outline", StartKind.SCENARIO: "success"}
 
@@ -34,14 +35,27 @@ class StartPanel(ttk.Frame):
 
         columns = ttk.Frame(center)
         columns.pack()
+        self._headings: list[ttk.Label] = []  # they grow with the window
         self._build_flow_column(columns).grid(row=0, column=0, sticky="n")
         self._build_scenario_column(columns).grid(
             row=0, column=1, sticky="n", padx=(COLUMN_GAP, 0)
         )
+        ScaleWatcher(self, self._apply_scale)
+
+    def _apply_scale(self, scale: float) -> None:
+        font = ("TkDefaultFont", sizes_for(scale).heading_font, "bold")
+        for heading in self._headings:
+            heading.configure(font=font)
 
     def _build_column(self, parent: ttk.Frame, heading_key: str) -> ttk.Frame:
         column = ttk.Frame(parent)
-        ttk.Label(column, text=t(heading_key), font=HEADING_FONT).pack(anchor="w")
+        heading = ttk.Label(
+            column,
+            text=t(heading_key),
+            font=("TkDefaultFont", sizes_for(1.0).heading_font, "bold"),
+        )
+        heading.pack(anchor="w")
+        self._headings.append(heading)
         ttk.Separator(column, bootstyle="success").pack(fill="x", pady=(4, 16))
         return column
 

@@ -169,3 +169,69 @@ def test_sound_is_saved_with_the_other_settings(db, settings_view_model):
     assert message is None
     assert settings_view_model.settings().sound is False
     assert stored_rows(db) == [("sound", "0")]
+
+
+# --- the theme ---------------------------------------------------------------------
+
+
+def test_the_themes_are_offered_with_their_names(settings_view_model):
+    assert settings_view_model.themes() == [
+        ("light", "Light"),
+        ("dark", "Dark"),
+        ("catppuccin_latte", "Catppuccin Latte"),
+        ("catppuccin_frappe", "Catppuccin Frappé"),
+        ("catppuccin_macchiato", "Catppuccin Macchiato"),
+        ("catppuccin_mocha", "Catppuccin Mocha"),
+    ]
+
+
+def test_a_chosen_theme_is_stored_at_once(db, settings_view_model):
+    message = settings_view_model.choose_theme("catppuccin_mocha")
+
+    assert message is None
+    assert settings_view_model.settings().theme == "catppuccin_mocha"
+    assert stored_rows(db) == [("theme", "catppuccin_mocha")]
+
+
+def test_an_unknown_theme_is_refused_and_nothing_is_stored(db, settings_view_model):
+    message = settings_view_model.choose_theme("nonsense")
+
+    assert message == t("setting.theme_invalid")
+    assert stored_rows(db) == []
+
+
+# --- the window ---------------------------------------------------------------------
+
+
+def test_the_window_geometry_is_stored_at_once(db, settings_view_model):
+    message = settings_view_model.remember_window_geometry("900x700+100+50")
+
+    assert message is None
+    assert settings_view_model.settings().window_geometry == "900x700+100+50"
+    assert stored_rows(db) == [("window_geometry", "900x700+100+50")]
+
+
+def test_an_unreadable_window_geometry_is_refused_and_nothing_is_stored(
+    db, settings_view_model
+):
+    message = settings_view_model.remember_window_geometry("nonsense")
+
+    assert message == t("setting.window_geometry_invalid")
+    assert stored_rows(db) == []
+
+
+def test_saving_the_other_settings_leaves_the_window_geometry_alone(settings_view_model):
+    settings_view_model.remember_window_geometry("900x700+100+50")
+
+    settings_view_model.save(**form_values(work_minutes="30"))
+
+    assert settings_view_model.settings().window_geometry == "900x700+100+50"
+
+
+def test_saving_the_other_settings_leaves_the_theme_alone(settings_view_model):
+    settings_view_model.choose_theme("light")
+
+    settings_view_model.save(**form_values(work_minutes="30"))
+
+    assert settings_view_model.settings().theme == "light"
+    assert settings_view_model.settings().work_minutes == 30
