@@ -17,7 +17,7 @@ Accepted like [stage-2.md](stage-2.md): decisions first, tests and code together
   - The running, waiting and start screens grow with the window: the sizes of the fonts, of the circles and of the gaps follow the size of the window between a minimum and a maximum.
   - The rule (window size to sizes) is a pure function and is tested; the window gets a minimum size.
 
-- [ ] **3.3 Fullscreen board**
+- [x] **3.3 Fullscreen board**
   - `F11` and a button in the header toggle the fullscreen window; `Esc` leaves it first and only then goes back from a secondary screen.
   - In fullscreen the home screen is a board: only the interval, the countdown and the progress (the circle row, or the work interval counter in a flow), at the sizes of 3.2; the header and the buttons are hidden, `Space` and `Enter` keep working. A secondary screen opened in fullscreen looks as usual.
   - The key handling (`F11`, `Esc` order) is tested without Tk.

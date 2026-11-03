@@ -12,7 +12,11 @@ from ttkbootstrap.dialogs import Messagebox
 
 
 class RunningPanel(ttk.Frame):
-    def __init__(self, parent: tkinter.Misc, view_model: RunningViewModel):
+    def __init__(
+        self, parent: tkinter.Misc, view_model: RunningViewModel, board: bool = False
+    ):
+        """On the board (fullscreen) there are no buttons: only the interval, the countdown and
+        the progress."""
         super().__init__(parent)
         self._view_model = view_model
         self._sizes = sizes_for(1.0)  # the fonts and circles grow with the window
@@ -45,6 +49,14 @@ class RunningPanel(ttk.Frame):
         self._progress_row.set_blink(view_model.blink())
         self._progress_row_is_shown = False
 
+        self._pause_button: ttk.Button | None = None
+        if not board:
+            self._build_buttons(center)
+
+        self.refresh()
+        ScaleWatcher(self, self._apply_scale)
+
+    def _build_buttons(self, center: ttk.Frame) -> None:
         # The buttons do not take focus, so that Space on them is only the hotkey.
         buttons = ttk.Frame(center)
         buttons.pack(pady=(24, 0))
@@ -68,9 +80,6 @@ class RunningPanel(ttk.Frame):
             takefocus=False,
         ).pack(side="left", padx=4)
 
-        self.refresh()
-        ScaleWatcher(self, self._apply_scale)
-
     def _apply_scale(self, scale: float) -> None:
         sizes = sizes_for(scale)
         self._sizes = sizes
@@ -89,7 +98,8 @@ class RunningPanel(ttk.Frame):
         self._number.configure(text=self._view_model.number_text())
         self._countdown.configure(text=self._view_model.countdown())
         self._show_progress(self._view_model.progress_items())
-        self._pause_button.configure(text=self._view_model.pause_button_text())
+        if self._pause_button is not None:
+            self._pause_button.configure(text=self._view_model.pause_button_text())
 
     def _show_progress(self, items) -> None:
         if items is None:
