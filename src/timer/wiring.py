@@ -16,11 +16,13 @@ from timer.resume import Resumption
 from timer.sound import SOUNDS_DIR, SoundNotifier, SoundPlayer
 from timer.storage.categories import CategoryRepository
 from timer.storage.db import Db
+from timer.storage.history import HistoryRepository
 from timer.storage.migrate import MIGRATIONS_DIR, migrate
 from timer.storage.scenarios import ScenarioRepository
 from timer.storage.sessions import SessionRepository
 from timer.storage.settings import SettingsRepository
 from timer.ui.categories_view_model import CategoriesViewModel
+from timer.ui.history_view_model import HistoryViewModel
 from timer.ui.home_view_model import HomeViewModel
 from timer.ui.running_view_model import RunningViewModel
 from timer.ui.scenarios_view_model import ScenariosViewModel
@@ -37,6 +39,7 @@ class Components:
     running_view_model: RunningViewModel
     waiting_view_model: WaitingViewModel
     scenarios_view_model: ScenariosViewModel
+    history_view_model: HistoryViewModel
     resumption: Resumption | None  # set when a scenario session is left to resume
 
 
@@ -91,5 +94,6 @@ def build_components(
         scenarios_view_model=ScenariosViewModel(
             scenario_repository, category_repository, settings_repository, engine
         ),
+        history_view_model=HistoryViewModel(HistoryRepository(db), clock),
         resumption=resumption,
     )

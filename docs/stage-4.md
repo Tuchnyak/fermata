@@ -12,7 +12,7 @@ The data is already recorded and the schema (with the view `interval_details`) i
   - `HistoryRepository`, read only: the finished work intervals that started in a period, from `interval_details`, in the order they started. A running interval (no status yet) and the breaks are left out.
   - `HistoryViewModel`: the rows to show (category color and name, start time, actual duration, status), the totals of actual time per category (longest first) and the total of the period, the title of the period, the texts of the buttons. Tested on a real SQLite in memory, without Tk.
 
-- [ ] **4.2 The History screen**
+- [x] **4.2 The History screen**
   - A History button in the navigation bar (`Screen.HISTORY`); `Esc` and Back lead home as from the other screens.
   - A Day / Week switch, the arrows to the previous and the next period, a Today button, the title of the period.
   - The list of work intervals (`ttk.Treeview` with a scroll bar): a smooth circle in the color of the category, the category name, the start time, the actual duration and the status. The totals under it: one line per category with its color, then the total of the period. An empty period says so.

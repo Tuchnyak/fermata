@@ -12,6 +12,7 @@ class Screen(StrEnum):
     SCENARIOS = "scenarios"
     CATEGORIES = "categories"
     SETTINGS = "settings"
+    HISTORY = "history"
 
 
 class Navigation:

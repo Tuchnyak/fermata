@@ -56,6 +56,7 @@ def main():
         components.running_view_model,
         components.waiting_view_model,
         components.scenarios_view_model,
+        components.history_view_model,
         fullscreen,
     )
     speed = speed_of(release=is_release(), real_time=arguments.real_time)
