@@ -26,7 +26,7 @@ uv add <pkg>       # add a dependency (--dev for tooling)
   - `engine.py`, `intervals.py`, `scenarios.py` — timer logic with no UI and no database: the engine, the interval rules, the scenario value types.
   - `recorder.py`, `resume.py` — the recorder writes the engine's events to the database; `resume.py` offers a scenario session left behind by a closed app and carries out the answer.
   - `storage/` — SQLite: the `Db` helper, migrations (`storage/migrations/NNN_*.sql`), repositories, the data directory.
-  - `ui/` — Tkinter. `*_view_model.py` (and the pure `progress.py`, `scaling.py`, `fullscreen.py`, `scenario_summary.py`) hold the logic of a screen without Tk and are tested; `*_screen.py`, `*_panel.py`, `scenario_editor.py`, `progress_row.py`, `scale_watcher.py` and `main_window.py` are the Tk widgets.
+  - `ui/` — Tkinter. `*_view_model.py` (and the pure `progress.py`, `scaling.py`, `fullscreen.py`, `scenario_summary.py`, `history_period.py`) hold the logic of a screen without Tk and are tested; `*_screen.py`, `*_panel.py`, `scenario_editor.py`, `progress_row.py`, `scale_watcher.py` and `main_window.py` are the Tk widgets.
   - `themes.py` — the six palettes; `window_geometry.py` — the stored window size and position and how to fit them to the screen (no Tk).
   - `wiring.py` — builds everything except Tk (database, engine, view models); `i18n.py` with `locales/en.json` is `t(key)`.
 - `tests/` — pytest tests, mirroring `src/` (e.g. `tests/timer/ui/test_hotkeys.py`).

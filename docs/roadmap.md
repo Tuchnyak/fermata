@@ -59,7 +59,11 @@ Breakdown into pieces with progress: [stage-3.md](stage-3.md).
 
 ## Stage 4 — History screen
 
-- Day / Week view with navigation, work interval list with colors and statuses, totals per category.
+Breakdown into pieces with progress: [stage-4.md](stage-4.md).
+
+**Status: done.**
+
+- Day / Week view with navigation and a Today button, work interval list with colors and statuses, totals per category and in all.
 
 ## Stage 5 — Sound
 

@@ -17,7 +17,7 @@ The data is already recorded and the schema (with the view `interval_details`) i
   - A Day / Week switch, the arrows to the previous and the next period, a Today button, the title of the period.
   - The list of work intervals (`ttk.Treeview` with a scroll bar): a smooth circle in the color of the category, the category name, the start time, the actual duration and the status. The totals under it: one line per category with its color, then the total of the period. An empty period says so.
 
-- [ ] **4.3 Close-out**
+- [x] **4.3 Close-out**
   - `docs/schema.md` (the query behind the screen, if useful), `docs/spec.md` §13 and §19, `AGENTS.md` and the roadmap match the code.
   - Final manual check by the owner on real data; the development clock runs twice as fast, so its times are the sped-up ones.
   - After the owner's approval the branch is merged into `master` with `git merge --no-ff`, then deleted locally and on GitHub.
