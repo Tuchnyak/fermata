@@ -138,6 +138,8 @@ Every column of `interval` plus the related data, so queries need no joins:
 | `session_kind` | `session.kind` |
 | `scenario_name` | `session.scenario_name`; NULL for flows |
 
+The history screen reads this view: the work intervals with a status that started in the period (a day or a week, its local bounds converted to UTC, the start included and the end excluded), in the order they started.
+
 ## Example queries
 
 Worked time per category per week (weeks start on Monday):

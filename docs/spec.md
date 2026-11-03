@@ -229,9 +229,9 @@ Every interval — work intervals **and** breaks — of every session:
 
 ### 13.2 History screen
 
-- Toggle Day / Week (week starts on Monday), previous/next navigation.
+- Toggle Day / Week (week starts on Monday), previous/next navigation and a Today button.
 - List of **work intervals** with category color, category name, start time, actual duration and status.
-- Totals of actual time per category for the selected period.
+- Totals of actual time per category for the selected period, longest first, and the total of the period.
 - Breaks are stored in the database but not shown on this screen.
 
 ### 13.3 Own analysis
@@ -292,7 +292,7 @@ Not part of the product unless a real need appears (see roadmap backlog for the 
 
 ## 19. Assumptions to confirm
 
-Decided while writing. All of them are confirmed and implemented: items 1–5 and 7–9 in Stage 1, items 6 and 10–13 in Stage 2, items 14–17 in Stage 3:
+Decided while writing. All of them are confirmed and implemented: items 1–5 and 7–9 in Stage 1, items 6 and 10–13 in Stage 2, items 14–17 in Stage 3, items 18–21 in Stage 4:
 
 1. Skipped work intervals count toward N for long breaks (the break pattern stays as previewed).
 2. Skipping a break moves straight to the next work interval.
@@ -311,3 +311,7 @@ Decided while writing. All of them are confirmed and implemented: items 1–5 an
 15. Fullscreen is a property of the window and is never stored. The board layout is for the home screen only; a window that is left fullscreen by the window manager, not by our keys, is not noticed.
 16. The fonts and circles scale with the smaller of the window's width and height relative to the default window (720×680), between 0.7 and 4 times.
 17. The window geometry is written on close only, so a crash loses only the last move. The window manager puts the frame at the position asked for while Tk reports the position below the title bar; the application measures the difference after the window is shown and takes it off when storing, so the window does not creep down at every start.
+18. The history screen lists the finished work intervals that started in the period, by the local time of the computer (a day runs from local midnight to the next, so it may be 23 or 25 hours long at a change of summer time). An interval that runs past midnight belongs to the day it started; the interval running now appears when it ends. A week is one flat list with the weekday in the start time.
+19. `completed`, `skipped` and `stopped` intervals show their actual duration (pauses excluded) and count in the totals; an `interrupted` one shows a dash and counts for nothing. A length under a minute reads `0m`.
+20. The category in the list is the interval's category as it is named now: a renamed category shows its new name, an archived one is still shown.
+21. No index is added to `interval` for the history: the amount of data does not need one.

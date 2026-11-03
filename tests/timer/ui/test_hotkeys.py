@@ -87,10 +87,11 @@ def test_space_on_the_home_screen_asks_to_start_a_flow_when_idle(
     assert engine.current_interval is None  # starting is up to the home screen
 
 
+@pytest.mark.parametrize("screen", [Screen.CATEGORIES, Screen.HISTORY])
 def test_space_does_not_start_a_flow_from_a_secondary_screen(
-    handler, navigation, start_requests
+    handler, navigation, start_requests, screen
 ):
-    navigation.open(Screen.CATEGORIES)
+    navigation.open(screen)
 
     press(handler, "space")
 
@@ -165,7 +166,7 @@ def test_enter_does_nothing_while_an_interval_runs_or_when_idle(handler, engine)
 # --- Escape ------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("screen", [Screen.CATEGORIES, Screen.SETTINGS])
+@pytest.mark.parametrize("screen", [Screen.CATEGORIES, Screen.HISTORY, Screen.SETTINGS])
 def test_escape_goes_back_from_a_secondary_screen(handler, navigation, screen):
     navigation.open(screen)
 

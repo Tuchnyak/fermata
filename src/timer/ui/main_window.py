@@ -12,6 +12,8 @@ from timer.build import is_release
 from timer.i18n import t
 from timer.ui.categories_screen import CategoriesScreen
 from timer.ui.categories_view_model import CategoriesViewModel
+from timer.ui.history_screen import HistoryScreen
+from timer.ui.history_view_model import HistoryViewModel
 from timer.ui.home_view_model import HomeMode, HomeViewModel
 from timer.ui.fullscreen import Fullscreen, shows_board
 from timer.ui.hotkeys import HotkeyHandler
@@ -27,7 +29,7 @@ from timer.ui.waiting_panel import WaitingPanel
 from timer.ui.waiting_view_model import WaitingViewModel
 from timer.window_geometry import MIN_SIZE, placement_offset, startup_geometry, without_offset
 
-NAVIGATION_BAR_SCREENS = (Screen.SCENARIOS, Screen.CATEGORIES, Screen.SETTINGS)
+NAVIGATION_BAR_SCREENS = (Screen.SCENARIOS, Screen.CATEGORIES, Screen.HISTORY, Screen.SETTINGS)
 TICK_MILLISECONDS = 200  # how often the engine is ticked and the countdown redrawn
 PLACEMENT_MILLISECONDS = 300  # by then the window manager has placed the window
 
@@ -53,6 +55,7 @@ class MainWindow:
         running_view_model: RunningViewModel,
         waiting_view_model: WaitingViewModel,
         scenarios_view_model: ScenariosViewModel,
+        history_view_model: HistoryViewModel,
         fullscreen: Fullscreen,
     ):
         self._root = root
@@ -64,6 +67,7 @@ class MainWindow:
         self._running_view_model = running_view_model
         self._waiting_view_model = waiting_view_model
         self._scenarios_view_model = scenarios_view_model
+        self._history_view_model = history_view_model
         self._fullscreen = fullscreen
         self._shown_home_mode: HomeMode | None = None
         self._running_panel: RunningPanel | None = None
@@ -202,6 +206,10 @@ class MainWindow:
             ).pack(fill="both", expand=True)
         elif self._navigation.current == Screen.CATEGORIES:
             CategoriesScreen(self._content, self._categories_view_model).pack(
+                fill="both", expand=True
+            )
+        elif self._navigation.current == Screen.HISTORY:
+            HistoryScreen(self._content, self._history_view_model).pack(
                 fill="both", expand=True
             )
         elif self._navigation.current == Screen.SETTINGS:

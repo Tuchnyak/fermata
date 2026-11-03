@@ -2,7 +2,8 @@ import sys
 
 import pytest
 from timer.i18n import t
-from timer.ui.main_window import window_title
+from timer.ui.main_window import NAVIGATION_BAR_SCREENS, window_title
+from timer.ui.navigation import Screen
 
 
 def test_a_release_window_is_titled_timer(monkeypatch):
@@ -38,3 +39,12 @@ def test_a_release_window_shows_no_speed(monkeypatch):
 @pytest.mark.parametrize("key", ["app.title", "app.title_dev", "app.title_dev_speed"])
 def test_the_titles_exist_in_the_catalog(key):
     assert t(key, speed=2)
+
+
+def test_the_navigation_bar_leads_to_every_secondary_screen_in_this_order():
+    assert NAVIGATION_BAR_SCREENS == (
+        Screen.SCENARIOS,
+        Screen.CATEGORIES,
+        Screen.HISTORY,
+        Screen.SETTINGS,
+    )

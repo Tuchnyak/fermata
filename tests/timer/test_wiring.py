@@ -202,3 +202,26 @@ def test_a_sound_is_still_recorded_with_the_history(components, clock, database_
     components.engine.tick()
 
     assert [row["status"] for row in stored_intervals(database_path)] == ["completed"]
+
+
+# --- the history ---------------------------------------------------------------
+
+
+def test_a_finished_interval_shows_in_the_history_of_its_day(clock, components):
+    start_flow(components)
+    clock.advance(10 * 60)
+    components.engine.stop()
+
+    view = components.history_view_model.view()
+
+    assert [(row.category, row.duration, row.status) for row in view.rows] == [
+        ("None", "10m", "Stopped")
+    ]
+    assert view.total == "10m"
+
+
+def test_the_running_interval_is_not_in_the_history_yet(clock, components):
+    start_flow(components)
+    clock.advance(10 * 60)
+
+    assert components.history_view_model.view().rows == []
