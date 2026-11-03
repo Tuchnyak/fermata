@@ -4,6 +4,8 @@ import tkinter
 from collections.abc import Sequence
 
 import ttkbootstrap as ttk
+from PIL import ImageTk
+from timer.ui.circle_image import render_circle
 from timer.ui.progress import (
     Circle,
     CircleState,
@@ -35,6 +37,8 @@ class ProgressRow(tkinter.Canvas):
         self._blink = False
         self._current_is_dim = False
         self._blink_job: str | None = None
+        # The pictures on the canvas, by what they show; Tk draws only the ones it is holding.
+        self._pictures: dict[tuple[int, int, str, str | None], ImageTk.PhotoImage] = {}
         self.bind("<Configure>", lambda event: self._draw())
 
     def show(self, items: Sequence[ProgressItem]) -> None:
@@ -77,6 +81,7 @@ class ProgressRow(tkinter.Canvas):
         self._drawn = (width, self._items, dim, self._sizes)
 
         self.delete("all")
+        self._pictures.clear()
         circle_size = self._sizes.circle
         placements = arrange(self._items, width, circle_size, self._sizes.circle_spacing)
         left_margin = 0
@@ -92,43 +97,25 @@ class ProgressRow(tkinter.Canvas):
             self.configure(height=lines_height)
 
     def _draw_circle(self, x: int, y: int, circle: Circle, dim: bool) -> None:
-        edge = self._sizes.outline
-        left, top = x + edge // 2, y + edge // 2
-        right = x + self._sizes.circle - edge // 2
-        bottom = y + self._sizes.circle - edge // 2
-        # The outline is drawn centered on the edge, so it reaches out by half its width: every
-        # circle has one, or a filled circle would come out smaller than an outlined one.
+        # Every circle has an outline, or a filled circle would come out smaller than an
+        # outlined one.
         if circle.state == CircleState.DONE:
-            self.create_oval(
-                left,
-                top,
-                right,
-                bottom,
-                fill=circle.color,
-                outline=circle.color,
-                width=edge,
-            )
+            outline, fill = circle.color, circle.color
         elif circle.state == CircleState.SKIPPED:
-            muted = faded(circle.color, self._background, FADE_AMOUNT)
-            self.create_oval(
-                left, top, right, bottom, fill=muted, outline=muted, width=edge
-            )
+            outline = fill = faded(circle.color, self._background, FADE_AMOUNT)
         elif circle.state == CircleState.CURRENT:
             # The edge is in the color of the category, like a done circle's; the fill is what
             # sets it apart: it is dimmed, and blinking brings it to the full color and back.
-            fill = circle.color
+            outline, fill = circle.color, circle.color
             if dim:
                 fill = faded(circle.color, self._background, BLINK_FADE_AMOUNT)
-            self.create_oval(
-                left,
-                top,
-                right,
-                bottom,
-                fill=fill,
-                outline=circle.color,
-                width=edge,
-            )
         else:
-            self.create_oval(
-                left, top, right, bottom, outline=circle.color, width=edge
-            )
+            outline, fill = circle.color, None
+        self.create_image(x, y, image=self._picture(outline, fill), anchor="nw")
+
+    def _picture(self, outline: str, fill: str | None) -> ImageTk.PhotoImage:
+        key = (self._sizes.circle, self._sizes.outline, outline, fill)
+        if key not in self._pictures:
+            image = render_circle(self._sizes.circle, self._sizes.outline, outline, fill)
+            self._pictures[key] = ImageTk.PhotoImage(image)
+        return self._pictures[key]
