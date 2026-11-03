@@ -4,6 +4,8 @@ import tkinter
 
 import ttkbootstrap as ttk
 from timer.i18n import t
+from timer.ui.scale_watcher import ScaleWatcher
+from timer.ui.scaling import sizes_for
 from timer.ui.waiting_view_model import WaitingViewModel
 from ttkbootstrap.dialogs import Messagebox
 
@@ -15,9 +17,12 @@ class WaitingPanel(ttk.Frame):
 
         center = ttk.Frame(self)
         center.pack(expand=True)
-        ttk.Label(
-            center, text=view_model.next_title(), font=("TkDefaultFont", 28)
-        ).pack(pady=(0, 24))
+        self._title = ttk.Label(
+            center,
+            text=view_model.next_title(),
+            font=("TkDefaultFont", sizes_for(1.0).title_font),
+        )
+        self._title.pack(pady=(0, 24))
 
         # The buttons do not take focus, so that Space on them is only the hotkey.
         buttons = ttk.Frame(center)
@@ -38,6 +43,10 @@ class WaitingPanel(ttk.Frame):
             bootstyle="danger",
             takefocus=False,
         ).pack(side="left", padx=4)
+        ScaleWatcher(self, self._apply_scale)
+
+    def _apply_scale(self, scale: float) -> None:
+        self._title.configure(font=("TkDefaultFont", sizes_for(scale).title_font))
 
     def _stop(self) -> None:
         answer = Messagebox.yesno(

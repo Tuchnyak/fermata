@@ -26,6 +26,7 @@ from timer.ui.waiting_panel import WaitingPanel
 from timer.ui.waiting_view_model import WaitingViewModel
 
 NAVIGATION_BAR_SCREENS = (Screen.SCENARIOS, Screen.CATEGORIES, Screen.SETTINGS)
+MIN_WINDOW_SIZE = (520, 440)  # below this the screens would not fit
 TICK_MILLISECONDS = 200  # how often the engine is ticked and the countdown redrawn
 
 
@@ -64,6 +65,7 @@ class MainWindow:
         self._running_panel: RunningPanel | None = None
         root.title(window_title())
         root.geometry("720x680")
+        root.minsize(*MIN_WINDOW_SIZE)
         self._header = ttk.Frame(root, padding=8)
         self._header.pack(fill="x")
         self._content = ttk.Frame(root, padding=8)

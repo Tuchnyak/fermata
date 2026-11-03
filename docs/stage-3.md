@@ -13,7 +13,7 @@ Accepted like [stage-2.md](stage-2.md): decisions first, tests and code together
   - Everything that is drawn by hand follows the theme: the circle row, the category swatches, the number slider ticks, the hint texts.
   - Tested without Tk: the six themes are all defined and listed, an unknown stored theme falls back to Dark, and the text colors of every theme keep a readable contrast against its backgrounds (a computed check, so a hard-to-read palette cannot slip in).
 
-- [ ] **3.2 Layout that scales**
+- [x] **3.2 Layout that scales**
   - The running, waiting and start screens grow with the window: the sizes of the fonts, of the circles and of the gaps follow the size of the window between a minimum and a maximum.
   - The rule (window size to sizes) is a pure function and is tested; the window gets a minimum size.
 

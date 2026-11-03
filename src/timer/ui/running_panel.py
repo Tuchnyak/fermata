@@ -6,16 +6,16 @@ import ttkbootstrap as ttk
 from timer.i18n import t
 from timer.ui.progress_row import ProgressRow
 from timer.ui.running_view_model import RunningViewModel
+from timer.ui.scale_watcher import ScaleWatcher
+from timer.ui.scaling import sizes_for
 from ttkbootstrap.dialogs import Messagebox
-
-
-SWATCH_SIZE = 28  # as high as the title
 
 
 class RunningPanel(ttk.Frame):
     def __init__(self, parent: tkinter.Misc, view_model: RunningViewModel):
         super().__init__(parent)
         self._view_model = view_model
+        self._sizes = sizes_for(1.0)  # the fonts and circles grow with the window
 
         center = ttk.Frame(self)
         center.pack(expand=True, fill="x")
@@ -24,17 +24,19 @@ class RunningPanel(ttk.Frame):
         # A circle in the color of the category stands before the title of a work interval.
         self._swatch = tkinter.Canvas(
             title_row,
-            width=SWATCH_SIZE,
-            height=SWATCH_SIZE,
+            width=self._sizes.swatch,
+            height=self._sizes.swatch,
             background=ttk.Style().lookup("TFrame", "background"),
             highlightthickness=0,
         )
         self._shown_color: str | None = None
-        self._title = ttk.Label(title_row, font=("TkDefaultFont", 28))
+        self._title = ttk.Label(title_row, font=("TkDefaultFont", self._sizes.title_font))
         self._title.pack(side="left")
-        self._number = ttk.Label(center, font=("TkDefaultFont", 12))
+        self._number = ttk.Label(center, font=("TkDefaultFont", self._sizes.number_font))
         self._number.pack(pady=(4, 0))
-        self._countdown = ttk.Label(center, font=("TkDefaultFont", 72, "bold"))
+        self._countdown = ttk.Label(
+            center, font=("TkDefaultFont", self._sizes.countdown_font, "bold")
+        )
         self._countdown.pack(pady=24)
         # The circle row is shown for a scenario only, between the countdown and the buttons.
         progress_place = ttk.Frame(center)
@@ -67,6 +69,18 @@ class RunningPanel(ttk.Frame):
         ).pack(side="left", padx=4)
 
         self.refresh()
+        ScaleWatcher(self, self._apply_scale)
+
+    def _apply_scale(self, scale: float) -> None:
+        sizes = sizes_for(scale)
+        self._sizes = sizes
+        self._title.configure(font=("TkDefaultFont", sizes.title_font))
+        self._number.configure(font=("TkDefaultFont", sizes.number_font))
+        self._countdown.configure(font=("TkDefaultFont", sizes.countdown_font, "bold"))
+        self._swatch.configure(width=sizes.swatch, height=sizes.swatch)
+        self._progress_row.set_sizes(sizes)
+        self._shown_color = None  # the swatch is drawn again, at its new size
+        self.refresh()
 
     def refresh(self) -> None:
         """Show the state of the engine now; called several times a second."""
@@ -96,9 +110,8 @@ class RunningPanel(ttk.Frame):
             self._swatch.pack_forget()
             return
         self._swatch.delete("all")
-        self._swatch.create_oval(
-            2, 2, SWATCH_SIZE - 2, SWATCH_SIZE - 2, fill=color, outline=""
-        )
+        size = self._sizes.swatch
+        self._swatch.create_oval(2, 2, size - 2, size - 2, fill=color, outline="")
         self._swatch.pack(side="left", padx=(0, 12), before=self._title)
 
     def _toggle_pause(self) -> None:
