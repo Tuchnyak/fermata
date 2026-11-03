@@ -55,5 +55,5 @@ The agent develops, the owner acts as product manager and reviewer.
   4. Present one report: the tests, what changed, the green run and a manual check list. The owner reviews the tests as acceptance tests and approves the piece as a whole.
   5. Commit only after the owner's explicit approval; several commits per piece are fine, and the checkbox is ticked in the last one.
 - Commit messages use Conventional Commits prefixes: `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, `chore:`.
-- A finished stage is merged into `master` with a merge commit (`git merge --no-ff`) so the commits of its pieces stay in history.
+- A finished stage is merged into `master` with a merge commit (`git merge --no-ff`) so the commits of its pieces stay in history. The stage branch is then deleted, locally and on GitHub.
 - The version lives in `pyproject.toml` (and `uv.lock`) on `master` and is raised there, in a `chore: release X.Y.Z` commit. A release is the branch `release/vX.Y.Z` cut from `master` at that commit; release branches are never deleted and there are no tags. The program for the owner's laptop is built from a release branch with `scripts/install-local.sh`. `master` and the release branches are pushed to GitHub (`origin`).
