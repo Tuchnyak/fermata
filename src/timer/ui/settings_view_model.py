@@ -39,6 +39,14 @@ class SettingsViewModel:
             return t(error.key)
         return None
 
+    def remember_window_geometry(self, text: str) -> str | None:
+        """Store the size and position of the normal window; answer with the message if refused."""
+        try:
+            self._settings_repository.set("window_geometry", text)
+        except ValidationError as error:
+            return t(error.key)
+        return None
+
     def save(
         self,
         *,

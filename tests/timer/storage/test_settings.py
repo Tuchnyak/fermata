@@ -151,6 +151,27 @@ def test_the_theme_must_be_one_of_the_themes(settings_repository, value):
     assert error.value.key == "setting.theme_invalid"
 
 
+def test_no_window_geometry_is_stored_by_default(settings_repository):
+    assert settings_repository.get_all().window_geometry == ""
+
+
+def test_a_window_geometry_can_be_stored_and_replaced(db, settings_repository):
+    settings_repository.set("window_geometry", "900x700+100+50")
+    settings_repository.set("window_geometry", "800x600+0+0")
+
+    assert settings_repository.get_all().window_geometry == "800x600+0+0"
+    assert stored_settings(db) == [("window_geometry", "800x600+0+0")]
+
+
+@pytest.mark.parametrize("value", ["", "nonsense", "720x680", "0x680+0+0", 5, None])
+def test_the_window_geometry_must_be_a_readable_one(db, settings_repository, value):
+    with pytest.raises(ValidationError) as error:
+        settings_repository.set("window_geometry", value)
+
+    assert error.value.key == "setting.window_geometry_invalid"
+    assert stored_settings(db) == []
+
+
 def test_values_survive_reopening_the_database(tmp_path):
     path = tmp_path / "test.db"
     first = Db.open(path)
@@ -305,6 +326,7 @@ def test_rejected_value_keeps_the_previous_one(settings_repository):
         "setting.long_break_every_invalid",
         "setting.transition_mode_invalid",
         "setting.blink_invalid",
+        "setting.window_geometry_invalid",
     ],
 )
 def test_error_messages_exist_in_the_catalog(key):

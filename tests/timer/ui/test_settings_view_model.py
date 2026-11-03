@@ -200,6 +200,34 @@ def test_an_unknown_theme_is_refused_and_nothing_is_stored(db, settings_view_mod
     assert stored_rows(db) == []
 
 
+# --- the window ---------------------------------------------------------------------
+
+
+def test_the_window_geometry_is_stored_at_once(db, settings_view_model):
+    message = settings_view_model.remember_window_geometry("900x700+100+50")
+
+    assert message is None
+    assert settings_view_model.settings().window_geometry == "900x700+100+50"
+    assert stored_rows(db) == [("window_geometry", "900x700+100+50")]
+
+
+def test_an_unreadable_window_geometry_is_refused_and_nothing_is_stored(
+    db, settings_view_model
+):
+    message = settings_view_model.remember_window_geometry("nonsense")
+
+    assert message == t("setting.window_geometry_invalid")
+    assert stored_rows(db) == []
+
+
+def test_saving_the_other_settings_leaves_the_window_geometry_alone(settings_view_model):
+    settings_view_model.remember_window_geometry("900x700+100+50")
+
+    settings_view_model.save(**form_values(work_minutes="30"))
+
+    assert settings_view_model.settings().window_geometry == "900x700+100+50"
+
+
 def test_saving_the_other_settings_leaves_the_theme_alone(settings_view_model):
     settings_view_model.choose_theme("light")
 

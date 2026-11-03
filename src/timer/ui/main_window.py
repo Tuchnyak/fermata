@@ -25,10 +25,11 @@ from timer.ui.settings_view_model import SettingsViewModel
 from timer.ui.start_panel import StartPanel
 from timer.ui.waiting_panel import WaitingPanel
 from timer.ui.waiting_view_model import WaitingViewModel
+from timer.window_geometry import MIN_SIZE, placement_offset, startup_geometry, without_offset
 
 NAVIGATION_BAR_SCREENS = (Screen.SCENARIOS, Screen.CATEGORIES, Screen.SETTINGS)
-MIN_WINDOW_SIZE = (520, 440)  # below this the screens would not fit
 TICK_MILLISECONDS = 200  # how often the engine is ticked and the countdown redrawn
+PLACEMENT_MILLISECONDS = 300  # by then the window manager has placed the window
 
 
 def window_title(speed: int = 1) -> str:
@@ -66,9 +67,17 @@ class MainWindow:
         self._fullscreen = fullscreen
         self._shown_home_mode: HomeMode | None = None
         self._running_panel: RunningPanel | None = None
+        self._normal_geometry = ""  # of the normal window, taken when it goes fullscreen
+        self._placement_offset = (0, 0)
         root.title(window_title())
-        root.geometry("720x680")
-        root.minsize(*MIN_WINDOW_SIZE)
+        self._asked_geometry = startup_geometry(
+            settings_view_model.settings().window_geometry,
+            root.winfo_screenwidth(),
+            root.winfo_screenheight(),
+        )
+        root.geometry(self._asked_geometry)
+        root.minsize(*MIN_SIZE)
+        root.protocol("WM_DELETE_WINDOW", self._on_close)
         self._header = ttk.Frame(root, padding=8)
         self._header.pack(fill="x")
         self._content = ttk.Frame(root, padding=8)
@@ -76,6 +85,13 @@ class MainWindow:
         root.bind("<Key>", self._on_key)
         self._show_current_screen()
         root.after(TICK_MILLISECONDS, self._on_tick)
+        root.after(PLACEMENT_MILLISECONDS, self._measure_placement)
+
+    def _measure_placement(self) -> None:
+        if not self._fullscreen.is_on:
+            self._placement_offset = placement_offset(
+                self._asked_geometry, self._root.geometry()
+            )
 
     def _on_tick(self) -> None:
         # The engine is ticked whatever screen is shown, so that intervals end on time.
@@ -119,8 +135,18 @@ class MainWindow:
         self._apply_fullscreen()
 
     def _apply_fullscreen(self) -> None:
+        if self._fullscreen.is_on:
+            self._normal_geometry = self._root.geometry()
         self._root.attributes("-fullscreen", self._fullscreen.is_on)
         self._show_current_screen()
+
+    def _on_close(self) -> None:
+        # Fullscreen is never remembered: a window closed in it keeps its normal geometry.
+        geometry = self._normal_geometry if self._fullscreen.is_on else self._root.geometry()
+        self._settings_view_model.remember_window_geometry(
+            without_offset(geometry, self._placement_offset)
+        )
+        self._root.destroy()
 
     def _open(self, screen: Screen) -> None:
         self._navigation.open(screen)

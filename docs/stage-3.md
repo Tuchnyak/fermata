@@ -22,10 +22,11 @@ Accepted like [stage-2.md](stage-2.md): decisions first, tests and code together
   - In fullscreen the home screen is a board: only the interval, the countdown and the progress (the circle row, or the work interval counter in a flow), at the sizes of 3.2; the header and the buttons are hidden, `Space` and `Enter` keep working. A secondary screen opened in fullscreen looks as usual.
   - The key handling (`F11`, `Esc` order) is tested without Tk.
 
-- [ ] **3.4 Window size and position remembered**
+- [x] **3.4 Window size and position remembered**
   - The size and position of the normal window are stored in the database (the setting `window_geometry`, not shown in Settings) when the window is closed, and restored at the next start. Fullscreen is never remembered: the application always starts in a normal window on the home screen. A window closed in fullscreen stores the size and position it had before, not the size of the screen.
   - A stored position that would put the window off the screen (another monitor, another resolution) is corrected to the screen.
-  - The stored text is validated and an invalid or missing value means the default size; tested without Tk.
+  - The stored text is validated and an invalid or missing value means the default size in the middle of the screen; tested without Tk.
+  - The window manager of the owner's laptop puts the window's frame at the position asked for, while Tk reports the position below the title bar, so a read-and-store cycle would move the window down at every start. The difference is measured once after the window is shown (asked position against reported) and taken off when storing.
 
 - [ ] **3.5 Close-out**
   - `docs/schema.md` (the settings `theme` and `window_geometry`), `docs/spec.md` §11, §12 and §19, `AGENTS.md` and the roadmap match the code.

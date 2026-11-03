@@ -83,6 +83,7 @@
   "setting.blink_invalid": "The blink setting must be on or off.",
   "setting.sound_invalid": "The sound setting must be on or off.",
   "setting.theme_invalid": "Unknown theme.",
+  "setting.window_geometry_invalid": "Unreadable window size and position.",
   "settings.work_minutes": "Work interval (minutes)",
   "settings.short_break_minutes": "Short break (minutes)",
   "settings.long_break_minutes": "Long break (minutes)",

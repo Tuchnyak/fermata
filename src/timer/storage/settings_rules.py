@@ -9,6 +9,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from functools import partial
 
+from timer.window_geometry import parse_geometry
+
 
 # The limits and the modes are also what the settings screen offers.
 WORK_MINUTES_RANGE = (1, 120)
@@ -54,6 +56,10 @@ def _is_flag(value: object) -> bool:
     return type(value) is bool
 
 
+def _is_window_geometry(value: object) -> bool:
+    return parse_geometry(value) is not None
+
+
 RULES = {
     "work_minutes": _integer_rule(WORK_MINUTES_RANGE, "setting.work_minutes_invalid"),
     "short_break_minutes": _integer_rule(
@@ -69,4 +75,5 @@ RULES = {
     "blink": Rule(_is_flag, "setting.blink_invalid"),
     "sound": Rule(_is_flag, "setting.sound_invalid"),
     "theme": Rule(_is_theme, "setting.theme_invalid"),
+    "window_geometry": Rule(_is_window_geometry, "setting.window_geometry_invalid"),
 }
