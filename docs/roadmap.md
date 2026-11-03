@@ -48,6 +48,8 @@ An out-of-order detour for the owner's own use: a first cut of sound (end of wor
 
 ## Stage 3 — Themes and fullscreen
 
+Breakdown into pieces with progress: [stage-3.md](stage-3.md).
+
 - Six themes: Light, Dark, Catppuccin Latte / Frappé / Macchiato / Mocha; switching in Settings.
 - Layout that scales with the window.
 - Fullscreen board (`F11`, `Esc`).
