@@ -9,6 +9,7 @@ from timer.storage.settings_rules import (
     LONG_BREAK_EVERY_RANGE,
     LONG_BREAK_MINUTES_RANGE,
     SHORT_BREAK_MINUTES_RANGE,
+    THEME_IDS,
     TRANSITION_MODES,
     WORK_MINUTES_RANGE,
 )
@@ -131,6 +132,25 @@ def test_sound_must_be_a_boolean(db, settings_repository, value):
     assert error.value.key == "setting.sound_invalid"
 
 
+def test_the_theme_is_dark_by_default(settings_repository):
+    assert settings_repository.get_all().theme == "dark"
+
+
+@pytest.mark.parametrize("theme_id", THEME_IDS)
+def test_every_theme_can_be_stored(settings_repository, theme_id):
+    settings_repository.set("theme", theme_id)
+
+    assert settings_repository.get_all().theme == theme_id
+
+
+@pytest.mark.parametrize("value", ["", "Dark", "nonsense", 1, None])
+def test_the_theme_must_be_one_of_the_themes(settings_repository, value):
+    with pytest.raises(ValidationError) as error:
+        settings_repository.set("theme", value)
+
+    assert error.value.key == "setting.theme_invalid"
+
+
 def test_values_survive_reopening_the_database(tmp_path):
     path = tmp_path / "test.db"
     first = Db.open(path)
@@ -241,7 +261,7 @@ def test_a_number_setting_rejects_a_value_that_is_not_an_integer(
         settings_repository.set(key, value)
 
 
-@pytest.mark.parametrize("key", ["", "theme", "Work_Minutes", "work minutes"])
+@pytest.mark.parametrize("key", ["", "volume", "Work_Minutes", "work minutes"])
 def test_unknown_key_is_rejected(settings_repository, key):
     with pytest.raises(ValidationError) as error:
         settings_repository.set(key, 25)
@@ -256,7 +276,7 @@ def test_unknown_key_is_rejected(settings_repository, key):
         ("long_break_every", 21),
         ("transition_mode", "manual"),
         ("blink", "yes"),
-        ("theme", "dark"),
+        ("volume", "dark"),
     ],
 )
 def test_rejected_value_is_not_stored(db, settings_repository, key, value):
@@ -329,7 +349,7 @@ def test_set_many_keeps_the_previous_values_when_one_value_is_invalid(settings_r
 
 def test_set_many_rejects_an_unknown_key_and_stores_nothing(db, settings_repository):
     with pytest.raises(ValidationError) as error:
-        settings_repository.set_many({"work_minutes": 30, "theme": "dark"})
+        settings_repository.set_many({"work_minutes": 30, "volume": "dark"})
 
     assert error.value.key == "setting.unknown_key"
     assert stored_settings(db) == []

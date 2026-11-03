@@ -1,6 +1,7 @@
-"""The settings screen: the timer values, the transition mode, the blink flag and the sound flag.
+"""The settings screen: the timer values, the transition mode, the blink and sound flags and the theme.
 
-Nothing is stored until the Save button is pressed.
+Nothing is stored until the Save button is pressed, except the theme: it is applied and stored
+as soon as it is chosen, so that its look can be seen while choosing.
 """
 
 import tkinter
@@ -14,6 +15,7 @@ from timer.storage.settings_rules import (
     TRANSITION_MODES,
     WORK_MINUTES_RANGE,
 )
+from timer.themes import ttk_theme_name
 from timer.ui.number_slider import NumberSlider
 from timer.ui.settings_view_model import SettingsViewModel
 
@@ -63,6 +65,7 @@ class SettingsScreen(ttk.Frame):
         self._build_number_fields()
         self._build_transition_modes()
         self._build_flags()
+        self._build_theme()
         self._load_settings()
 
     def _build_save_button(self, actions: ttk.Frame) -> None:
@@ -117,6 +120,28 @@ class SettingsScreen(ttk.Frame):
                 self, text=t(key), variable=variable, takefocus=False
             ).pack(anchor="w", pady=(16, 0))
 
+    def _build_theme(self) -> None:
+        line = ttk.Frame(self)
+        line.pack(anchor="w", pady=(16, 0))
+        ttk.Label(line, text=t("settings.theme")).pack(side="left", padx=(0, 8))
+        self._themes = self._view_model.themes()
+        self._theme_selector = ttk.Combobox(
+            line, values=[name for _, name in self._themes], state="readonly"
+        )
+        self._theme_selector.pack(side="left")
+        self._theme_selector.bind("<<ComboboxSelected>>", self._on_theme_selected)
+
+    def _on_theme_selected(self, event: tkinter.Event) -> None:
+        theme_id, _ = self._themes[self._theme_selector.current()]
+        message = self._view_model.choose_theme(theme_id)
+        if message is not None:
+            self._message.configure(text=message, bootstyle="danger")
+            return
+        ttk.Style().theme_use(ttk_theme_name(theme_id))
+        for slider in self._sliders.values():
+            slider.refresh_colors()  # what is drawn by hand does not follow the theme itself
+        self.focus_set()
+
     def _load_settings(self) -> None:
         settings = self._view_model.settings()
         for key, slider in self._sliders.items():
@@ -124,6 +149,9 @@ class SettingsScreen(ttk.Frame):
         self._mode_variable.set(settings.transition_mode)
         self._blink_variable.set(settings.blink)
         self._sound_variable.set(settings.sound)
+        for theme_id, name in self._themes:
+            if theme_id == settings.theme:
+                self._theme_selector.set(name)
 
     def _save(self) -> None:
         numbers = {}

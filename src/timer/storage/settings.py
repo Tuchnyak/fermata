@@ -25,6 +25,7 @@ class Settings:
     transition_mode: str = "confirm"
     blink: bool = True
     sound: bool = True
+    theme: str = "dark"
 
 
 def _encode(value: Value) -> str:

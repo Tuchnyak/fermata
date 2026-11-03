@@ -41,6 +41,7 @@ Only settings the user has changed are stored; a missing key means the applicati
 | `transition_mode` | `auto`, `confirm` or `mixed` | `confirm` |
 | `blink` | blink the current circle, `1` / `0` | 1 |
 | `sound` | play a sound when a work interval or a break ends, `1` / `0` | 1 |
+| `theme` | `light`, `dark`, `catppuccin_latte`, `catppuccin_frappe`, `catppuccin_macchiato` or `catppuccin_mocha`; an unknown value is read as `dark` | `dark` |
 
 The limits are enforced by the application when a setting is written, not by the schema.
 

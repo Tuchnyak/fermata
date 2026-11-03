@@ -5,6 +5,7 @@ from timer.clock import make_clock, speed_of
 from timer.i18n import t
 from timer.resume import Resumption
 from timer.storage.paths import db_path
+from timer.themes import register_themes, ttk_theme_name
 from timer.ui.hotkeys import HotkeyHandler
 from timer.ui.main_window import MainWindow, window_title
 from timer.ui.navigation import Navigation
@@ -33,7 +34,9 @@ def main():
     clock = make_clock(release=is_release(), real_time=arguments.real_time)
     components = build_components(db_path(), clock)
 
-    root = ttk.Window(themename="darkly")
+    register_themes()
+    stored_theme = components.settings_view_model.settings().theme
+    root = ttk.Window(themename=ttk_theme_name(stored_theme))
     navigation = Navigation()
     hotkey_handler = HotkeyHandler(
         components.engine, navigation, start_flow=components.home_view_model.start

@@ -5,6 +5,7 @@
 
 from timer.i18n import t
 from timer.storage.settings import Settings, SettingsRepository, Value
+from timer.storage.settings_rules import THEME_IDS
 from timer.validation import ValidationError
 
 
@@ -22,6 +23,21 @@ class SettingsViewModel:
 
     def settings(self) -> Settings:
         return self._settings_repository.get_all()
+
+    def themes(self) -> list[tuple[str, str]]:
+        """The themes to choose from, as (id, name to show) in the order to show them."""
+        choices = []
+        for theme_id in THEME_IDS:
+            choices.append((theme_id, t(f"theme.{theme_id}")))
+        return choices
+
+    def choose_theme(self, theme_id: str) -> str | None:
+        """Store the theme at once; answer with the message to show if it is rejected."""
+        try:
+            self._settings_repository.set("theme", theme_id)
+        except ValidationError as error:
+            return t(error.key)
+        return None
 
     def save(
         self,
