@@ -16,6 +16,7 @@ Accepted like [stage-2.md](stage-2.md): decisions first, tests and code together
 - [x] **3.2 Layout that scales**
   - The running, waiting and start screens grow with the window: the sizes of the fonts, of the circles and of the gaps follow the size of the window between a minimum and a maximum.
   - The rule (window size to sizes) is a pure function and is tested; the window gets a minimum size.
+  - Added after the owner's review of the large sizes: the circles are smooth pictures (drawn four times larger and scaled down, `ui/circle_image.py`) instead of Tk ovals, whose edge is jagged.
 
 - [x] **3.3 Fullscreen board**
   - `F11` and a button in the header toggle the fullscreen window; `Esc` leaves it first and only then goes back from a secondary screen.
@@ -28,7 +29,7 @@ Accepted like [stage-2.md](stage-2.md): decisions first, tests and code together
   - The stored text is validated and an invalid or missing value means the default size in the middle of the screen; tested without Tk.
   - The window manager of the owner's laptop puts the window's frame at the position asked for, while Tk reports the position below the title bar, so a read-and-store cycle would move the window down at every start. The difference is measured once after the window is shown (asked position against reported) and taken off when storing.
 
-- [ ] **3.5 Close-out**
+- [x] **3.5 Close-out**
   - `docs/schema.md` (the settings `theme` and `window_geometry`), `docs/spec.md` §11, §12 and §19, `AGENTS.md` and the roadmap match the code.
   - Final manual check by the owner: all six themes on every screen, resizing, fullscreen and the restored window; the release build is refreshed by the owner's command (`./scripts/install-local.sh` from the release branch after it takes this stage).
   - After the owner's approval the branch is merged into `master` with `git merge --no-ff`.

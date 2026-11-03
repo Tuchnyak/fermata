@@ -202,15 +202,16 @@ Idle state, instead of the controls:
 - The center shows the interval (for work intervals — the category name; for breaks `SHORT BREAK` or `LONG BREAK`), the work interval number, a large countdown and the circle row (scenario) or work interval counter (flow).
 - Scenarios, Categories, History and Settings open **inside the main window** with a Back button. No secondary windows.
 - One layout that **scales with the window**: the countdown and fonts grow with the window size.
-- **Fullscreen board** (`[⛶]` / `F11`): only the interval, the countdown and the progress; controls are hidden, hotkeys keep working. `Esc` exits.
-- The window remembers its size and position between launches.
+- **Fullscreen board** (`[⛶]` / `F11`): only the interval, the countdown and the progress; controls are hidden, hotkeys keep working. `Esc` exits. The board is the home screen only: a secondary screen opened in fullscreen looks as usual, and `F11` works there too, also while a text field has the focus.
+- The window remembers its size and position between launches (the setting `window_geometry`, written when the window is closed). Fullscreen is never remembered: the application always starts in a normal window on the home screen, and a window closed in fullscreen stores the size and position it had before. A stored position off the screen (another monitor, another resolution) is moved onto the screen.
 - The application shows its **version** in the UI (in Settings) and prints it for `--version`; it is the version of `pyproject.toml`.
 - The application has an **icon**: the window icon and the icon of its launcher entry. The picture is chosen by the owner.
 
 ## 12. Themes
 
 - Six built-in themes: Light, Dark, Catppuccin Latte, Catppuccin Frappé, Catppuccin Macchiato, Catppuccin Mocha.
-- Selected in Settings, applied immediately. The OS theme is not followed.
+- Selected in Settings, applied and stored immediately, without the Save button of the other settings (what is typed there but not saved survives the change). The OS theme is not followed. Dark is the default.
+- The Catppuccin palettes are the official ones; Light and Dark are the application's own neutral palettes. The accent of every theme is its blue.
 - The theme provides the accent color (current circle) and neutral colors; category colors are the user's own.
 - A theme editor is in the backlog (see roadmap).
 
@@ -291,7 +292,7 @@ Not part of the product unless a real need appears (see roadmap backlog for the 
 
 ## 19. Assumptions to confirm
 
-Decided while writing. All of them are confirmed and implemented: items 1–5 and 7–9 in Stage 1, items 6 and 10–13 in Stage 2:
+Decided while writing. All of them are confirmed and implemented: items 1–5 and 7–9 in Stage 1, items 6 and 10–13 in Stage 2, items 14–17 in Stage 3:
 
 1. Skipped work intervals count toward N for long breaks (the break pattern stays as previewed).
 2. Skipping a break moves straight to the next work interval.
@@ -306,3 +307,7 @@ Decided while writing. All of them are confirmed and implemented: items 1–5 an
 11. Skipping the last work interval of a scenario ends the session like completing it: no break follows, and the interval counts as skipped in the summary.
 12. The summary of a scenario is shown on the home screen only when it ran to its end, and stays there until the next session starts; Stop shows no summary.
 13. A scenario can be started only while the timer is idle. Editing or deleting it while its session runs is allowed and changes nothing for that session, which uses its snapshot: the overrides in the snapshot are fixed, the values that are not overridden are read from the global settings when an interval starts.
+14. The theme is applied and stored when it is chosen, not on Save; the palettes are in the code and the database holds only the id of the theme.
+15. Fullscreen is a property of the window and is never stored. The board layout is for the home screen only; a window that is left fullscreen by the window manager, not by our keys, is not noticed.
+16. The fonts and circles scale with the smaller of the window's width and height relative to the default window (720×680), between 0.7 and 4 times.
+17. The window geometry is written on close only, so a crash loses only the last move. The window manager puts the frame at the position asked for while Tk reports the position below the title bar; the application measures the difference after the window is shown and takes it off when storing, so the window does not creep down at every start.

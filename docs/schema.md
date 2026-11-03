@@ -42,6 +42,7 @@ Only settings the user has changed are stored; a missing key means the applicati
 | `blink` | blink the current circle, `1` / `0` | 1 |
 | `sound` | play a sound when a work interval or a break ends, `1` / `0` | 1 |
 | `theme` | `light`, `dark`, `catppuccin_latte`, `catppuccin_frappe`, `catppuccin_macchiato` or `catppuccin_mocha`; an unknown value is read as `dark` | `dark` |
+| `window_geometry` | size and position of the normal window as `WIDTHxHEIGHT+X+Y` (a negative position as `+-N`), e.g. `720x680+600+260`; written when the window is closed, never the fullscreen size; an unreadable value is read as the default window | none (720×680 in the middle of the screen) |
 
 The limits are enforced by the application when a setting is written, not by the schema.
 
