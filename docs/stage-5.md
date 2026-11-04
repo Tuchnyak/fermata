@@ -24,7 +24,7 @@ What is already there from [release-0.2.md](release-0.2.md): the sounds of the e
   - The switch is read when a sound is due, so the signals and the background sound follow it at once.
   - Tested without Tk: the toggle and what it stores, that the other settings stay, the texts, and that a muted timer stays silent through the whole chain.
 
-- [ ] **5.4 Close-out**
+- [x] **5.4 Close-out**
   - `docs/schema.md` (the setting), `docs/spec.md` §4.1, §14 and §19, `AGENTS.md`, the roadmap and `src/timer/sounds/README.md` match the code.
   - Final check by ear by the owner; the version is raised on `master` before a release is cut, as in `AGENTS.md`.
   - After the owner's approval the branch is merged into `master` with `git merge --no-ff`, then deleted locally and on GitHub.

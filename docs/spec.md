@@ -48,7 +48,8 @@ Work intervals are grouped into **Scenarios** that are designed in advance and s
 | Transition mode | Wait for confirmation |
 | Blink current circle | On |
 | Theme | Dark |
-| Sound notifications | On (available from the sound stage) |
+| Sound notifications | On |
+| Background sound while working | Off |
 
 Durations are whole minutes.
 
@@ -173,7 +174,7 @@ A long break is shown as a gap one empty circle wide, so work intervals are visu
 
 ```
 ┌ Timer ─────────────────────────────────────────────────┐
-│ [Scenarios] [Categories] [History] [Settings]   [⛶]    │
+│ [Scenarios] [Categories] [History] [Settings]  [🔊] [⛶] │
 │                                                        │
 │                       WORK · 3/6                       │
 │                                                        │
@@ -200,9 +201,10 @@ Idle state, instead of the controls:
 - After a scenario that ran to its end, a summary line stands above the columns (§7.4) until the next session starts.
 
 - The center shows the interval (for work intervals — the category name; for breaks `SHORT BREAK` or `LONG BREAK`), the work interval number, a large countdown and the circle row (scenario) or work interval counter (flow).
+- The **mute button** `[🔊]` (`[🔇]` while muted) switches all the sounds off and on; see §14.
 - Scenarios, Categories, History and Settings open **inside the main window** with a Back button. No secondary windows.
 - One layout that **scales with the window**: the countdown and fonts grow with the window size.
-- **Fullscreen board** (`[⛶]` / `F11`): only the interval, the countdown and the progress; controls are hidden, hotkeys keep working. `Esc` exits. The board is the home screen only: a secondary screen opened in fullscreen looks as usual, and `F11` works there too, also while a text field has the focus.
+- **Fullscreen board** (`[⛶]` / `F11`): only the interval, the countdown and the progress; controls are hidden (the mute button stays, in the top right corner), hotkeys keep working. `Esc` exits. The board is the home screen only: a secondary screen opened in fullscreen looks as usual, and `F11` works there too, also while a text field has the focus.
 - The window remembers its size and position between launches (the setting `window_geometry`, written when the window is closed). Fullscreen is never remembered: the application always starts in a normal window on the home screen, and a window closed in fullscreen stores the size and position it had before. A stored position off the screen (another monitor, another resolution) is moved onto the screen.
 - The application shows its **version** in the UI (in Settings) and prints it for `--version`; it is the version of `pyproject.toml`.
 - The application has an **icon**: the window icon and the icon of its launcher entry. The picture is chosen by the owner.
@@ -243,7 +245,11 @@ The database schema is documented so the user can query history directly (`sqlit
 - A calm, unobtrusive sound on every interval transition.
 - One global on/off switch.
 - Tkinter has no cross-platform audio; the playback method (library or a system command such as `paplay`) is chosen at that stage.
+- The sounds are the owner's files in `src/timer/sounds/`; the names and formats are in the README of that folder.
 - First cut (interim release 0.2): one sound for the end of a work interval and one for the end of a break, played when the time runs out; Skip and Stop are silent. The files are chosen by the owner and kept in `src/timer/sounds/`. On Linux a system command plays them in the background: the first of `paplay`, `pw-play`, `ffplay`, `aplay` that is installed and knows the format. No file or no player means no sound. The Settings check box "Sound notifications" is the global switch.
+- Stage 5: a scenario run to its end plays its own sound, `scenario_end`, instead of `work_end`; without its file `work_end` plays. Skipping or stopping is silent.
+- A **background sound** while a work interval runs: ticking, white noise or rain, chosen in Settings (the choice is stored at once), off by default. It plays in a loop, and only while a work interval is running: a pause, a break, waiting for confirmation, Skip, Stop and the end of the interval stop it, and resuming starts it again. It is played by `ffplay`, which is the one of the players that loops; without `ffplay` there is no background sound.
+- The **mute button** on the home screen (in the header, and on the fullscreen board) is the check box "Sound notifications": it switches the signals and the background sound off and on together and is stored at once.
 
 ## 15. Localization
 
@@ -292,7 +298,7 @@ Not part of the product unless a real need appears (see roadmap backlog for the 
 
 ## 19. Assumptions to confirm
 
-Decided while writing. All of them are confirmed and implemented: items 1–5 and 7–9 in Stage 1, items 6 and 10–13 in Stage 2, items 14–17 in Stage 3, items 18–21 in Stage 4:
+Decided while writing. All of them are confirmed and implemented: items 1–5 and 7–9 in Stage 1, items 6 and 10–13 in Stage 2, items 14–17 in Stage 3, items 18–21 in Stage 4, items 22–25 in Stage 5:
 
 1. Skipped work intervals count toward N for long breaks (the break pattern stays as previewed).
 2. Skipping a break moves straight to the next work interval.
@@ -315,3 +321,7 @@ Decided while writing. All of them are confirmed and implemented: items 1–5 an
 19. `completed`, `skipped` and `stopped` intervals show their actual duration (pauses excluded) and count in the totals; an `interrupted` one shows a dash and counts for nothing. A length under a minute reads `0m`.
 20. The category in the list is the interval's category as it is named now: a renamed category shows its new name, an archived one is still shown.
 21. No index is added to `interval` for the history: the amount of data does not need one.
+22. The sound of the end of a scenario plays only when its last work interval ended by time; skipping that interval is silent, like any skip. Two sounds never play for one end.
+23. The background sound is read at every tick of the window, so a pause, the choice in Settings and the mute button apply within a fraction of a second. `ffplay` runs under `timeout` (coreutils) for the time left in the interval plus five seconds, because its own `-t` does not end a loop: a sound left behind by a crashed application ends by itself. Without `timeout` there is no background sound. The player is ended when the window is closed.
+24. The mute button changes the stored setting `sound`, so a muted timer stays muted after a restart until the button is pressed again; the chosen background sound is kept.
+25. The background files are two-minute loops (`ticking` is 68 seconds), cut and encoded as `ogg` to keep the repository and the build small. The loudness of the files is not equalized (see the backlog).

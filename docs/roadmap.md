@@ -67,7 +67,12 @@ Breakdown into pieces with progress: [stage-4.md](stage-4.md).
 
 ## Stage 5 — Sound
 
-- Calm transition sounds with a global on/off switch; choose the playback method for Linux.
+Breakdown into pieces with progress: [stage-5.md](stage-5.md).
+
+**Status: done.**
+
+- Calm transition sounds with a global on/off switch and the playback by a system command for Linux (first cut in release 0.2); a sound for the end of a scenario.
+- A background sound while working (ticking, white noise or rain), and a mute button on the home screen and the fullscreen board.
 
 ## Stage 6 — Packaging and CI
 
@@ -81,4 +86,5 @@ Breakdown into pieces with progress: [stage-4.md](stage-4.md).
 Not scheduled. Each item needs its own design discussion before work starts.
 
 - **Theme editor** — to be designed separately.
+- **Equal loudness of the sound files** — measured in Stage 5: `scenario_end` is much louder than `work_end`, `ticking` much quieter than the other background sounds, and `rain` peaks above full scale. The owner postponed it; a choice of the common level is needed first.
 - Deferred ideas from requirements (add only on real need): restart interval, "+5 minutes", per-scenario transition mode, per-category work interval length, history screen with charts and filters, builds for Windows/macOS.
