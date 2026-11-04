@@ -1,12 +1,14 @@
 """The settings screen: the timer values, the transition mode, the blink and sound flags, the
-background sound and the theme.
+background sound, the theme and the language.
 
-Nothing is stored until the Save button is pressed, except the background sound and the theme:
-they are applied and stored as soon as they are chosen, so that they can be heard and seen
-while choosing.
+Nothing is stored until the Save button is pressed, except the background sound, the theme and
+the language: they are applied and stored as soon as they are chosen, so that they can be heard
+and seen while choosing. A new language redraws the screen, which gets back what was typed in
+it but not saved yet (the draft).
 """
 
 import tkinter
+from collections.abc import Callable
 
 import ttkbootstrap as ttk
 from timer.i18n import t
@@ -56,11 +58,22 @@ NUMBER_FIELDS = (
 
 class SettingsScreen(ttk.Frame):
     def __init__(
-        self, parent: tkinter.Misc, view_model: SettingsViewModel, actions: ttk.Frame
+        self,
+        parent: tkinter.Misc,
+        view_model: SettingsViewModel,
+        actions: ttk.Frame,
+        on_language_changed: Callable[[dict[str, object]], None],
+        draft: dict[str, object] | None = None,
     ):
-        """`actions` is the place at the right of the window header for the screen's buttons."""
+        """`actions` is the place at the right of the window header for the screen's buttons.
+
+        `on_language_changed` is called with the draft of the form after the language was
+        changed, to have the screen drawn again in it; `draft` is what a screen drawn before
+        left, to be put back.
+        """
         super().__init__(parent)
         self._view_model = view_model
+        self._on_language_changed = on_language_changed
         self._sliders: dict[str, NumberSlider] = {}
         self._mode_variable = tkinter.StringVar()
         self._blink_variable = tkinter.BooleanVar()
@@ -73,7 +86,7 @@ class SettingsScreen(ttk.Frame):
         self._build_flags()
         self._build_background_sound()
         self._build_theme()
-        self._load_settings()
+        self._load_settings(draft)
 
     def _build_version(self, actions: ttk.Frame) -> None:
         """The version right after the title in the header, small and dim.
@@ -181,6 +194,32 @@ class SettingsScreen(ttk.Frame):
         self._theme_selector.pack(side="left")
         self._theme_selector.bind("<<ComboboxSelected>>", self._on_theme_selected)
 
+        ttk.Label(line, text=t("settings.language")).pack(side="left", padx=(24, 8))
+        self._languages = self._view_model.languages()
+        self._language_selector = ttk.Combobox(
+            line, values=[name for _, name in self._languages], state="readonly"
+        )
+        self._language_selector.pack(side="left")
+        self._language_selector.bind("<<ComboboxSelected>>", self._on_language_selected)
+
+    def _on_language_selected(self, event: tkinter.Event) -> None:
+        language_id, _ = self._languages[self._language_selector.current()]
+        message = self._view_model.choose_language(language_id)
+        if message is not None:
+            self._message.configure(text=message, bootstyle="danger")
+            return
+        self._on_language_changed(self._draft())
+
+    def _draft(self) -> dict[str, object]:
+        """What stands in the form now, saved or not."""
+        draft: dict[str, object] = {}
+        for key, slider in self._sliders.items():
+            draft[key] = int(slider.get())
+        draft["transition_mode"] = self._mode_variable.get()
+        draft["blink"] = self._blink_variable.get()
+        draft["sound"] = self._sound_variable.get()
+        return draft
+
     def _on_theme_selected(self, event: tkinter.Event) -> None:
         theme_id, _ = self._themes[self._theme_selector.current()]
         message = self._view_model.choose_theme(theme_id)
@@ -193,19 +232,24 @@ class SettingsScreen(ttk.Frame):
         self._dim_version()
         self.focus_set()
 
-    def _load_settings(self) -> None:
+    def _load_settings(self, draft: dict[str, object] | None = None) -> None:
+        """Show the stored settings, with what a draft changes in them."""
         settings = self._view_model.settings()
+        values = {**vars(settings), **(draft or {})}
         for key, slider in self._sliders.items():
-            slider.set(getattr(settings, key))
-        self._mode_variable.set(settings.transition_mode)
-        self._blink_variable.set(settings.blink)
-        self._sound_variable.set(settings.sound)
+            slider.set(values[key])
+        self._mode_variable.set(values["transition_mode"])
+        self._blink_variable.set(values["blink"])
+        self._sound_variable.set(values["sound"])
         for theme_id, name in self._themes:
             if theme_id == settings.theme:
                 self._theme_selector.set(name)
         for sound_id, name in self._background_sounds:
             if sound_id == settings.background_sound:
                 self._background_sound_selector.set(name)
+        for language_id, name in self._languages:
+            if language_id == settings.language:
+                self._language_selector.set(name)
 
     def _save(self) -> None:
         numbers = {}

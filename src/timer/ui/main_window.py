@@ -10,10 +10,11 @@ from tkinter import ttk as tk_ttk
 import ttkbootstrap as ttk
 from timer.background_sound import BackgroundSound
 from timer.build import is_release
-from timer.i18n import t
+from timer.i18n import current_language, t
 from timer.ui.categories_screen import CategoriesScreen
 from timer.ui.categories_view_model import CategoriesViewModel
 from timer.ui.history_screen import HistoryScreen
+from timer.ui.library_locale import apply_library_locale
 from timer.ui.history_view_model import HistoryViewModel
 from timer.ui.home_view_model import HomeMode, HomeViewModel
 from timer.ui.fullscreen import Fullscreen, shows_board
@@ -60,6 +61,7 @@ class MainWindow:
         history_view_model: HistoryViewModel,
         fullscreen: Fullscreen,
         background_sound: BackgroundSound,
+        speed: int = 1,
     ):
         self._root = root
         self._navigation = navigation
@@ -73,11 +75,13 @@ class MainWindow:
         self._history_view_model = history_view_model
         self._fullscreen = fullscreen
         self._background_sound = background_sound
+        self._speed = speed
+        self._settings_draft: dict[str, object] | None = None
         self._shown_home_mode: HomeMode | None = None
         self._running_panel: RunningPanel | None = None
         self._normal_geometry = ""  # of the normal window, taken when it goes fullscreen
         self._placement_offset = (0, 0)
-        root.title(window_title())
+        root.title(window_title(speed))
         self._asked_geometry = startup_geometry(
             settings_view_model.settings().window_geometry,
             root.winfo_screenwidth(),
@@ -158,6 +162,13 @@ class MainWindow:
         self._background_sound.stop()
         self._root.destroy()
 
+    def _on_language_changed(self, draft: dict[str, object]) -> None:
+        """Draw everything again in the new language; the settings form keeps its draft."""
+        apply_library_locale(current_language())
+        self._root.title(window_title(self._speed))
+        self._settings_draft = draft
+        self._show_current_screen()
+
     def _open(self, screen: Screen) -> None:
         self._navigation.open(screen)
         self._show_current_screen()
@@ -222,9 +233,14 @@ class MainWindow:
                 fill="both", expand=True
             )
         elif self._navigation.current == Screen.SETTINGS:
-            SettingsScreen(self._content, self._settings_view_model, actions).pack(
-                fill="both", expand=True
-            )
+            draft, self._settings_draft = self._settings_draft, None
+            SettingsScreen(
+                self._content,
+                self._settings_view_model,
+                actions,
+                self._on_language_changed,
+                draft,
+            ).pack(fill="both", expand=True)
         else:
             self._show_home_content(board)
 

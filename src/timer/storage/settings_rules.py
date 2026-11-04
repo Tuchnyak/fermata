@@ -18,6 +18,7 @@ SHORT_BREAK_MINUTES_RANGE = (1, 30)
 LONG_BREAK_MINUTES_RANGE = (1, 60)
 LONG_BREAK_EVERY_RANGE = (1, 10)
 TRANSITION_MODES = ("auto", "confirm", "mixed")
+LANGUAGE_IDS = ("en", "ru")  # the languages that have a catalog, English first
 BACKGROUND_SOUND_IDS = ("off", "ticking", "white_noise", "rain")
 THEME_IDS = (
     "light",
@@ -57,6 +58,10 @@ def _is_background_sound(value: object) -> bool:
     return value in BACKGROUND_SOUND_IDS
 
 
+def _is_language(value: object) -> bool:
+    return value in LANGUAGE_IDS
+
+
 def _is_flag(value: object) -> bool:
     return type(value) is bool
 
@@ -81,5 +86,6 @@ RULES = {
     "sound": Rule(_is_flag, "setting.sound_invalid"),
     "background_sound": Rule(_is_background_sound, "setting.background_sound_invalid"),
     "theme": Rule(_is_theme, "setting.theme_invalid"),
+    "language": Rule(_is_language, "setting.language_invalid"),
     "window_geometry": Rule(_is_window_geometry, "setting.window_geometry_invalid"),
 }

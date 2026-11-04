@@ -2,13 +2,14 @@ import ttkbootstrap as ttk
 from timer.arguments import parse_arguments
 from timer.build import is_release
 from timer.clock import make_clock, speed_of
-from timer.i18n import t
+from timer.i18n import current_language, t
 from timer.resume import Resumption
 from timer.storage.paths import db_path
 from timer.themes import register_themes, ttk_theme_name
 from timer.ui.fullscreen import Fullscreen
 from timer.ui.hotkeys import HotkeyHandler
-from timer.ui.main_window import MainWindow, window_title
+from timer.ui.library_locale import apply_library_locale
+from timer.ui.main_window import MainWindow
 from timer.ui.navigation import Navigation
 from timer.wiring import build_components
 from ttkbootstrap.dialogs import Messagebox
@@ -21,12 +22,13 @@ def ask_to_resume(root: ttk.Window, resumption: Resumption) -> None:
         message=resumption.question(),
         title=t("resume.title"),
         parent=root,
+        buttons=[t("dialog.no"), t("dialog.yes")],
         localize=False,
     )
     # Closing the question without an answer leaves the session to be offered again.
-    if answer == "Yes":
+    if answer == t("dialog.yes"):
         resumption.resume()
-    elif answer == "No":
+    elif answer == t("dialog.no"):
         resumption.decline()
 
 
@@ -38,6 +40,7 @@ def main():
     register_themes()
     stored_theme = components.settings_view_model.settings().theme
     root = ttk.Window(themename=ttk_theme_name(stored_theme))
+    apply_library_locale(current_language())
     navigation = Navigation()
     fullscreen = Fullscreen()
     hotkey_handler = HotkeyHandler(
@@ -59,9 +62,8 @@ def main():
         components.history_view_model,
         fullscreen,
         components.background_sound,
+        speed_of(release=is_release(), real_time=arguments.real_time),
     )
-    speed = speed_of(release=is_release(), real_time=arguments.real_time)
-    root.title(window_title(speed))
     if components.resumption is not None:
         root.after(ASK_DELAY_MILLISECONDS, ask_to_resume, root, components.resumption)
     root.mainloop()

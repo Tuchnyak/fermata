@@ -212,7 +212,7 @@ def test_the_preview_shows_a_future_circle_per_work_interval_with_the_category_c
 def test_the_preview_tells_the_count_and_the_total_duration(editor, work, personal):
     fill_example(editor, work, personal)
 
-    assert editor.preview().text == "6 work intervals · ~3h 05m"
+    assert editor.preview().text == "Work intervals: 6 · ~3h 05m"
 
 
 def test_the_preview_follows_the_overrides(editor, work, personal):
@@ -224,7 +224,7 @@ def test_the_preview_follows_the_overrides(editor, work, personal):
 
     assert shape(preview.items) == "CCGCCGCC"
     # Six work intervals of 10 minutes; breaks after 1..5: 5 + 15 + 5 + 15 + 5 = 45.
-    assert preview.text == "6 work intervals · ~1h 45m"
+    assert preview.text == "Work intervals: 6 · ~1h 45m"
 
 
 def test_removing_an_override_returns_to_the_global_value(editor, work, personal):

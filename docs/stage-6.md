@@ -13,10 +13,13 @@ What is already there from [release-0.2.md](release-0.2.md): the PyInstaller bui
   - Settings shows the version right after its title in the header: `Version 0.5.0`, in a smaller font and a less contrasting color than the rest of the screen (a faded text color, readable in all six themes: a test checks the contrast). It is in the header, not in a line of its own, because the screen has no room for another line at the default window size.
   - The build carries the metadata by itself: PyInstaller sees the `version("timer")` call (a build without the `--copy-metadata` flag was tried and reports the version), so no flag is added; verified by running the built executable with `--version`, and guarded by the CI check of 6.5.
 
-- [ ] **6.2 Choosing the language**
-  - Added at the owner's request, before the icon. The setting `language` and a list in Settings; the languages are English (the default), Russian, Spanish, Portuguese, German, Chinese and Japanese. Spec §15 said the language setting appears when a second language does: this is that stage.
-  - The mechanics: one catalog file per language with the same keys as `en.json`, the text in the chosen language and English where a key is missing; a test fails when a catalog lacks a key or has an extra one. The decisions (the names in the list, when the choice applies) are stated when the piece starts.
-  - Russian is the first translation, so the owner can check the mechanics by reading it.
+- [x] **6.2 Choosing the language**
+  - Added at the owner's request, before the icon. The setting `language` and a list in Settings (on the line of the theme); the languages are English (the default), Russian, Spanish, Portuguese (Brazilian), German, Chinese (Simplified) and Japanese. Spec §15 said the language setting appears when a second language does: this is that stage. This piece makes the mechanics and the first two catalogs, English and Russian; each language is added to the list when its catalog is.
+  - The list names every language in that language (`English`, `Русский`); the choice is stored and applied at once, like the theme: the screen is drawn again, and what was typed in Settings but not saved yet is kept.
+  - One catalog file per language, `locales/<code>.json`, with the keys and the `{placeholders}` of `en.json`; a text a language lacks is shown in English. A test fails when a catalog lacks a key, has an extra one or changes the placeholders.
+  - The plural forms of the scenario line are avoided by wording: `Work intervals: 3 · ~1h 15m`, one key per language. The lengths of time (`25m`, `1h 05m`) are catalog texts too.
+  - The Yes / No buttons of the questions are named in the language (`ui/dialogs.py`); the line-of-text and color dialogs of ttkbootstrap speak the language through the library's own catalog, to which the Russian texts we use are added (`ui/library_locale.py`).
+  - The names of the categories and scenarios are the user's data and are not translated (the system category stays `None`).
 
 - [ ] **6.3 The other languages**
   - Spanish, Portuguese, German, Chinese and Japanese catalogs. The translations are written by the agent and are not checked by native speakers; this is said in the docs. The window must show Chinese and Japanese text: checked on the owner's laptop.

@@ -6,9 +6,10 @@ from functools import partial
 
 import ttkbootstrap as ttk
 from timer.i18n import t
+from timer.ui.dialogs import ask_yes_no
 from timer.storage.categories import Category
 from timer.ui.categories_view_model import DEFAULT_COLOR, CategoriesViewModel
-from ttkbootstrap.dialogs import Messagebox, Querybox
+from ttkbootstrap.dialogs import Querybox
 from ttkbootstrap.dialogs.colorchooser import ColorChooserDialog
 
 SWATCH_SIZE = 16
@@ -146,13 +147,8 @@ class CategoriesScreen(ttk.Frame):
             self._show_result(self._view_model.recolor(category.id, new_color))
 
     def _archive(self, category: Category) -> None:
-        answer = Messagebox.yesno(
-            message=t("categories.archive_confirm", name=category.name),
-            title=t("categories.archive"),
-            parent=self,
-            localize=False,
-        )
-        if answer == "Yes":
+        message = t("categories.archive_confirm", name=category.name)
+        if ask_yes_no(self, message, t("categories.archive")):
             self._show_result(self._view_model.archive(category.id))
 
     def _show_result(self, message: str | None) -> bool:

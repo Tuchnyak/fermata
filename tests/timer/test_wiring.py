@@ -1,4 +1,5 @@
 import pytest
+from timer import i18n
 from timer.background_sound import BackgroundSound
 from timer.intervals import IntervalKind
 from timer.sound import SoundEvent
@@ -301,3 +302,20 @@ def test_pressing_the_mute_button_again_brings_the_sounds_back(components, clock
     components.engine.tick()
 
     assert player.played == [SoundEvent.WORK_END]
+
+
+# --- the language --------------------------------------------------------------------
+
+
+def test_the_stored_language_is_the_one_the_application_starts_in(database_path, clock):
+    first = build_components(database_path, clock)
+    first.settings_view_model.choose_language("ru")
+    i18n.set_language("en")
+
+    build_components(database_path, clock)
+
+    assert i18n.current_language() == "ru"
+
+
+def test_the_application_starts_in_english_without_a_stored_language(components):
+    assert i18n.current_language() == "en"

@@ -7,10 +7,10 @@ from functools import partial
 
 import ttkbootstrap as ttk
 from timer.i18n import t
+from timer.ui.dialogs import ask_yes_no
 from timer.scenarios import ScenarioEntity
 from timer.ui.scenario_editor import ScenarioEditor
 from timer.ui.scenarios_view_model import ScenariosViewModel
-from ttkbootstrap.dialogs import Messagebox
 
 
 class ScenariosScreen(ttk.Frame):
@@ -97,12 +97,7 @@ class ScenariosScreen(ttk.Frame):
         self._on_started()
 
     def _delete(self, scenario: ScenarioEntity) -> None:
-        answer = Messagebox.yesno(
-            message=t("scenarios.delete_confirm", name=scenario.name),
-            title=t("scenarios.delete"),
-            parent=self,
-            localize=False,
-        )
-        if answer == "Yes":
+        message = t("scenarios.delete_confirm", name=scenario.name)
+        if ask_yes_no(self, message, t("scenarios.delete")):
             self._view_model.delete(scenario.id)
             self._show_list()

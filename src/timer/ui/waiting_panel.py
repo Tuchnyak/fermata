@@ -4,10 +4,10 @@ import tkinter
 
 import ttkbootstrap as ttk
 from timer.i18n import t
+from timer.ui.dialogs import ask_yes_no
 from timer.ui.scale_watcher import ScaleWatcher
 from timer.ui.scaling import sizes_for
 from timer.ui.waiting_view_model import WaitingViewModel
-from ttkbootstrap.dialogs import Messagebox
 
 
 class WaitingPanel(ttk.Frame):
@@ -56,11 +56,5 @@ class WaitingPanel(ttk.Frame):
         self._title.configure(font=("TkDefaultFont", sizes_for(scale).title_font))
 
     def _stop(self) -> None:
-        answer = Messagebox.yesno(
-            message=t("waiting.stop_confirm"),
-            title=t("running.stop"),
-            parent=self,
-            localize=False,
-        )
-        if answer == "Yes":
+        if ask_yes_no(self, t("waiting.stop_confirm"), t("running.stop")):
             self._view_model.stop()

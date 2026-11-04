@@ -1,4 +1,5 @@
 import pytest
+from timer import i18n
 from timer.i18n import t
 from timer.storage.db import Db
 from timer.version import app_version
@@ -331,3 +332,61 @@ def test_the_mute_button_has_its_texts_in_the_catalog(key):
 
 def test_the_settings_show_the_version_of_the_application(settings_view_model):
     assert settings_view_model.version_text() == f"Version {app_version()}"
+
+
+# --- the language --------------------------------------------------------------------
+
+
+def test_the_language_is_english_by_default(settings_view_model):
+    assert settings_view_model.settings().language == "en"
+
+
+def test_the_languages_are_offered_each_in_its_own_name(settings_view_model):
+    assert settings_view_model.languages() == [("en", "English"), ("ru", "Русский")]
+
+
+def test_the_names_of_the_languages_do_not_change_with_the_language(settings_view_model):
+    settings_view_model.choose_language("ru")
+
+    assert settings_view_model.languages() == [("en", "English"), ("ru", "Русский")]
+
+
+def test_a_chosen_language_is_stored_at_once_and_applies_at_once(db, settings_view_model):
+    message = settings_view_model.choose_language("ru")
+
+    assert message is None
+    assert settings_view_model.settings().language == "ru"
+    assert stored_rows(db) == [("language", "ru")]
+    assert i18n.current_language() == "ru"
+    assert t("nav.back") == "Назад"
+
+
+def test_an_unknown_language_is_refused_and_nothing_changes(db, settings_view_model):
+    message = settings_view_model.choose_language("xx")
+
+    assert message == t("setting.language_invalid")
+    assert stored_rows(db) == []
+    assert i18n.current_language() == "en"
+
+
+def test_saving_the_other_settings_leaves_the_language_alone(settings_view_model):
+    settings_view_model.choose_language("ru")
+
+    settings_view_model.save(**form_values(work_minutes="30"))
+
+    assert settings_view_model.settings().language == "ru"
+    assert i18n.current_language() == "ru"
+
+
+def test_the_messages_of_a_rejected_value_come_in_the_chosen_language(settings_view_model):
+    settings_view_model.choose_language("ru")
+
+    message = settings_view_model.save(**form_values(work_minutes="0"))
+
+    assert message == t("setting.work_minutes_invalid")
+    assert message != "The work interval must be a whole number from 1 to 120 minutes."
+
+
+def test_the_language_label_exists_in_every_language():
+    for code in ("en", "ru"):
+        assert i18n.catalog_of(code)["settings.language"]

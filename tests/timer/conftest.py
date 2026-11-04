@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from timer import i18n
 
 
 class FakeClock:
@@ -26,3 +27,11 @@ def silent_application(monkeypatch, tmp_path_factory):
     """No test plays a real sound: the application built in a test looks for its sounds in an
     empty directory. A test of sound passes its own player or sounds directory."""
     monkeypatch.setattr("timer.wiring.SOUNDS_DIR", tmp_path_factory.mktemp("no_sounds"))
+
+
+@pytest.fixture(autouse=True)
+def english_language():
+    """Every test starts in English, whatever language the one before it chose."""
+    i18n.set_language("en")
+    yield
+    i18n.set_language("en")

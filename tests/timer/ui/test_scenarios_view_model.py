@@ -87,7 +87,7 @@ def test_the_scenarios_are_listed_by_name(scenarios_view_model, scenario_reposit
 def test_a_scenario_is_described_by_its_work_intervals_and_total_time(
     scenarios_view_model, example
 ):
-    assert scenarios_view_model.describe(example) == "6 work intervals · ~3h 05m"
+    assert scenarios_view_model.describe(example) == "Work intervals: 6 · ~3h 05m"
 
 
 def test_the_description_follows_the_overrides_and_the_global_settings(
@@ -98,7 +98,7 @@ def test_the_description_follows_the_overrides_and_the_global_settings(
         Scenario("Pair", (ScenarioRow(work.id, 2),), short_break_minutes=10)
     )
 
-    assert scenarios_view_model.describe(scenario) == "2 work intervals · ~1h 30m"
+    assert scenarios_view_model.describe(scenario) == "Work intervals: 2 · ~1h 30m"
 
 
 # --- deleting --------------------------------------------------------------------

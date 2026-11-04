@@ -1,4 +1,5 @@
 import pytest
+from timer import i18n
 from timer.logic import format_duration, format_time
 
 def test_format_time_under_a_minute():
@@ -40,3 +41,10 @@ def test_format_duration(seconds, expected):
 
 def test_format_duration_drops_seconds():
     assert format_duration(25 * 60 + 59) == "25m"
+
+
+def test_format_duration_comes_in_the_language_in_force():
+    i18n.set_language("ru")
+
+    assert format_duration(25 * 60) == "25 мин"
+    assert format_duration(3 * 3600 + 5 * 60) == "3 ч 05 мин"

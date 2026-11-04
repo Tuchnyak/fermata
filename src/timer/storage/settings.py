@@ -27,6 +27,7 @@ class Settings:
     sound: bool = True
     background_sound: str = "off"
     theme: str = "dark"
+    language: str = "en"
     window_geometry: str = ""  # "" until the window has been closed once
 
 

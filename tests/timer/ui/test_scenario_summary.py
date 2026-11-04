@@ -1,15 +1,18 @@
 import pytest
+from timer import i18n
 from timer.ui.scenario_summary import describe
 
 
-def test_several_work_intervals_are_counted_in_the_plural():
-    assert describe(6, 185 * 60) == "6 work intervals · ~3h 05m"
+def test_the_count_and_the_length_of_the_scenario_are_told():
+    assert describe(6, 185 * 60) == "Work intervals: 6 · ~3h 05m"
 
 
-def test_one_work_interval_is_counted_in_the_singular():
-    assert describe(1, 25 * 60) == "1 work interval · ~25m"
+@pytest.mark.parametrize("count", [0, 1, 2, 5, 11, 21])
+def test_every_count_is_told_in_the_same_form(count):
+    assert describe(count, 60 * 60) == f"Work intervals: {count} · ~1h 00m"
 
 
-@pytest.mark.parametrize("count", [0, 2, 5, 11])
-def test_other_counts_use_the_plural(count):
-    assert describe(count, 60 * 60).startswith(f"{count} work intervals")
+def test_the_summary_comes_in_the_language_in_force():
+    i18n.set_language("ru")
+
+    assert describe(6, 185 * 60) == "Рабочих интервалов: 6 · ~3 ч 05 мин"

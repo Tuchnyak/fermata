@@ -3,9 +3,9 @@
 `save` answers with the message to show, already localized, or None when the values were saved.
 """
 
-from timer.i18n import t
+from timer.i18n import language_name, set_language, t
 from timer.storage.settings import Settings, SettingsRepository, Value
-from timer.storage.settings_rules import BACKGROUND_SOUND_IDS, THEME_IDS
+from timer.storage.settings_rules import BACKGROUND_SOUND_IDS, LANGUAGE_IDS, THEME_IDS
 from timer.validation import ValidationError
 from timer.version import app_version
 
@@ -63,6 +63,23 @@ class SettingsViewModel:
             self._settings_repository.set("background_sound", sound_id)
         except ValidationError as error:
             return t(error.key)
+        return None
+
+    def languages(self) -> list[tuple[str, str]]:
+        """The languages to choose from, as (id, name in that language), English first."""
+        choices = []
+        for language_id in LANGUAGE_IDS:
+            choices.append((language_id, language_name(language_id)))
+        return choices
+
+    def choose_language(self, language_id: str) -> str | None:
+        """Store the language and put the interface into it at once; answer with the message to
+        show if it is rejected."""
+        try:
+            self._settings_repository.set("language", language_id)
+        except ValidationError as error:
+            return t(error.key)
+        set_language(language_id)
         return None
 
     def remember_window_geometry(self, text: str) -> str | None:

@@ -5,5 +5,4 @@ from timer.logic import format_duration
 
 
 def describe(work_count: int, total_seconds: int) -> str:
-    key = "scenarios.summary.one" if work_count == 1 else "scenarios.summary.other"
-    return t(key, count=work_count, duration=format_duration(total_seconds))
+    return t("scenarios.summary", count=work_count, duration=format_duration(total_seconds))

@@ -4,11 +4,11 @@ import tkinter
 
 import ttkbootstrap as ttk
 from timer.i18n import t
+from timer.ui.dialogs import ask_yes_no
 from timer.ui.progress_row import ProgressRow
 from timer.ui.running_view_model import RunningViewModel
 from timer.ui.scale_watcher import ScaleWatcher
 from timer.ui.scaling import sizes_for
-from ttkbootstrap.dialogs import Messagebox
 
 
 class RunningPanel(ttk.Frame):
@@ -133,11 +133,5 @@ class RunningPanel(ttk.Frame):
         self.refresh()
 
     def _stop(self) -> None:
-        answer = Messagebox.yesno(
-            message=t("running.stop_confirm"),
-            title=t("running.stop"),
-            parent=self,
-            localize=False,
-        )
-        if answer == "Yes":
+        if ask_yes_no(self, t("running.stop_confirm"), t("running.stop")):
             self._view_model.stop()

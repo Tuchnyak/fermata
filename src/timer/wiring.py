@@ -12,6 +12,7 @@ from pathlib import Path
 
 from timer.background_sound import BackgroundSound
 from timer.engine import Engine, FlowEvent
+from timer.i18n import set_language
 from timer.recorder import Recorder
 from timer.resume import Resumption
 from timer.sound import SOUNDS_DIR, SoundNotifier, SoundPlayer
@@ -67,6 +68,7 @@ def build_components(
     session_repository = SessionRepository(db)
     scenario_repository = ScenarioRepository(db)
 
+    set_language(settings_repository.get_all().language)
     session_repository.interrupt_running_sessions()
 
     recorder = Recorder(db, session_repository)
