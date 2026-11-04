@@ -91,6 +91,16 @@ Breakdown into pieces with progress: [stage-6.md](stage-6.md).
 - The PyInstaller call moves from `scripts/install-local.sh` into `scripts/build.sh`, which the installer and the pipeline both run.
 - Linux only; builds for other systems only if they become needed. Moved out of Stage 6 at the owner's request.
 
+## Stage 8 — Windows
+
+Added at the owner's request: the owner wants to share the program, and has a Windows machine to check on. A separate stage, after the CI of Stage 7 (which then gets a Windows build too). What has to change, found by looking at the code:
+
+- Sound: the players (`paplay`, `pw-play`, `ffplay`, `aplay`) and the `timeout` that loops the background sound are Linux's; Windows needs its own way to play the signals and a loop.
+- The data folder: `%APPDATA%` (or `%LOCALAPPDATA%`) instead of `~/.local/share`.
+- Tests: the time zone tests use `time.tzset`, which Windows lacks; time zones need the `tzdata` package there.
+- Packaging: no `install-local.sh` or `.desktop`; a Windows build of the executable with an `.ico` icon, and an installer or an archive. No code signing at first (Windows will warn).
+- Looks: fonts, the `⛶` sign, high resolution screens, Chinese and Japanese text; checked by the owner on the Windows machine.
+
 ## Backlog
 
 Not scheduled. Each item needs its own design discussion before work starts.
