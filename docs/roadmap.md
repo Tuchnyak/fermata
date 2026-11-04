@@ -89,6 +89,8 @@ Breakdown into pieces with progress: [stage-6.md](stage-6.md).
 
 Breakdown into pieces with progress: [stage-7.md](stage-7.md).
 
+**Status: done.**
+
 Added at the owner's request: the program is to be shared as one file, so its sound must not depend on players installed on the machine (`ffplay`, `paplay`, `timeout`, which only Linux has).
 
 - The sounds are played by the program itself with the `miniaudio` library: it reads wav, ogg, flac and mp3, plays through the system's sound (PulseAudio or PipeWire, ALSA, Windows) and is small (0.3–0.6 MB).

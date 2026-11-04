@@ -17,7 +17,7 @@ Why: the owner wants to share the program as one file, so it must not rely on pl
   - The frames of a sound, and so the loop without a gap, are a pure function (`sample_stream`) and tested alone; the output is tested against the null device of the library, which plays into nothing.
   - Verified: the tests with the fake and with the null device; a PyInstaller build that starts and carries `miniaudio`; one second of silence through the owner's real sound system (PulseAudio), to see that the device opens without any sound; the real sound by the owner by ear (the agent says before it plays anything).
 
-- [ ] **7.2 Close-out**
+- [x] **7.2 Close-out**
   - `docs/spec.md` §14 and §19, `AGENTS.md`, `README.md` (no players are required any more), `src/fermata/sounds/README.md` and the roadmap match the code.
   - Final check by the owner by ear: the signals, the scenario end, the three backgrounds and their loops, the mute button.
   - After the owner's approval the branch is merged into `master` with `git merge --no-ff` and deleted; a release is made if the owner asks.
