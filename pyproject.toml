@@ -1,6 +1,6 @@
 [project]
 name = "fermata-timer"
-version = "0.6.0"
+version = "0.7.0"
 description = "Fermata — focus timer with scenarios"
 readme = "README.md"
 license = "GPL-3.0-only"
