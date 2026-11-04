@@ -225,3 +225,30 @@ def test_the_running_interval_is_not_in_the_history_yet(clock, components):
     clock.advance(10 * 60)
 
     assert components.history_view_model.view().rows == []
+
+
+# --- the sound of the end of a scenario ----------------------------------------
+
+
+def start_a_scenario_of_one_work_interval(components):
+    editor = components.scenarios_view_model.new_editor()
+    editor.set_name("Short")
+    assert editor.save() is None
+    components.scenarios_view_model.start(editor.saved_scenario_id)
+
+
+def test_a_scenario_run_to_its_end_plays_the_sound_of_its_end(components, clock, player):
+    start_a_scenario_of_one_work_interval(components)
+
+    clock.advance(components.engine.remaining_seconds())
+    components.engine.tick()
+
+    assert player.played == [SoundEvent.SCENARIO_END]
+
+
+def test_skipping_the_last_interval_of_a_scenario_is_silent(components, player):
+    start_a_scenario_of_one_work_interval(components)
+
+    components.engine.skip()
+
+    assert player.played == []

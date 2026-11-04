@@ -1,6 +1,7 @@
 """Sound notifications: which sound an engine event calls for, and playing it.
 
-The sounds are files in `sounds/` next to this module, `work_end.<ext>` and `break_end.<ext>`.
+The sounds are files in `sounds/` next to this module: `work_end.<ext>`, `break_end.<ext>` and
+`scenario_end.<ext>`, which `work_end` stands in for while it is missing.
 They are played by a system command in the background (no audio library is needed), and
 anything that goes wrong, such as no file or no player, only means there is no sound.
 """
@@ -38,16 +39,21 @@ class SoundEvent(StrEnum):
 
     WORK_END = "work_end"
     BREAK_END = "break_end"
+    SCENARIO_END = "scenario_end"
+
+
+# The sound that plays when the file of a sound is missing.
+FALLBACKS = {SoundEvent.SCENARIO_END: SoundEvent.WORK_END}
 
 
 def sound_event_for(event: FlowEvent) -> SoundEvent | None:
-    """The sound an engine event calls for: an interval that ended by time. An interval ended
-    by the user (skipped or stopped) is silent."""
+    """The sound an engine event calls for: an interval that ended by time, or a scenario that
+    ran to its end. An interval ended by the user (skipped or stopped) is silent."""
     finished = event.finished_interval
     if finished is None or finished.status != IntervalStatus.COMPLETED:
         return None
     if finished.kind == IntervalKind.WORK:
-        return SoundEvent.WORK_END
+        return SoundEvent.SCENARIO_END if event.session_completed else SoundEvent.WORK_END
     return SoundEvent.BREAK_END
 
 
@@ -64,14 +70,23 @@ class SoundPlayer:
         self._running: list[subprocess.Popen] = []
 
     def play(self, sound: SoundEvent) -> None:
-        for extension in EXTENSIONS:
-            file = self._sounds_dir / f"{sound}.{extension}"
-            if not file.is_file():
-                continue
+        files = self._files_of(sound)
+        if not files and sound in FALLBACKS:
+            files = self._files_of(FALLBACKS[sound])
+        for file, extension in files:
             command = self._command_for(file, extension)
             if command is not None:
                 self._start(command)
                 return
+
+    def _files_of(self, sound: SoundEvent) -> list[tuple[Path, str]]:
+        """The files that exist for a sound, with their formats, the best format first."""
+        files = []
+        for extension in EXTENSIONS:
+            file = self._sounds_dir / f"{sound}.{extension}"
+            if file.is_file():
+                files.append((file, extension))
+        return files
 
     def _command_for(self, file: Path, extension: str) -> list[str] | None:
         for program, options, formats in PLAYERS:
