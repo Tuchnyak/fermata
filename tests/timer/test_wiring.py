@@ -1,4 +1,5 @@
 import pytest
+from timer.background_sound import BackgroundSound
 from timer.intervals import IntervalKind
 from timer.sound import SoundEvent
 from timer.storage.db import Db
@@ -237,6 +238,33 @@ def start_a_scenario_of_one_work_interval(components):
     components.scenarios_view_model.start(editor.saved_scenario_id)
 
 
+def test_the_background_sound_follows_the_timer_and_the_settings(
+    database_path, clock, player, tmp_path, monkeypatch
+):
+    (tmp_path / "rain.wav").write_bytes(b"sound")
+    started = []
+
+    def launch(command, **keywords):
+        started.append(command)
+        return type("Process", (), {"terminate": lambda self: None, "wait": lambda self, timeout: 0})()
+
+    monkeypatch.setattr("timer.wiring.SOUNDS_DIR", tmp_path)
+    monkeypatch.setattr(
+        "timer.wiring.BackgroundSound",
+        lambda engine, get_settings, sounds_dir: BackgroundSound(
+            engine, get_settings, sounds_dir, which=lambda name: f"/usr/bin/{name}", launch=launch
+        ),
+    )
+    components = build_components(database_path, clock, player)
+    components.settings_view_model.choose_background_sound("rain")
+
+    start_flow(components)
+    components.background_sound.update()
+
+    assert len(started) == 1
+    assert started[0][-1] == str(tmp_path / "rain.wav")
+
+
 def test_a_scenario_run_to_its_end_plays_the_sound_of_its_end(components, clock, player):
     start_a_scenario_of_one_work_interval(components)
 
@@ -252,3 +280,24 @@ def test_skipping_the_last_interval_of_a_scenario_is_silent(components, player):
     components.engine.skip()
 
     assert player.played == []
+
+
+def test_the_mute_button_silences_the_end_of_an_interval(components, clock, player):
+    components.settings_view_model.toggle_sound()
+    start_flow(components)
+
+    clock.advance(components.engine.remaining_seconds())
+    components.engine.tick()
+
+    assert player.played == []
+
+
+def test_pressing_the_mute_button_again_brings_the_sounds_back(components, clock, player):
+    components.settings_view_model.toggle_sound()
+    components.settings_view_model.toggle_sound()
+    start_flow(components)
+
+    clock.advance(components.engine.remaining_seconds())
+    components.engine.tick()
+
+    assert player.played == [SoundEvent.WORK_END]

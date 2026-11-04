@@ -58,6 +58,7 @@ def main():
         components.scenarios_view_model,
         components.history_view_model,
         fullscreen,
+        components.background_sound,
     )
     speed = speed_of(release=is_release(), real_time=arguments.real_time)
     root.title(window_title(speed))

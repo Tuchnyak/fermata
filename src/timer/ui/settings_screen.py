@@ -1,7 +1,9 @@
-"""The settings screen: the timer values, the transition mode, the blink and sound flags and the theme.
+"""The settings screen: the timer values, the transition mode, the blink and sound flags, the
+background sound and the theme.
 
-Nothing is stored until the Save button is pressed, except the theme: it is applied and stored
-as soon as it is chosen, so that its look can be seen while choosing.
+Nothing is stored until the Save button is pressed, except the background sound and the theme:
+they are applied and stored as soon as they are chosen, so that they can be heard and seen
+while choosing.
 """
 
 import tkinter
@@ -65,6 +67,7 @@ class SettingsScreen(ttk.Frame):
         self._build_number_fields()
         self._build_transition_modes()
         self._build_flags()
+        self._build_background_sound()
         self._build_theme()
         self._load_settings()
 
@@ -120,6 +123,26 @@ class SettingsScreen(ttk.Frame):
                 self, text=t(key), variable=variable, takefocus=False
             ).pack(anchor="w", pady=(16, 0))
 
+    def _build_background_sound(self) -> None:
+        line = ttk.Frame(self)
+        line.pack(anchor="w", pady=(16, 0))
+        ttk.Label(line, text=t("settings.background_sound")).pack(side="left", padx=(0, 8))
+        self._background_sounds = self._view_model.background_sounds()
+        self._background_sound_selector = ttk.Combobox(
+            line, values=[name for _, name in self._background_sounds], state="readonly"
+        )
+        self._background_sound_selector.pack(side="left")
+        self._background_sound_selector.bind(
+            "<<ComboboxSelected>>", self._on_background_sound_selected
+        )
+
+    def _on_background_sound_selected(self, event: tkinter.Event) -> None:
+        sound_id, _ = self._background_sounds[self._background_sound_selector.current()]
+        message = self._view_model.choose_background_sound(sound_id)
+        if message is not None:
+            self._message.configure(text=message, bootstyle="danger")
+        self.focus_set()
+
     def _build_theme(self) -> None:
         line = ttk.Frame(self)
         line.pack(anchor="w", pady=(16, 0))
@@ -152,6 +175,9 @@ class SettingsScreen(ttk.Frame):
         for theme_id, name in self._themes:
             if theme_id == settings.theme:
                 self._theme_selector.set(name)
+        for sound_id, name in self._background_sounds:
+            if sound_id == settings.background_sound:
+                self._background_sound_selector.set(name)
 
     def _save(self) -> None:
         numbers = {}

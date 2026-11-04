@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+from timer.background_sound import BackgroundSound
 from timer.engine import Engine, FlowEvent
 from timer.recorder import Recorder
 from timer.resume import Resumption
@@ -33,6 +34,7 @@ from timer.ui.waiting_view_model import WaitingViewModel
 @dataclass(frozen=True)
 class Components:
     engine: Engine
+    background_sound: BackgroundSound
     categories_view_model: CategoriesViewModel
     settings_view_model: SettingsViewModel
     home_view_model: HomeViewModel
@@ -82,6 +84,9 @@ def build_components(
         resumption = Resumption(session_repository, recorder, engine, interrupted)
     return Components(
         engine=engine,
+        background_sound=BackgroundSound(
+            engine, settings_repository.get_all, SOUNDS_DIR
+        ),
         categories_view_model=CategoriesViewModel(category_repository),
         settings_view_model=SettingsViewModel(settings_repository),
         home_view_model=HomeViewModel(

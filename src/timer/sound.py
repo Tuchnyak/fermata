@@ -57,6 +57,16 @@ def sound_event_for(event: FlowEvent) -> SoundEvent | None:
     return SoundEvent.BREAK_END
 
 
+def sound_files(sounds_dir: Path, name: str) -> list[tuple[Path, str]]:
+    """The files that exist for a sound, with their formats, the best format first."""
+    files = []
+    for extension in EXTENSIONS:
+        file = sounds_dir / f"{name}.{extension}"
+        if file.is_file():
+            files.append((file, extension))
+    return files
+
+
 class SoundPlayer:
     def __init__(
         self,
@@ -70,23 +80,14 @@ class SoundPlayer:
         self._running: list[subprocess.Popen] = []
 
     def play(self, sound: SoundEvent) -> None:
-        files = self._files_of(sound)
+        files = sound_files(self._sounds_dir, sound)
         if not files and sound in FALLBACKS:
-            files = self._files_of(FALLBACKS[sound])
+            files = sound_files(self._sounds_dir, FALLBACKS[sound])
         for file, extension in files:
             command = self._command_for(file, extension)
             if command is not None:
                 self._start(command)
                 return
-
-    def _files_of(self, sound: SoundEvent) -> list[tuple[Path, str]]:
-        """The files that exist for a sound, with their formats, the best format first."""
-        files = []
-        for extension in EXTENSIONS:
-            file = self._sounds_dir / f"{sound}.{extension}"
-            if file.is_file():
-                files.append((file, extension))
-        return files
 
     def _command_for(self, file: Path, extension: str) -> list[str] | None:
         for program, options, formats in PLAYERS:

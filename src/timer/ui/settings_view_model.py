@@ -5,7 +5,7 @@
 
 from timer.i18n import t
 from timer.storage.settings import Settings, SettingsRepository, Value
-from timer.storage.settings_rules import THEME_IDS
+from timer.storage.settings_rules import BACKGROUND_SOUND_IDS, THEME_IDS
 from timer.validation import ValidationError
 
 
@@ -35,6 +35,28 @@ class SettingsViewModel:
         """Store the theme at once; answer with the message to show if it is rejected."""
         try:
             self._settings_repository.set("theme", theme_id)
+        except ValidationError as error:
+            return t(error.key)
+        return None
+
+    def toggle_sound(self) -> bool:
+        """Switch the sound on or off at once (the check box of the settings); answer with the new
+        state, True for on."""
+        sound_is_on = not self.settings().sound
+        self._settings_repository.set("sound", sound_is_on)
+        return sound_is_on
+
+    def background_sounds(self) -> list[tuple[str, str]]:
+        """The background sounds to choose from, as (id, name to show), "off" first."""
+        choices = []
+        for sound_id in BACKGROUND_SOUND_IDS:
+            choices.append((sound_id, t(f"background.{sound_id}")))
+        return choices
+
+    def choose_background_sound(self, sound_id: str) -> str | None:
+        """Store the background sound at once; answer with the message to show if it is rejected."""
+        try:
+            self._settings_repository.set("background_sound", sound_id)
         except ValidationError as error:
             return t(error.key)
         return None

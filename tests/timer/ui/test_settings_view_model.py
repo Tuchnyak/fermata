@@ -3,7 +3,7 @@ from timer.i18n import t
 from timer.storage.db import Db
 from timer.storage.migrate import MIGRATIONS_DIR, migrate
 from timer.storage.settings import Settings, SettingsRepository
-from timer.storage.settings_rules import TRANSITION_MODES
+from timer.storage.settings_rules import BACKGROUND_SOUND_IDS, TRANSITION_MODES
 from timer.ui.settings_view_model import SettingsViewModel
 
 
@@ -235,3 +235,91 @@ def test_saving_the_other_settings_leaves_the_theme_alone(settings_view_model):
 
     assert settings_view_model.settings().theme == "light"
     assert settings_view_model.settings().work_minutes == 30
+
+
+# --- the background sound ------------------------------------------------------------
+
+
+def test_there_is_no_background_sound_by_default(settings_view_model):
+    assert settings_view_model.settings().background_sound == "off"
+
+
+def test_the_background_sounds_are_offered_with_their_names(settings_view_model):
+    assert settings_view_model.background_sounds() == [
+        ("off", "Off"),
+        ("ticking", "Ticking"),
+        ("white_noise", "White noise"),
+        ("rain", "Rain"),
+    ]
+
+
+def test_a_chosen_background_sound_is_stored_at_once(db, settings_view_model):
+    message = settings_view_model.choose_background_sound("rain")
+
+    assert message is None
+    assert settings_view_model.settings().background_sound == "rain"
+    assert stored_rows(db) == [("background_sound", "rain")]
+
+
+def test_an_unknown_background_sound_is_refused_and_nothing_is_stored(
+    db, settings_view_model
+):
+    message = settings_view_model.choose_background_sound("nonsense")
+
+    assert message == t("setting.background_sound_invalid")
+    assert stored_rows(db) == []
+
+
+def test_saving_the_other_settings_leaves_the_background_sound_alone(settings_view_model):
+    settings_view_model.choose_background_sound("ticking")
+
+    settings_view_model.save(**form_values(work_minutes="30"))
+
+    assert settings_view_model.settings().background_sound == "ticking"
+
+
+@pytest.mark.parametrize("sound_id", BACKGROUND_SOUND_IDS)
+def test_every_background_sound_has_a_name(sound_id):
+    assert t(f"background.{sound_id}")
+
+
+def test_the_label_of_the_background_sound_exists_in_the_catalog():
+    assert t("settings.background_sound")
+
+
+# --- the mute button -----------------------------------------------------------------
+
+
+def test_the_mute_button_turns_the_sound_off_and_on_again(db, settings_view_model):
+    assert settings_view_model.toggle_sound() is False
+    assert settings_view_model.settings().sound is False
+    assert stored_rows(db) == [("sound", "0")]
+
+    assert settings_view_model.toggle_sound() is True
+    assert settings_view_model.settings().sound is True
+
+
+def test_the_mute_button_is_the_switch_of_the_settings(settings_view_model):
+    settings_view_model.save(**form_values(sound=False))
+
+    assert settings_view_model.toggle_sound() is True
+    assert settings_view_model.settings().sound is True
+
+
+def test_the_mute_button_leaves_the_other_settings_alone(settings_view_model):
+    settings_view_model.save(**form_values(work_minutes="30", blink=False))
+    settings_view_model.choose_background_sound("rain")
+
+    settings_view_model.toggle_sound()
+
+    settings = settings_view_model.settings()
+    assert (settings.work_minutes, settings.blink, settings.background_sound) == (
+        30,
+        False,
+        "rain",
+    )
+
+
+@pytest.mark.parametrize("key", ["home.sound_on", "home.sound_off"])
+def test_the_mute_button_has_its_texts_in_the_catalog(key):
+    assert t(key)
