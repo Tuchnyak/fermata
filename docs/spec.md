@@ -206,8 +206,8 @@ Idle state, instead of the controls:
 - One layout that **scales with the window**: the countdown and fonts grow with the window size.
 - **Fullscreen board** (`[⛶]` / `F11`): only the interval, the countdown and the progress; controls are hidden (the mute button stays, in the top right corner), hotkeys keep working. `Esc` exits. The board is the home screen only: a secondary screen opened in fullscreen looks as usual, and `F11` works there too, also while a text field has the focus.
 - The window remembers its size and position between launches (the setting `window_geometry`, written when the window is closed). Fullscreen is never remembered: the application always starts in a normal window on the home screen, and a window closed in fullscreen stores the size and position it had before. A stored position off the screen (another monitor, another resolution) is moved onto the screen.
-- The application shows its **version** in the UI (in Settings) and prints it for `--version`; it is the version of `pyproject.toml`.
-- The application has an **icon**: the window icon and the icon of its launcher entry. The picture is chosen by the owner.
+- The application shows its **version** in the UI (in Settings, small and dim, right after the title) and prints it for `--version`; it is the version of `pyproject.toml`, read from the package metadata.
+- The program is called **Fermata** ("Fermata — focus timer with scenarios"); the name is the same in every language and the line under it is translated. It has an **icon**, the window icon and the icon of its launcher entry: a red sun, the dot of the fermata, setting behind a black horizon under the musical arc, on a warm white tile.
 
 ## 12. Themes
 
@@ -254,8 +254,10 @@ The database schema is documented so the user can query history directly (`sqlit
 ## 15. Localization
 
 - All UI strings go through one lookup function, e.g. `t("scenario.start")`.
-- English only for now, stored as one dictionary/file of keys. Adding a language = adding a file with the same keys.
-- No OS locale detection, plural rules or `gettext` until a second language exists. The language setting appears only then.
+- One catalog file of keys per language, `locales/<code>.json`: English (the default), Russian, Spanish, Portuguese (Brazilian), German, Chinese (Simplified) and Japanese. Adding a language = adding a file with the same keys and the same `{placeholders}` (a test checks it); a text a language lacks is shown in English.
+- The language is chosen in Settings, by the name each language gives itself, and applies and is stored at once. There is no OS locale detection: the program starts in English until the choice is made.
+- No plural rules or `gettext`: a line that counts is worded so that it needs no plural form. The names of categories and scenarios are the user's own and are not translated.
+- The English and Russian texts are the owner's to read; the other five languages are translations by the agent that no native speaker has checked.
 
 ## 16. Data storage
 
@@ -298,7 +300,7 @@ Not part of the product unless a real need appears (see roadmap backlog for the 
 
 ## 19. Assumptions to confirm
 
-Decided while writing. All of them are confirmed and implemented: items 1–5 and 7–9 in Stage 1, items 6 and 10–13 in Stage 2, items 14–17 in Stage 3, items 18–21 in Stage 4, items 22–25 in Stage 5:
+Decided while writing. All of them are confirmed and implemented: items 1–5 and 7–9 in Stage 1, items 6 and 10–13 in Stage 2, items 14–17 in Stage 3, items 18–21 in Stage 4, items 22–25 in Stage 5, items 26–29 in Stage 6:
 
 1. Skipped work intervals count toward N for long breaks (the break pattern stays as previewed).
 2. Skipping a break moves straight to the next work interval.
@@ -325,3 +327,7 @@ Decided while writing. All of them are confirmed and implemented: items 1–5 an
 23. The background sound is read at every tick of the window, so a pause, the choice in Settings and the mute button apply within a fraction of a second. `ffplay` runs under `timeout` (coreutils) for the time left in the interval plus five seconds, because its own `-t` does not end a loop: a sound left behind by a crashed application ends by itself. Without `timeout` there is no background sound. The player is ended when the window is closed.
 24. The mute button changes the stored setting `sound`, so a muted timer stays muted after a restart until the button is pressed again; the chosen background sound is kept.
 25. The background files are two-minute loops (`ticking` is 68 seconds), cut and encoded as `ogg` to keep the repository and the build small. The loudness of the files is not equalized (see the backlog).
+26. The version is read from the package metadata; PyInstaller carries it into the built program by itself (it sees the call), which is checked by running the built program with `--version`.
+27. A new language redraws the screen and keeps what was typed in Settings but not saved yet. The language names itself in the list; Chinese is Simplified and Portuguese is Brazilian, the variants the dialogs of the window library already know.
+28. The program is named Fermata everywhere: the window title, the command `fermata`, the package `fermata` of the project `fermata-timer` (`fermata` is taken on PyPI), the data folders `fermata` and `fermata-dev`, the file `fermata.db` and the variable `FERMATA_DATA_DIR`. The word "Pomodoro" is left out of the name and of the line under it, because it is claimed as a trademark. The data of the earlier name was moved by hand, there is no migration code.
+29. The icon is drawn by `scripts/make_icon.py` from one shape and committed as an SVG and a 256 px PNG; its colors do not follow the theme. On a very dark panel the black horizon merges with the panel; seen and accepted.

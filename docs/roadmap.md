@@ -74,12 +74,22 @@ Breakdown into pieces with progress: [stage-5.md](stage-5.md).
 - Calm transition sounds with a global on/off switch and the playback by a system command for Linux (first cut in release 0.2); a sound for the end of a scenario.
 - A background sound while working (ticking, white noise or rain), and a mute button on the home screen and the fullscreen board.
 
-## Stage 6 — Packaging and CI
+## Stage 6 — Packaging, languages and the name
 
-- PyInstaller build for Linux.
-- Version in the UI: shown in Settings and printed by `--version`, read from the package metadata (the build has to carry it); no second place where the number is written.
-- Application icon: one picture (from the owner) used as the window icon and as the icon of the launcher entry that the local installer writes; the build carries it.
-- CI pipeline; builds for other OS only if they become needed.
+Breakdown into pieces with progress: [stage-6.md](stage-6.md).
+
+**Status: done.**
+
+- The PyInstaller build for Linux and the local installer (from release 0.2).
+- The version in the UI and for `--version`, read from the package metadata; no second place where the number is written.
+- The choice of the language: English, Russian, Spanish, Portuguese, German, Chinese and Japanese (added at the owner's request).
+- The name **Fermata** ("Fermata — focus timer with scenarios") and its icon, worked out with the owner; the package, the command, the data folders and the repository are named after it.
+
+## Stage 7 — CI
+
+- A GitHub Actions pipeline on a push to `master` and `release/**` and on pull requests: the tests, and a build of the executable with a check that `fermata --version` prints the version of `pyproject.toml`.
+- The PyInstaller call moves from `scripts/install-local.sh` into `scripts/build.sh`, which the installer and the pipeline both run.
+- Linux only; builds for other systems only if they become needed. Moved out of Stage 6 at the owner's request.
 
 ## Backlog
 

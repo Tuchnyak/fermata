@@ -3,7 +3,7 @@
 Breakdown of [roadmap.md](roadmap.md) Stage 6. Requirements: [spec.md](spec.md) §11 (the version and the icon).
 Branch: `feat/stage-6-packaging`. A piece is ticked when the owner has approved it and it is committed.
 Accepted like [stage-5.md](stage-5.md): decisions first, tests and code together, one approval per piece.
-What is already there from [release-0.2.md](release-0.2.md): the PyInstaller build and `scripts/install-local.sh`. This stage adds the version in the program, the choice of the language, the name Fermata with its icon and a CI pipeline.
+What is already there from [release-0.2.md](release-0.2.md): the PyInstaller build and `scripts/install-local.sh`. This stage adds the version in the program, the choice of the language and the name Fermata with its icon. The CI pipeline, planned here first, was moved out into Stage 7 by the owner.
 
 ## Pieces
 
@@ -41,21 +41,15 @@ What is already there from [release-0.2.md](release-0.2.md): the PyInstaller bui
   - The PNG is the window icon (Tk `iconphoto`; Tk 8.6 cannot read SVG). The install script puts the SVG into `~/.local/share/icons/hicolor/scalable/apps/fermata.svg` and the PNG into `…/256x256/apps/fermata.png`; the entry says `Icon=fermata`. The build carries the PNG.
   - Tested: the files exist, the PNG is square and 256 px, the script writes the same files again (so they are not edited by hand); the rest is checked by the owner by eye.
 
-- [ ] **6.6 The CI pipeline**
-  - A GitHub Actions workflow runs on a push to `master` and `release/**` and on pull requests: it sets up Python and `uv`, installs from `uv.lock` (`uv sync --frozen`) and runs the tests.
-  - A second job builds the executable with the same PyInstaller command as the install script and checks that `./dist/fermata --version` prints the version of `pyproject.toml`: a build that loses the metadata or the data files fails here.
-  - To keep one command in one place, the PyInstaller call moves from the install script into `scripts/build.sh`, which both the script and the workflow run.
-  - Linux only, on one runner; no artifact is published. It can be seen working only after the branch is pushed, so the owner's go-ahead for the push is asked for.
-
-- [ ] **6.7 Close-out**
+- [x] **6.6 Close-out**
   - `README.md`, `docs/spec.md` §11, §15 and §19, `AGENTS.md` (the commands, the layout) and the roadmap match the code.
-  - Final check by the owner: the version in Settings and from `--version`, every language on the screens, the icon in the window and in the menu, the CI run on GitHub.
+  - Final check by the owner: the version in Settings and from `--version`, every language on the screens, the icon in the window and in the menu.
   - After the owner's approval the branch is merged into `master` with `git merge --no-ff`, then deleted locally and on GitHub.
 
 ## Decisions made while breaking down — to confirm
 
 1. The version comes from the package metadata of the installed project, not from a second file or a constant; a test guards that it equals `pyproject.toml`.
-2. CI is GitHub Actions, Linux only, tests plus a build with a `--version` smoke check, no published artifacts; other systems only if they become needed (roadmap).
+2. CI moved out to Stage 7 (see the roadmap).
 3. The icon is drawn by the agent to the owner's choice (6.5); the launcher entry gets it through the `hicolor` icon folder of the user.
-4. Order set by the owner: the version, then the languages, then the name and the icon, then CI.
+4. Order set by the owner: the version, then the languages, then the name and the icon; CI later.
 5. The name, the line under it and the icon were chosen by the owner in a brainstorm; the reasons are in 6.4 and 6.5.
