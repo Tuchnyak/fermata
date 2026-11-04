@@ -32,4 +32,4 @@ def test_version_prints_the_name_and_the_version_and_stops(capsys, release):
         parse_arguments(["--version"], release=release)
 
     assert stop.value.code == 0
-    assert capsys.readouterr().out == f"timer {app_version()}\n"
+    assert capsys.readouterr().out == f"fermata {app_version()}\n"

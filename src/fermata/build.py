@@ -4,5 +4,5 @@ import sys
 
 
 def is_release() -> bool:
-    """A release is the frozen executable; `uv run timer` runs from source."""
+    """A release is the frozen executable; `uv run fermata` runs from source."""
     return bool(getattr(sys, "frozen", False))

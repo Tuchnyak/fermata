@@ -34,7 +34,7 @@ def test_missing_placeholder_value_raises_key_error(monkeypatch):
 
 
 def test_english_catalog_is_loaded():
-    assert t("app.title") == "Timer"
+    assert t("app.title") == "Fermata"
 
 
 def test_english_catalog_keys_are_flat_dotted_and_texts_are_not_empty():
@@ -155,3 +155,27 @@ def test_the_other_languages_are_named_in_themselves(code, name):
 @pytest.mark.parametrize("key", ["nav.back", "settings.save", "history.today", "running.skip"])
 def test_a_translation_is_not_a_copy_of_the_english_text(code, key):
     assert i18n.catalog_of(code)[key] != i18n.catalog_of("en")[key]
+
+
+# --- the name of the program -------------------------------------------------------
+
+
+@pytest.mark.parametrize("code", LANGUAGE_IDS)
+def test_the_program_is_called_fermata_in_every_language(code):
+    catalog = i18n.catalog_of(code)
+
+    assert catalog["app.title"] == "Fermata"
+    assert catalog["app.title_dev"] == "Fermata (dev)"
+    assert catalog["app.title_dev_speed"] == "Fermata (dev, ×{speed})"
+
+
+def test_the_line_under_the_name_is_the_one_the_owner_chose():
+    assert i18n.catalog_of("en")["app.description"] == "Focus timer with scenarios"
+    assert i18n.catalog_of("en")["app.generic_name"] == "Focus timer"
+    assert i18n.catalog_of("ru")["app.description"] == "Фокус-таймер со сценариями"
+    assert i18n.catalog_of("ru")["app.generic_name"] == "Фокус-таймер"
+
+
+@pytest.mark.parametrize("code", [code for code in LANGUAGE_IDS if code != "en"])
+def test_the_line_under_the_name_is_translated(code):
+    assert i18n.catalog_of(code)["app.description"] != i18n.catalog_of("en")["app.description"]

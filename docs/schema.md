@@ -1,11 +1,11 @@
-# Timer — Database schema
+# Fermata — Database schema
 
-The application keeps everything in one SQLite file: `$XDG_DATA_HOME/timer/timer.db`, by default `~/.local/share/timer/timer.db`.
-A run from source (development) uses `timer-dev` instead of `timer`; `TIMER_DATA_DIR` replaces the directory in either build (see [spec.md](spec.md) §16).
-The schema is created by the migrations in `src/timer/storage/migrations/`; the current version is stored in `PRAGMA user_version`.
+The application keeps everything in one SQLite file: `$XDG_DATA_HOME/fermata/fermata.db`, by default `~/.local/share/fermata/fermata.db`.
+A run from source (development) uses `fermata-dev` instead of `fermata`; `FERMATA_DATA_DIR` replaces the directory in either build (see [spec.md](spec.md) §16).
+The schema is created by the migrations in `src/fermata/storage/migrations/`; the current version is stored in `PRAGMA user_version`.
 Terms are defined in [spec.md](spec.md) §2.
 
-Open the file read-only for your own analysis, e.g. `sqlite3 -readonly ~/.local/share/timer/timer.db` (`timer-dev` for the development database).
+Open the file read-only for your own analysis, e.g. `sqlite3 -readonly ~/.local/share/fermata/fermata.db` (`fermata-dev` for the development database).
 The application enforces foreign keys per connection (`PRAGMA foreign_keys = ON`); do the same if you write.
 
 ## Conventions

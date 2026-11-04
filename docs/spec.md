@@ -1,4 +1,4 @@
-# Timer — Specification
+# Fermata — Specification
 
 Pomodoro timer for tracking work intervals, run on a dedicated second laptop.
 This document records the agreed requirements and decisions. Stage order lives in [roadmap.md](roadmap.md).
@@ -173,7 +173,7 @@ A long break is shown as a gap one empty circle wide, so work intervals are visu
 ## 11. Main window
 
 ```
-┌ Timer ─────────────────────────────────────────────────┐
+┌ Fermata ───────────────────────────────────────────────┐
 │ [Scenarios] [Categories] [History] [Settings]  [🔊] [⛶] │
 │                                                        │
 │                       WORK · 3/6                       │
@@ -245,8 +245,8 @@ The database schema is documented so the user can query history directly (`sqlit
 - A calm, unobtrusive sound on every interval transition.
 - One global on/off switch.
 - Tkinter has no cross-platform audio; the playback method (library or a system command such as `paplay`) is chosen at that stage.
-- The sounds are the owner's files in `src/timer/sounds/`; the names and formats are in the README of that folder.
-- First cut (interim release 0.2): one sound for the end of a work interval and one for the end of a break, played when the time runs out; Skip and Stop are silent. The files are chosen by the owner and kept in `src/timer/sounds/`. On Linux a system command plays them in the background: the first of `paplay`, `pw-play`, `ffplay`, `aplay` that is installed and knows the format. No file or no player means no sound. The Settings check box "Sound notifications" is the global switch.
+- The sounds are the owner's files in `src/fermata/sounds/`; the names and formats are in the README of that folder.
+- First cut (interim release 0.2): one sound for the end of a work interval and one for the end of a break, played when the time runs out; Skip and Stop are silent. The files are chosen by the owner and kept in `src/fermata/sounds/`. On Linux a system command plays them in the background: the first of `paplay`, `pw-play`, `ffplay`, `aplay` that is installed and knows the format. No file or no player means no sound. The Settings check box "Sound notifications" is the global switch.
 - Stage 5: a scenario run to its end plays its own sound, `scenario_end`, instead of `work_end`; without its file `work_end` plays. Skipping or stopping is silent.
 - A **background sound** while a work interval runs: ticking, white noise or rain, chosen in Settings (the choice is stored at once), off by default. It plays in a loop, and only while a work interval is running: a pause, a break, waiting for confirmation, Skip, Stop and the end of the interval stop it, and resuming starts it again. It is played by `ffplay`, which is the one of the players that loops; without `ffplay` there is no background sound.
 - The **mute button** on the home screen (in the header, and on the fullscreen board) is the check box "Sound notifications": it switches the signals and the background sound off and on together and is stored at once.
@@ -260,11 +260,11 @@ The database schema is documented so the user can query history directly (`sqlit
 ## 16. Data storage
 
 Everything is stored in one SQLite database (`sqlite3` from the standard library):
-`$XDG_DATA_HOME/timer/timer.db`, by default `~/.local/share/timer/timer.db`.
+`$XDG_DATA_HOME/fermata/fermata.db`, by default `~/.local/share/fermata/fermata.db`.
 
-That is the database of a release. A run from source (development) uses `timer-dev` instead of `timer`, so development never touches the data of an installed release. The environment variable `TIMER_DATA_DIR`, when set to an absolute path, replaces the whole directory in either build.
+That is the database of a release. A run from source (development) uses `fermata-dev` instead of `fermata`, so development never touches the data of an installed release. The environment variable `FERMATA_DATA_DIR`, when set to an absolute path, replaces the whole directory in either build.
 
-A run from source also runs its clock twice as fast, so that intervals can be tested quickly; the window title says "(dev, ×2)". `uv run timer --real-time` restores the normal speed. A release has neither the speed-up nor the option. The times stored in a development database are the sped-up ones, so which session is the latest is decided by the order of creation, not by the time.
+A run from source also runs its clock twice as fast, so that intervals can be tested quickly; the window title says "(dev, ×2)". `uv run fermata --real-time` restores the normal speed. A release has neither the speed-up nor the option. The times stored in a development database are the sped-up ones, so which session is the latest is decided by the order of creation, not by the time.
 
 It holds settings, categories, scenarios, the state of the current session and history. The complete schema is created in stage 1 (stage 2 adds code for scenarios, not tables) and documented in `docs/schema.md`.
 
@@ -281,7 +281,7 @@ It holds settings, categories, scenarios, the state of the current session and h
 
 - Linux only. Other OS builds are out of scope for now.
 - Python 3.12, Tkinter + ttkbootstrap, ttk widgets only (classic `tk` widgets only where ttk has no equivalent, e.g. `Canvas`).
-- uv for dependencies and running; `src/` layout; entry point `timer = "timer.app:main"`.
+- uv for dependencies and running; `src/` layout; entry point `fermata = "fermata.app:main"` (the project is `fermata-timer`).
 - Timer logic is kept separate from the UI and covered by pytest tests.
 - Packaging (PyInstaller) and CI come last.
 

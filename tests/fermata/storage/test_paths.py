@@ -6,7 +6,7 @@ from fermata.storage.paths import data_dir, db_path
 
 @pytest.fixture(autouse=True)
 def no_data_dir_override(monkeypatch):
-    monkeypatch.delenv("TIMER_DATA_DIR", raising=False)
+    monkeypatch.delenv("FERMATA_DATA_DIR", raising=False)
 
 
 @pytest.fixture
@@ -22,12 +22,12 @@ def source_build(monkeypatch):
 # --- the directory of a release build -----------------------------------------
 
 
-def test_a_release_uses_the_timer_directory_in_xdg_data_home(
+def test_a_release_uses_the_fermata_directory_in_xdg_data_home(
     release_build, monkeypatch, tmp_path
 ):
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "xdg"))
 
-    assert data_dir() == tmp_path / "xdg" / "timer"
+    assert data_dir() == tmp_path / "xdg" / "fermata"
 
 
 def test_a_release_defaults_to_local_share_in_home(
@@ -36,18 +36,18 @@ def test_a_release_defaults_to_local_share_in_home(
     monkeypatch.delenv("XDG_DATA_HOME", raising=False)
     monkeypatch.setenv("HOME", str(tmp_path))
 
-    assert data_dir() == tmp_path / ".local" / "share" / "timer"
+    assert data_dir() == tmp_path / ".local" / "share" / "fermata"
 
 
 # --- the directory when running from source (development) ----------------------
 
 
-def test_running_from_source_uses_the_timer_dev_directory_in_xdg_data_home(
+def test_running_from_source_uses_the_fermata_dev_directory_in_xdg_data_home(
     source_build, monkeypatch, tmp_path
 ):
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "xdg"))
 
-    assert data_dir() == tmp_path / "xdg" / "timer-dev"
+    assert data_dir() == tmp_path / "xdg" / "fermata-dev"
 
 
 def test_running_from_source_defaults_to_local_share_in_home(
@@ -56,7 +56,7 @@ def test_running_from_source_defaults_to_local_share_in_home(
     monkeypatch.delenv("XDG_DATA_HOME", raising=False)
     monkeypatch.setenv("HOME", str(tmp_path))
 
-    assert data_dir() == tmp_path / ".local" / "share" / "timer-dev"
+    assert data_dir() == tmp_path / ".local" / "share" / "fermata-dev"
 
 
 def test_the_two_builds_never_share_a_directory(monkeypatch, tmp_path):
@@ -80,31 +80,31 @@ def test_an_empty_or_relative_xdg_data_home_is_ignored(
     monkeypatch.setenv("XDG_DATA_HOME", xdg_data_home)
     monkeypatch.setenv("HOME", str(tmp_path))
 
-    assert data_dir() == tmp_path / ".local" / "share" / "timer-dev"
+    assert data_dir() == tmp_path / ".local" / "share" / "fermata-dev"
 
 
-# --- TIMER_DATA_DIR ------------------------------------------------------------
+# --- FERMATA_DATA_DIR ------------------------------------------------------------
 
 
 @pytest.mark.parametrize("build", ["release_build", "source_build"])
-def test_timer_data_dir_is_used_as_it_is_in_either_build(
+def test_fermata_data_dir_is_used_as_it_is_in_either_build(
     request, build, monkeypatch, tmp_path
 ):
     request.getfixturevalue(build)
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "xdg"))
-    monkeypatch.setenv("TIMER_DATA_DIR", str(tmp_path / "scratch"))
+    monkeypatch.setenv("FERMATA_DATA_DIR", str(tmp_path / "scratch"))
 
     assert data_dir() == tmp_path / "scratch"
 
 
 @pytest.mark.parametrize("override", ["", "relative/dir"])
-def test_an_empty_or_relative_timer_data_dir_is_ignored(
+def test_an_empty_or_relative_fermata_data_dir_is_ignored(
     source_build, monkeypatch, tmp_path, override
 ):
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
-    monkeypatch.setenv("TIMER_DATA_DIR", override)
+    monkeypatch.setenv("FERMATA_DATA_DIR", override)
 
-    assert data_dir() == tmp_path / "timer-dev"
+    assert data_dir() == tmp_path / "fermata-dev"
 
 
 # --- creating the directory ------------------------------------------------------
@@ -119,7 +119,7 @@ def test_the_directory_is_created_with_parents(source_build, monkeypatch, tmp_pa
 def test_the_directory_of_timer_data_dir_is_created_with_parents(
     monkeypatch, tmp_path
 ):
-    monkeypatch.setenv("TIMER_DATA_DIR", str(tmp_path / "missing" / "scratch"))
+    monkeypatch.setenv("FERMATA_DATA_DIR", str(tmp_path / "missing" / "scratch"))
 
     assert data_dir().is_dir()
 
@@ -133,7 +133,7 @@ def test_the_directory_can_be_asked_for_again(source_build, monkeypatch, tmp_pat
 # --- the database file -----------------------------------------------------------
 
 
-def test_the_database_is_timer_db_in_the_data_dir(source_build, monkeypatch, tmp_path):
+def test_the_database_is_fermata_db_in_the_data_dir(source_build, monkeypatch, tmp_path):
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
 
-    assert db_path() == tmp_path / "timer-dev" / "fermata.db"
+    assert db_path() == tmp_path / "fermata-dev" / "fermata.db"
