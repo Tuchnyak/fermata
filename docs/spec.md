@@ -1,4 +1,4 @@
-# Timer — Specification
+# Fermata — Specification
 
 Pomodoro timer for tracking work intervals, run on a dedicated second laptop.
 This document records the agreed requirements and decisions. Stage order lives in [roadmap.md](roadmap.md).
@@ -173,7 +173,7 @@ A long break is shown as a gap one empty circle wide, so work intervals are visu
 ## 11. Main window
 
 ```
-┌ Timer ─────────────────────────────────────────────────┐
+┌ Fermata ───────────────────────────────────────────────┐
 │ [Scenarios] [Categories] [History] [Settings]  [🔊] [⛶] │
 │                                                        │
 │                       WORK · 3/6                       │
@@ -206,8 +206,8 @@ Idle state, instead of the controls:
 - One layout that **scales with the window**: the countdown and fonts grow with the window size.
 - **Fullscreen board** (`[⛶]` / `F11`): only the interval, the countdown and the progress; controls are hidden (the mute button stays, in the top right corner), hotkeys keep working. `Esc` exits. The board is the home screen only: a secondary screen opened in fullscreen looks as usual, and `F11` works there too, also while a text field has the focus.
 - The window remembers its size and position between launches (the setting `window_geometry`, written when the window is closed). Fullscreen is never remembered: the application always starts in a normal window on the home screen, and a window closed in fullscreen stores the size and position it had before. A stored position off the screen (another monitor, another resolution) is moved onto the screen.
-- The application shows its **version** in the UI (in Settings) and prints it for `--version`; it is the version of `pyproject.toml`.
-- The application has an **icon**: the window icon and the icon of its launcher entry. The picture is chosen by the owner.
+- The application shows its **version** in the UI (in Settings, small and dim, right after the title) and prints it for `--version`; it is the version of `pyproject.toml`, read from the package metadata.
+- The program is called **Fermata** ("Fermata — focus timer with scenarios"); the name is the same in every language and the line under it is translated. It has an **icon**, the window icon and the icon of its launcher entry: a red sun, the dot of the fermata, setting behind a black horizon under the musical arc, on a warm white tile.
 
 ## 12. Themes
 
@@ -245,8 +245,8 @@ The database schema is documented so the user can query history directly (`sqlit
 - A calm, unobtrusive sound on every interval transition.
 - One global on/off switch.
 - Tkinter has no cross-platform audio; the playback method (library or a system command such as `paplay`) is chosen at that stage.
-- The sounds are the owner's files in `src/timer/sounds/`; the names and formats are in the README of that folder.
-- First cut (interim release 0.2): one sound for the end of a work interval and one for the end of a break, played when the time runs out; Skip and Stop are silent. The files are chosen by the owner and kept in `src/timer/sounds/`. On Linux a system command plays them in the background: the first of `paplay`, `pw-play`, `ffplay`, `aplay` that is installed and knows the format. No file or no player means no sound. The Settings check box "Sound notifications" is the global switch.
+- The sounds are the owner's files in `src/fermata/sounds/`; the names and formats are in the README of that folder.
+- First cut (interim release 0.2): one sound for the end of a work interval and one for the end of a break, played when the time runs out; Skip and Stop are silent. The files are chosen by the owner and kept in `src/fermata/sounds/`. On Linux a system command plays them in the background: the first of `paplay`, `pw-play`, `ffplay`, `aplay` that is installed and knows the format. No file or no player means no sound. The Settings check box "Sound notifications" is the global switch.
 - Stage 5: a scenario run to its end plays its own sound, `scenario_end`, instead of `work_end`; without its file `work_end` plays. Skipping or stopping is silent.
 - A **background sound** while a work interval runs: ticking, white noise or rain, chosen in Settings (the choice is stored at once), off by default. It plays in a loop, and only while a work interval is running: a pause, a break, waiting for confirmation, Skip, Stop and the end of the interval stop it, and resuming starts it again. It is played by `ffplay`, which is the one of the players that loops; without `ffplay` there is no background sound.
 - The **mute button** on the home screen (in the header, and on the fullscreen board) is the check box "Sound notifications": it switches the signals and the background sound off and on together and is stored at once.
@@ -254,17 +254,19 @@ The database schema is documented so the user can query history directly (`sqlit
 ## 15. Localization
 
 - All UI strings go through one lookup function, e.g. `t("scenario.start")`.
-- English only for now, stored as one dictionary/file of keys. Adding a language = adding a file with the same keys.
-- No OS locale detection, plural rules or `gettext` until a second language exists. The language setting appears only then.
+- One catalog file of keys per language, `locales/<code>.json`: English (the default), Russian, Spanish, Portuguese (Brazilian), German, Chinese (Simplified) and Japanese. Adding a language = adding a file with the same keys and the same `{placeholders}` (a test checks it); a text a language lacks is shown in English.
+- The language is chosen in Settings, by the name each language gives itself, and applies and is stored at once. There is no OS locale detection: the program starts in English until the choice is made.
+- No plural rules or `gettext`: a line that counts is worded so that it needs no plural form. The names of categories and scenarios are the user's own and are not translated.
+- The English and Russian texts are the owner's to read; the other five languages are translations by the agent that no native speaker has checked.
 
 ## 16. Data storage
 
 Everything is stored in one SQLite database (`sqlite3` from the standard library):
-`$XDG_DATA_HOME/timer/timer.db`, by default `~/.local/share/timer/timer.db`.
+`$XDG_DATA_HOME/fermata/fermata.db`, by default `~/.local/share/fermata/fermata.db`.
 
-That is the database of a release. A run from source (development) uses `timer-dev` instead of `timer`, so development never touches the data of an installed release. The environment variable `TIMER_DATA_DIR`, when set to an absolute path, replaces the whole directory in either build.
+That is the database of a release. A run from source (development) uses `fermata-dev` instead of `fermata`, so development never touches the data of an installed release. The environment variable `FERMATA_DATA_DIR`, when set to an absolute path, replaces the whole directory in either build.
 
-A run from source also runs its clock twice as fast, so that intervals can be tested quickly; the window title says "(dev, ×2)". `uv run timer --real-time` restores the normal speed. A release has neither the speed-up nor the option. The times stored in a development database are the sped-up ones, so which session is the latest is decided by the order of creation, not by the time.
+A run from source also runs its clock twice as fast, so that intervals can be tested quickly; the window title says "(dev, ×2)". `uv run fermata --real-time` restores the normal speed. A release has neither the speed-up nor the option. The times stored in a development database are the sped-up ones, so which session is the latest is decided by the order of creation, not by the time.
 
 It holds settings, categories, scenarios, the state of the current session and history. The complete schema is created in stage 1 (stage 2 adds code for scenarios, not tables) and documented in `docs/schema.md`.
 
@@ -281,7 +283,7 @@ It holds settings, categories, scenarios, the state of the current session and h
 
 - Linux only. Other OS builds are out of scope for now.
 - Python 3.12, Tkinter + ttkbootstrap, ttk widgets only (classic `tk` widgets only where ttk has no equivalent, e.g. `Canvas`).
-- uv for dependencies and running; `src/` layout; entry point `timer = "timer.app:main"`.
+- uv for dependencies and running; `src/` layout; entry point `fermata = "fermata.app:main"` (the project is `fermata-timer`).
 - Timer logic is kept separate from the UI and covered by pytest tests.
 - Packaging (PyInstaller) and CI come last.
 
@@ -298,7 +300,7 @@ Not part of the product unless a real need appears (see roadmap backlog for the 
 
 ## 19. Assumptions to confirm
 
-Decided while writing. All of them are confirmed and implemented: items 1–5 and 7–9 in Stage 1, items 6 and 10–13 in Stage 2, items 14–17 in Stage 3, items 18–21 in Stage 4, items 22–25 in Stage 5:
+Decided while writing. All of them are confirmed and implemented: items 1–5 and 7–9 in Stage 1, items 6 and 10–13 in Stage 2, items 14–17 in Stage 3, items 18–21 in Stage 4, items 22–25 in Stage 5, items 26–29 in Stage 6:
 
 1. Skipped work intervals count toward N for long breaks (the break pattern stays as previewed).
 2. Skipping a break moves straight to the next work interval.
@@ -325,3 +327,7 @@ Decided while writing. All of them are confirmed and implemented: items 1–5 an
 23. The background sound is read at every tick of the window, so a pause, the choice in Settings and the mute button apply within a fraction of a second. `ffplay` runs under `timeout` (coreutils) for the time left in the interval plus five seconds, because its own `-t` does not end a loop: a sound left behind by a crashed application ends by itself. Without `timeout` there is no background sound. The player is ended when the window is closed.
 24. The mute button changes the stored setting `sound`, so a muted timer stays muted after a restart until the button is pressed again; the chosen background sound is kept.
 25. The background files are two-minute loops (`ticking` is 68 seconds), cut and encoded as `ogg` to keep the repository and the build small. The loudness of the files is not equalized (see the backlog).
+26. The version is read from the package metadata; PyInstaller carries it into the built program by itself (it sees the call), which is checked by running the built program with `--version`.
+27. A new language redraws the screen and keeps what was typed in Settings but not saved yet. The language names itself in the list; Chinese is Simplified and Portuguese is Brazilian, the variants the dialogs of the window library already know.
+28. The program is named Fermata everywhere: the window title, the command `fermata`, the package `fermata` of the project `fermata-timer` (`fermata` is taken on PyPI), the data folders `fermata` and `fermata-dev`, the file `fermata.db` and the variable `FERMATA_DATA_DIR`. The word "Pomodoro" is left out of the name and of the line under it, because it is claimed as a trademark. The data of the earlier name was moved by hand, there is no migration code.
+29. The icon is drawn by `scripts/make_icon.py` from one shape and committed as an SVG and a 256 px PNG; its colors do not follow the theme. On a very dark panel the black horizon merges with the panel; seen and accepted.

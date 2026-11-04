@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Pomodoro timer with Scenarios (pre-designed queues of work intervals) and Flow mode. Desktop app for Linux.
+Fermata — a focus timer with Scenarios (pre-designed queues of work intervals) and Flow mode. Desktop app for Linux.
 
 - Requirements and decisions: [docs/spec.md](docs/spec.md)
 - Stage order and backlog: [docs/roadmap.md](docs/roadmap.md)
@@ -13,8 +13,9 @@ Python 3.12 · Tkinter + ttkbootstrap · SQLite (`sqlite3`) · uv · pytest · P
 
 ```
 uv sync            # set up .venv from uv.lock
-uv run timer       # run the app; from source its clock goes 2x faster (see --real-time)
-uv run timer --real-time   # run from source at the normal speed
+uv run fermata     # run the app; from source its clock goes 2x faster (see --real-time)
+uv run fermata --real-time   # run from source at the normal speed
+uv run fermata --version   # print the version (from pyproject.toml, via the package metadata)
 uv run pytest      # run tests
 ./scripts/install-local.sh   # build and install the program for this user (see README)
 uv add <pkg>       # add a dependency (--dev for tooling)
@@ -22,15 +23,16 @@ uv add <pkg>       # add a dependency (--dev for tooling)
 
 ## Layout
 
-- `src/timer/` — application package; entry point `timer.app:main`.
+- `src/fermata/` — application package (the project is `fermata-timer`); entry point `fermata.app:main`.
   - `engine.py`, `intervals.py`, `scenarios.py` — timer logic with no UI and no database: the engine, the interval rules, the scenario value types.
   - `recorder.py`, `resume.py` — the recorder writes the engine's events to the database; `resume.py` offers a scenario session left behind by a closed app and carries out the answer.
   - `storage/` — SQLite: the `Db` helper, migrations (`storage/migrations/NNN_*.sql`), repositories, the data directory.
   - `ui/` — Tkinter. `*_view_model.py` (and the pure `progress.py`, `scaling.py`, `fullscreen.py`, `scenario_summary.py`, `history_period.py`) hold the logic of a screen without Tk and are tested; `*_screen.py`, `*_panel.py`, `scenario_editor.py`, `progress_row.py`, `scale_watcher.py` and `main_window.py` are the Tk widgets.
   - `sound.py`, `background_sound.py` — which sound an event calls for and playing it with a system command, and the looped background sound of a work interval; the files are in `sounds/` (no Tk, tested with a fake player).
+  - `i18n.py` with `locales/<code>.json` — `t(key)` in the language chosen in Settings, one catalog per language (a test holds them to the keys and placeholders of `en.json`); `icons/` — the icon, drawn by `scripts/make_icon.py`; `desktop_entry.py` — the launcher entry the installer writes.
   - `themes.py` — the six palettes; `window_geometry.py` — the stored window size and position and how to fit them to the screen (no Tk).
-  - `wiring.py` — builds everything except Tk (database, engine, view models); `i18n.py` with `locales/en.json` is `t(key)`.
-- `tests/` — pytest tests, mirroring `src/` (e.g. `tests/timer/ui/test_hotkeys.py`).
+  - `wiring.py` — builds everything except Tk (database, engine, view models).
+- `tests/` — pytest tests, mirroring `src/` (e.g. `tests/fermata/ui/test_hotkeys.py`).
 - `docs/` — project documentation, in English.
 
 ## Rules

@@ -1,5 +1,5 @@
 [project]
-name = "timer"
+name = "fermata-timer"
 version = "0.5.0"
 description = "Pomodoro timer for time tracking"
 readme = "README.md"
@@ -17,9 +17,12 @@ dev = [
 ]
 
 [project.scripts]
-timer = "timer.app:main"
+fermata = "fermata.app:main"
 
 [build-system]
 requires = ["uv_build>=0.11.6,<0.12.0"]
 build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "fermata"  # the project is fermata-timer: fermata is taken on PyPI
 

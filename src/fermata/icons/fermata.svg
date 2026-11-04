@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="256" height="256">
+  <title>Fermata</title>
+  <defs>
+    <clipPath id="tile"><rect x="4" y="4" width="120" height="120" rx="26"/></clipPath>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="26" fill="#f7f4ee"/>
+  <g clip-path="url(#tile)">
+    <circle cx="64" cy="92" r="24" fill="#bc002d"/>
+    <rect x="4" y="96" width="120" height="28" fill="#1b1b1b"/>
+  </g>
+  <path d="M 26 70 A 38 38 0 0 1 102 70 L 97.5 70 A 33.5 25 0 0 0 30.5 70 Z" fill="#1b1b1b"/>
+</svg>
