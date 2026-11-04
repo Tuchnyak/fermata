@@ -3,7 +3,7 @@
 Breakdown of [roadmap.md](roadmap.md) Stage 6. Requirements: [spec.md](spec.md) §11 (the version and the icon).
 Branch: `feat/stage-6-packaging`. A piece is ticked when the owner has approved it and it is committed.
 Accepted like [stage-5.md](stage-5.md): decisions first, tests and code together, one approval per piece.
-What is already there from [release-0.2.md](release-0.2.md): the PyInstaller build and `scripts/install-local.sh`. This stage adds the version in the program, the choice of the language and the name Fermata with its icon. The CI pipeline, planned here first, was moved out into Stage 7 by the owner.
+What is already there from [release-0.2.md](release-0.2.md): the PyInstaller build and `scripts/install-local.sh`. This stage adds the version in the program, the choice of the language and the name Fermata with its icon. The CI pipeline, planned here first, was moved out into a stage of its own by the owner.
 
 ## Pieces
 

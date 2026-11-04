@@ -85,21 +85,31 @@ Breakdown into pieces with progress: [stage-6.md](stage-6.md).
 - The choice of the language: English, Russian, Spanish, Portuguese, German, Chinese and Japanese (added at the owner's request).
 - The name **Fermata** ("Fermata — focus timer with scenarios") and its icon, worked out with the owner; the package, the command, the data folders and the repository are named after it.
 
-## Stage 7 — CI
+## Stage 7 — Sound inside the program
 
-- A GitHub Actions pipeline on a push to `master` and `release/**` and on pull requests: the tests, and a build of the executable with a check that `fermata --version` prints the version of `pyproject.toml`.
-- The PyInstaller call moves from `scripts/install-local.sh` into `scripts/build.sh`, which the installer and the pipeline both run.
-- Linux only; builds for other systems only if they become needed. Moved out of Stage 6 at the owner's request.
+Breakdown into pieces with progress: [stage-7.md](stage-7.md).
+
+Added at the owner's request: the program is to be shared as one file, so its sound must not depend on players installed on the machine (`ffplay`, `paplay`, `timeout`, which only Linux has).
+
+- The sounds are played by the program itself with the `miniaudio` library: it reads wav, ogg, flac and mp3, plays through the system's sound (PulseAudio or PipeWire, ALSA, Windows) and is small (0.3–0.6 MB).
+- The system players are given up altogether, not kept as a fallback.
+- The background sound loops without a gap, and a sound can no longer outlive the program.
 
 ## Stage 8 — Windows
 
-Added at the owner's request: the owner wants to share the program, and has a Windows machine to check on. A separate stage, after the CI of Stage 7 (which then gets a Windows build too). What has to change, found by looking at the code:
+Added at the owner's request: the owner wants to share the program, and has a Windows machine to check on. A separate stage, after Stage 7 (the sound it makes is the part of the program that would not run on Windows). What has to change, found by looking at the code:
 
-- Sound: the players (`paplay`, `pw-play`, `ffplay`, `aplay`) and the `timeout` that loops the background sound are Linux's; Windows needs its own way to play the signals and a loop.
+- Sound: done in Stage 7, only to be checked on Windows.
 - The data folder: `%APPDATA%` (or `%LOCALAPPDATA%`) instead of `~/.local/share`.
 - Tests: the time zone tests use `time.tzset`, which Windows lacks; time zones need the `tzdata` package there.
 - Packaging: no `install-local.sh` or `.desktop`; a Windows build of the executable with an `.ico` icon, and an installer or an archive. No code signing at first (Windows will warn).
 - Looks: fonts, the `⛶` sign, high resolution screens, Chinese and Japanese text; checked by the owner on the Windows machine.
+
+## Stage 9 — CI
+
+- A GitHub Actions pipeline on a push to `master` and `release/**` and on pull requests: the tests, and a build of the executable with a check that `fermata --version` prints the version of `pyproject.toml`.
+- The PyInstaller call moves from `scripts/install-local.sh` into `scripts/build.sh`, which the installer and the pipeline both run.
+- Linux only; builds for other systems only if they become needed. Moved out of Stage 6 at the owner's request, and later again, after the sound and the Windows stage.
 
 ## Backlog
 
