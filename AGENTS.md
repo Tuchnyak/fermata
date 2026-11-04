@@ -28,7 +28,7 @@ uv add <pkg>       # add a dependency (--dev for tooling)
   - `recorder.py`, `resume.py` — the recorder writes the engine's events to the database; `resume.py` offers a scenario session left behind by a closed app and carries out the answer.
   - `storage/` — SQLite: the `Db` helper, migrations (`storage/migrations/NNN_*.sql`), repositories, the data directory.
   - `ui/` — Tkinter. `*_view_model.py` (and the pure `progress.py`, `scaling.py`, `fullscreen.py`, `scenario_summary.py`, `history_period.py`) hold the logic of a screen without Tk and are tested; `*_screen.py`, `*_panel.py`, `scenario_editor.py`, `progress_row.py`, `scale_watcher.py` and `main_window.py` are the Tk widgets.
-  - `sound.py`, `background_sound.py` — which sound an event calls for and playing it with a system command, and the looped background sound of a work interval; the files are in `sounds/` (no Tk, tested with a fake player).
+  - `sound.py`, `background_sound.py` — which sound an event calls for, and the looped background sound of a work interval; `audio.py` plays a file with `miniaudio` (no Tk; tested with a fake output and with the library's null device); the files are in `sounds/`.
   - `i18n.py` with `locales/<code>.json` — `t(key)` in the language chosen in Settings, one catalog per language (a test holds them to the keys and placeholders of `en.json`); `icons/` — the icon, drawn by `scripts/make_icon.py`; `desktop_entry.py` — the launcher entry the installer writes.
   - `themes.py` — the six palettes; `window_geometry.py` — the stored window size and position and how to fit them to the screen (no Tk).
   - `wiring.py` — builds everything except Tk (database, engine, view models).

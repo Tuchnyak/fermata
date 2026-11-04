@@ -73,4 +73,7 @@ def main():
     )
     if components.resumption is not None:
         root.after(ASK_DELAY_MILLISECONDS, ask_to_resume, root, components.resumption)
-    root.mainloop()
+    try:
+        root.mainloop()
+    finally:
+        components.audio_output.close()

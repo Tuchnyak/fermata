@@ -1,4 +1,3 @@
-import subprocess
 from pathlib import Path
 
 import pytest
@@ -92,56 +91,13 @@ def test_a_completed_interval_that_starts_the_next_one_calls_for_one_sound(clock
 # --- playing ---------------------------------------------------------------------
 
 
-class FakeProcess:
-    def __init__(self, command):
-        self.command = command
-        self.polls = 0
-        self.finished = False
-
-    def poll(self):
-        self.polls += 1
-        return 0 if self.finished else None
-
-
-class Launcher:
-    """Stands in for `subprocess.Popen`: remembers what it was asked to start."""
-
-    def __init__(self):
-        self.processes = []
-        self.keywords = []
-
-    def __call__(self, command, **keywords):
-        process = FakeProcess(command)
-        self.processes.append(process)
-        self.keywords.append(keywords)
-        return process
-
-    @property
-    def commands(self):
-        return [process.command for process in self.processes]
-
-
-def installed(*names):
-    """A `which` that knows only the given programs."""
-
-    def which(name):
-        return f"/usr/bin/{name}" if name in names else None
-
-    return which
-
-
 @pytest.fixture
 def sounds_dir(tmp_path):
     return tmp_path
 
 
-@pytest.fixture
-def launcher():
-    return Launcher()
-
-
-def make_player(sounds_dir, launcher, *programs):
-    return SoundPlayer(sounds_dir, which=installed(*programs), launch=launcher)
+def make_player(sounds_dir, output):
+    return SoundPlayer(sounds_dir, output)
 
 
 def put(sounds_dir, name):
@@ -149,158 +105,112 @@ def put(sounds_dir, name):
     return sounds_dir / name
 
 
-def test_the_file_of_the_event_is_played_by_the_first_player_that_is_installed(
-    sounds_dir, launcher
-):
+def test_the_file_of_the_event_is_played(sounds_dir, output):
     path = put(sounds_dir, "work_end.wav")
 
-    make_player(sounds_dir, launcher, "pw-play", "aplay").play(SoundEvent.WORK_END)
+    make_player(sounds_dir, output).play(SoundEvent.WORK_END)
 
-    assert launcher.commands == [["/usr/bin/pw-play", str(path)]]
+    assert output.plays == [(path, False)]
 
 
-def test_each_event_has_its_own_file(sounds_dir, launcher):
+def test_each_event_has_its_own_file(sounds_dir, output):
     put(sounds_dir, "work_end.wav")
     path = put(sounds_dir, "break_end.wav")
 
-    make_player(sounds_dir, launcher, "paplay").play(SoundEvent.BREAK_END)
+    make_player(sounds_dir, output).play(SoundEvent.BREAK_END)
 
-    assert launcher.commands == [["/usr/bin/paplay", str(path)]]
+    assert output.files == [path]
 
 
-def test_the_end_of_a_scenario_has_its_own_file(sounds_dir, launcher):
+def test_the_end_of_a_scenario_has_its_own_file(sounds_dir, output):
     put(sounds_dir, "work_end.wav")
     path = put(sounds_dir, "scenario_end.wav")
 
-    make_player(sounds_dir, launcher, "paplay").play(SoundEvent.SCENARIO_END)
+    make_player(sounds_dir, output).play(SoundEvent.SCENARIO_END)
 
-    assert launcher.commands == [["/usr/bin/paplay", str(path)]]
+    assert output.files == [path]
 
 
-def test_without_its_own_file_the_end_of_a_scenario_plays_the_work_sound(
-    sounds_dir, launcher
-):
+def test_without_its_own_file_the_end_of_a_scenario_plays_the_work_sound(sounds_dir, output):
     path = put(sounds_dir, "work_end.wav")
     put(sounds_dir, "break_end.wav")
 
-    make_player(sounds_dir, launcher, "paplay").play(SoundEvent.SCENARIO_END)
+    make_player(sounds_dir, output).play(SoundEvent.SCENARIO_END)
 
-    assert launcher.commands == [["/usr/bin/paplay", str(path)]]
+    assert output.files == [path]
 
 
-def test_the_work_sound_does_not_fall_back_to_the_scenario_sound(sounds_dir, launcher):
+def test_the_work_sound_does_not_fall_back_to_the_scenario_sound(sounds_dir, output):
     put(sounds_dir, "scenario_end.wav")
 
-    make_player(sounds_dir, launcher, "paplay").play(SoundEvent.WORK_END)
+    make_player(sounds_dir, output).play(SoundEvent.WORK_END)
 
-    assert launcher.commands == []
-
-
-def test_the_end_of_a_scenario_is_silent_without_any_of_the_files(sounds_dir, launcher):
-    make_player(sounds_dir, launcher, "paplay").play(SoundEvent.SCENARIO_END)
-
-    assert launcher.commands == []
+    assert output.plays == []
 
 
-@pytest.mark.parametrize("extension", ["wav", "ogg", "flac"])
-def test_paplay_plays_what_it_knows(sounds_dir, launcher, extension):
+def test_the_end_of_a_scenario_is_silent_without_any_of_the_files(sounds_dir, output):
+    make_player(sounds_dir, output).play(SoundEvent.SCENARIO_END)
+
+    assert output.plays == []
+
+
+@pytest.mark.parametrize("extension", ["wav", "ogg", "flac", "mp3"])
+def test_every_format_is_played(sounds_dir, output, extension):
     path = put(sounds_dir, f"work_end.{extension}")
 
-    make_player(sounds_dir, launcher, "paplay", "ffplay").play(SoundEvent.WORK_END)
+    make_player(sounds_dir, output).play(SoundEvent.WORK_END)
 
-    assert launcher.commands == [["/usr/bin/paplay", str(path)]]
-
-
-def test_an_mp3_is_played_by_ffplay_quietly_and_without_a_window(sounds_dir, launcher):
-    path = put(sounds_dir, "work_end.mp3")
-
-    make_player(sounds_dir, launcher, "paplay", "pw-play", "aplay", "ffplay").play(
-        SoundEvent.WORK_END
-    )
-
-    assert launcher.commands == [
-        ["/usr/bin/ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", str(path)]
-    ]
+    assert output.files == [path]
 
 
-def test_an_mp3_is_not_played_when_only_players_that_do_not_know_it_are_installed(
-    sounds_dir, launcher
+def test_the_formats_are_preferred_in_the_order_wav_ogg_flac_mp3(sounds_dir, output):
+    put(sounds_dir, "work_end.mp3")
+    put(sounds_dir, "work_end.flac")
+    ogg = put(sounds_dir, "work_end.ogg")
+
+    make_player(sounds_dir, output).play(SoundEvent.WORK_END)
+
+    assert output.files == [ogg]
+
+
+def test_a_missing_file_means_no_sound(sounds_dir, output):
+    make_player(sounds_dir, output).play(SoundEvent.WORK_END)
+
+    assert output.plays == []
+
+
+def test_a_missing_directory_means_no_sound(tmp_path, output):
+    make_player(tmp_path / "nowhere", output).play(SoundEvent.WORK_END)
+
+    assert output.plays == []
+
+
+def test_a_file_that_cannot_be_played_does_not_stop_the_next_format_from_trying(
+    sounds_dir,
 ):
-    put(sounds_dir, "work_end.mp3")
+    class PlaysOnlyOgg:
+        def __init__(self):
+            self.tried = []
 
-    make_player(sounds_dir, launcher, "paplay", "aplay").play(SoundEvent.WORK_END)
+        def play(self, file, *, loop=False):
+            self.tried.append(file.name)
+            return object() if file.suffix == ".ogg" else None
 
-    assert launcher.commands == []
-
-
-def test_aplay_plays_only_wav(sounds_dir, launcher):
-    put(sounds_dir, "work_end.ogg")
-
-    make_player(sounds_dir, launcher, "aplay").play(SoundEvent.WORK_END)
-
-    assert launcher.commands == []
-
-
-def test_a_wav_is_preferred_to_other_formats(sounds_dir, launcher):
-    put(sounds_dir, "work_end.mp3")
     wav = put(sounds_dir, "work_end.wav")
+    ogg = put(sounds_dir, "work_end.ogg")
+    output = PlaysOnlyOgg()
 
-    make_player(sounds_dir, launcher, "ffplay").play(SoundEvent.WORK_END)
+    make_player(sounds_dir, output).play(SoundEvent.WORK_END)
 
-    assert launcher.commands[0][-1] == str(wav)
-
-
-def test_a_missing_file_means_no_sound(sounds_dir, launcher):
-    make_player(sounds_dir, launcher, "paplay").play(SoundEvent.WORK_END)
-
-    assert launcher.commands == []
+    assert output.tried == [wav.name, ogg.name]
 
 
-def test_a_missing_directory_means_no_sound(tmp_path, launcher):
-    player = make_player(tmp_path / "nowhere", launcher, "paplay")
-
-    player.play(SoundEvent.WORK_END)
-
-    assert launcher.commands == []
-
-
-def test_no_player_installed_means_no_sound(sounds_dir, launcher):
+def test_no_sound_system_means_no_sound_and_no_error(sounds_dir, silent_output):
     put(sounds_dir, "work_end.wav")
 
-    make_player(sounds_dir, launcher).play(SoundEvent.WORK_END)
+    make_player(sounds_dir, silent_output).play(SoundEvent.WORK_END)
 
-    assert launcher.commands == []
-
-
-def test_a_player_that_cannot_be_started_does_not_disturb_the_timer(sounds_dir):
-    put(sounds_dir, "work_end.wav")
-
-    def broken(command, **keywords):
-        raise OSError("no such device")
-
-    SoundPlayer(sounds_dir, which=installed("paplay"), launch=broken).play(SoundEvent.WORK_END)
-
-
-def test_the_player_runs_in_the_background_and_says_nothing(sounds_dir, launcher):
-    put(sounds_dir, "work_end.wav")
-
-    make_player(sounds_dir, launcher, "paplay").play(SoundEvent.WORK_END)
-
-    (keywords,) = launcher.keywords
-    assert keywords["stdout"] == subprocess.DEVNULL
-    assert keywords["stderr"] == subprocess.DEVNULL
-    assert keywords["start_new_session"] is True
-
-
-def test_finished_players_are_collected(sounds_dir, launcher):
-    put(sounds_dir, "work_end.wav")
-    player = make_player(sounds_dir, launcher, "paplay")
-
-    player.play(SoundEvent.WORK_END)
-    launcher.processes[0].finished = True
-    player.play(SoundEvent.WORK_END)
-
-    assert launcher.processes[0].polls >= 1
+    assert len(silent_output.plays) == 1  # it was tried; nothing came of it
 
 
 def test_the_sounds_of_the_application_are_in_its_package():

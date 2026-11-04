@@ -6,13 +6,13 @@ Put the sound files of the application here:
 - `break_end.<ext>` — the end of a break;
 - `scenario_end.<ext>` — a scenario run to its end (plays instead of `work_end`; without this file `work_end` plays).
 
-The background sound of a work interval, chosen in Settings, is a file that is played in a loop (it needs `ffplay` and `timeout`):
+The background sound of a work interval, chosen in Settings, is a file that is played in a loop without a gap:
 
 - `ticking.<ext>` — a ticking clock;
 - `white_noise.<ext>` — white noise;
 - `rain.<ext>` — rain.
 
-`<ext>` is `wav`, `ogg`, `flac` or `mp3` (`mp3` needs `ffplay`). Without a file there is no sound. A background sound loops best from `wav` or `ogg`: an `mp3` may pause for a moment where it starts over.
+`<ext>` is `wav`, `ogg`, `flac` or `mp3`; when several exist the first of that order is played. The program plays them itself, no player is needed. Without a file there is no sound.
 Names are lower case, with an underscore.
 
 ## Sources

@@ -26,6 +26,7 @@ uv run pyinstaller \
     --add-data "${root}/src/fermata/icons:fermata/icons" \
     --collect-all ttkbootstrap \
     --hidden-import PIL._tkinter_finder \
+    --hidden-import _cffi_backend \
     src/fermata/__main__.py
 
 install -Dm755 dist/fermata "${bin_dir}/fermata"
