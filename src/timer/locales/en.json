@@ -146,6 +146,7 @@
   "theme.catppuccin_frappe": "Catppuccin Frappé",
   "theme.catppuccin_macchiato": "Catppuccin Macchiato",
   "theme.catppuccin_mocha": "Catppuccin Mocha",
+  "settings.version": "Version {version}",
   "settings.save": "Save",
   "settings.saved": "Saved.",
   "settings.mode.auto.name": "Auto-start",

@@ -7,6 +7,7 @@ from timer.i18n import t
 from timer.storage.settings import Settings, SettingsRepository, Value
 from timer.storage.settings_rules import BACKGROUND_SOUND_IDS, THEME_IDS
 from timer.validation import ValidationError
+from timer.version import app_version
 
 
 def _to_number(text: str) -> int | str:
@@ -20,6 +21,9 @@ def _to_number(text: str) -> int | str:
 class SettingsViewModel:
     def __init__(self, settings_repository: SettingsRepository):
         self._settings_repository = settings_repository
+
+    def version_text(self) -> str:
+        return t("settings.version", version=app_version())
 
     def settings(self) -> Settings:
         return self._settings_repository.get_all()

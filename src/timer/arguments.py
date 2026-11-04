@@ -4,6 +4,8 @@ import argparse
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from timer.version import app_version
+
 
 @dataclass(frozen=True)
 class Arguments:
@@ -12,6 +14,7 @@ class Arguments:
 
 def parse_arguments(argv: Sequence[str] | None = None, *, release: bool) -> Arguments:
     parser = argparse.ArgumentParser(prog="timer")
+    parser.add_argument("--version", action="version", version=f"timer {app_version()}")
     if not release:
         parser.add_argument(
             "--real-time",

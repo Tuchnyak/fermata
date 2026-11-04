@@ -19,8 +19,11 @@ from timer.storage.settings_rules import (
 )
 from timer.themes import ttk_theme_name
 from timer.ui.number_slider import NumberSlider
+from timer.ui.progress import faded
 from timer.ui.settings_view_model import SettingsViewModel
 
+VERSION_FONT_SIZE = 9
+VERSION_FADE_AMOUNT = 0.35  # how far the version's color moves towards the background
 SLIDER_LENGTH = 320  # the same for every slider, whatever its range
 MINUTES_STEP = 5  # the lowest time on a slider is one step, although the rules allow 1
 
@@ -64,12 +67,36 @@ class SettingsScreen(ttk.Frame):
         self._sound_variable = tkinter.BooleanVar()
 
         self._build_save_button(actions)
+        self._build_version(actions)
         self._build_number_fields()
         self._build_transition_modes()
         self._build_flags()
         self._build_background_sound()
         self._build_theme()
         self._load_settings()
+
+    def _build_version(self, actions: ttk.Frame) -> None:
+        """The version right after the title in the header, small and dim.
+
+        It is in the header, not above the settings: the screen has no room for another line.
+        """
+        self._version = ttk.Label(
+            actions.master,
+            text=self._view_model.version_text(),
+            font=("TkDefaultFont", VERSION_FONT_SIZE),
+        )
+        self._version.pack(side="left", before=actions)
+        self._dim_version()
+
+    def _dim_version(self) -> None:
+        style = ttk.Style()
+        self._version.configure(
+            foreground=faded(
+                style.lookup("TLabel", "foreground"),
+                style.lookup("TFrame", "background"),
+                VERSION_FADE_AMOUNT,
+            )
+        )
 
     def _build_save_button(self, actions: ttk.Frame) -> None:
         ttk.Button(
@@ -163,6 +190,7 @@ class SettingsScreen(ttk.Frame):
         ttk.Style().theme_use(ttk_theme_name(theme_id))
         for slider in self._sliders.values():
             slider.refresh_colors()  # what is drawn by hand does not follow the theme itself
+        self._dim_version()
         self.focus_set()
 
     def _load_settings(self) -> None:

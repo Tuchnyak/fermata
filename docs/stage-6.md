@@ -7,11 +7,11 @@ What is already there from [release-0.2.md](release-0.2.md): the PyInstaller bui
 
 ## Pieces
 
-- [ ] **6.1 The version in the program**
+- [x] **6.1 The version in the program**
   - The version is read from the package metadata (`importlib.metadata`), so `pyproject.toml` stays the only place where the number is written. A test compares what the program reports with `pyproject.toml`.
   - `timer --version` prints `timer 0.5.0` and exits, in a run from source and in the built executable.
-  - Settings shows the version in the first line of the screen, right under the header with the title: `Version 0.5.0`, in a smaller font and a less contrasting color than the rest of the screen.
-  - The build carries the metadata (`--copy-metadata timer` in `scripts/install-local.sh`); verified by running the built executable with `--version`.
+  - Settings shows the version right after its title in the header: `Version 0.5.0`, in a smaller font and a less contrasting color than the rest of the screen (a faded text color, readable in all six themes: a test checks the contrast). It is in the header, not in a line of its own, because the screen has no room for another line at the default window size.
+  - The build carries the metadata by itself: PyInstaller sees the `version("timer")` call (a build without the `--copy-metadata` flag was tried and reports the version), so no flag is added; verified by running the built executable with `--version`, and guarded by the CI check of 6.5.
 
 - [ ] **6.2 Choosing the language**
   - Added at the owner's request, before the icon. The setting `language` and a list in Settings; the languages are English (the default), Russian, Spanish, Portuguese, German, Chinese and Japanese. Spec §15 said the language setting appears when a second language does: this is that stage.

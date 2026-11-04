@@ -1,6 +1,7 @@
 import pytest
 from timer.i18n import t
 from timer.storage.db import Db
+from timer.version import app_version
 from timer.storage.migrate import MIGRATIONS_DIR, migrate
 from timer.storage.settings import Settings, SettingsRepository
 from timer.storage.settings_rules import BACKGROUND_SOUND_IDS, TRANSITION_MODES
@@ -323,3 +324,10 @@ def test_the_mute_button_leaves_the_other_settings_alone(settings_view_model):
 @pytest.mark.parametrize("key", ["home.sound_on", "home.sound_off"])
 def test_the_mute_button_has_its_texts_in_the_catalog(key):
     assert t(key)
+
+
+# --- the version ---------------------------------------------------------------------
+
+
+def test_the_settings_show_the_version_of_the_application(settings_view_model):
+    assert settings_view_model.version_text() == f"Version {app_version()}"

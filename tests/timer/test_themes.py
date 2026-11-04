@@ -101,3 +101,14 @@ def test_selected_text_stands_out_from_its_highlight(theme_id):
     colors = definition_of(theme_id).colors
 
     assert contrast(colors.selectfg, colors.selectbg) >= 3.0
+
+
+@pytest.mark.parametrize("theme_id", THEME_IDS)
+def test_the_dimmed_version_is_still_readable_but_less_contrasting_than_text(theme_id):
+    from timer.ui.progress import faded
+    from timer.ui.settings_screen import VERSION_FADE_AMOUNT
+
+    colors = definition_of(theme_id).colors
+    version_color = faded(colors.fg, colors.bg, VERSION_FADE_AMOUNT)
+
+    assert 3.0 <= contrast(version_color, colors.bg) < contrast(colors.fg, colors.bg)
