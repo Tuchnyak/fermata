@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+from fermata.audio import AudioOutput, MiniaudioOutput
 from fermata.background_sound import BackgroundSound
 from fermata.engine import Engine, FlowEvent
 from fermata.i18n import set_language
@@ -36,6 +37,7 @@ from fermata.ui.waiting_view_model import WaitingViewModel
 class Components:
     engine: Engine
     background_sound: BackgroundSound
+    audio_output: AudioOutput  # closed when the window is, which stops every sound
     categories_view_model: CategoriesViewModel
     settings_view_model: SettingsViewModel
     home_view_model: HomeViewModel
@@ -60,6 +62,7 @@ def build_components(
     database_path: str | Path,
     clock: Callable[[], datetime],
     sound_player: SoundPlayer | None = None,
+    audio_output: AudioOutput | None = None,
 ) -> Components:
     db = Db.open(database_path)
     migrate(db, MIGRATIONS_DIR)
@@ -71,9 +74,10 @@ def build_components(
     set_language(settings_repository.get_all().language)
     session_repository.interrupt_running_sessions()
 
+    output = audio_output or MiniaudioOutput()
     recorder = Recorder(db, session_repository)
     notifier = SoundNotifier(
-        settings_repository.get_all, sound_player or SoundPlayer(SOUNDS_DIR)
+        settings_repository.get_all, sound_player or SoundPlayer(SOUNDS_DIR, output)
     )
     engine = Engine(
         get_settings=settings_repository.get_all,
@@ -87,8 +91,9 @@ def build_components(
     return Components(
         engine=engine,
         background_sound=BackgroundSound(
-            engine, settings_repository.get_all, SOUNDS_DIR
+            engine, settings_repository.get_all, SOUNDS_DIR, output
         ),
+        audio_output=output,
         categories_view_model=CategoriesViewModel(category_repository),
         settings_view_model=SettingsViewModel(settings_repository),
         home_view_model=HomeViewModel(

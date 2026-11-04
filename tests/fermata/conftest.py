@@ -35,3 +35,51 @@ def english_language():
     i18n.set_language("en")
     yield
     i18n.set_language("en")
+
+
+class FakePlayback:
+    def __init__(self):
+        self.stopped = False
+
+    def stop(self):
+        self.stopped = True
+
+
+class FakeOutput:
+    """Stands in for the audio output: remembers what it was asked to play, plays nothing."""
+
+    def __init__(self, fails=False):
+        self.fails = fails  # a machine with no sound system: nothing can be played
+        self.plays = []  # (file, loop)
+        self.playbacks = []
+
+    def play(self, file, *, loop=False):
+        self.plays.append((file, loop))
+        if self.fails:
+            return None
+        playback = FakePlayback()
+        self.playbacks.append(playback)
+        return playback
+
+    def close(self):
+        for playback in self.playbacks:
+            playback.stop()
+
+    @property
+    def files(self):
+        return [file for file, _ in self.plays]
+
+    @property
+    def running(self):
+        return [playback for playback in self.playbacks if not playback.stopped]
+
+
+@pytest.fixture
+def output():
+    return FakeOutput()
+
+
+@pytest.fixture
+def silent_output():
+    """A machine with no sound system."""
+    return FakeOutput(fails=True)

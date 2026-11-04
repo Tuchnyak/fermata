@@ -2,16 +2,15 @@
 
 The sounds are files in `sounds/` next to this module: `work_end.<ext>`, `break_end.<ext>` and
 `scenario_end.<ext>`, which `work_end` stands in for while it is missing.
-They are played by a system command in the background (no audio library is needed), and
-anything that goes wrong, such as no file or no player, only means there is no sound.
+They are played inside the program (see `audio.py`), and anything that goes wrong, such as no
+file or no sound system, only means there is no sound.
 """
 
-import shutil
-import subprocess
 from collections.abc import Callable
 from enum import StrEnum
 from pathlib import Path
 
+from fermata.audio import AudioOutput
 from fermata.engine import FlowEvent
 from fermata.intervals import IntervalKind, IntervalStatus
 from fermata.storage.settings import Settings
@@ -20,18 +19,6 @@ SOUNDS_DIR = Path(__file__).parent / "sounds"
 
 # The formats of the files, the best first.
 EXTENSIONS = ("wav", "ogg", "flac", "mp3")
-
-# The players in the order they are tried: the program, its options and the formats it plays.
-PLAYERS = (
-    ("paplay", (), frozenset({"wav", "ogg", "flac"})),
-    ("pw-play", (), frozenset({"wav", "ogg", "flac"})),
-    (
-        "ffplay",
-        ("-nodisp", "-autoexit", "-loglevel", "quiet"),
-        frozenset({"wav", "ogg", "flac", "mp3"}),
-    ),
-    ("aplay", (), frozenset({"wav"})),
-)
 
 
 class SoundEvent(StrEnum):
@@ -57,60 +44,28 @@ def sound_event_for(event: FlowEvent) -> SoundEvent | None:
     return SoundEvent.BREAK_END
 
 
-def sound_files(sounds_dir: Path, name: str) -> list[tuple[Path, str]]:
-    """The files that exist for a sound, with their formats, the best format first."""
+def sound_files(sounds_dir: Path, name: str) -> list[Path]:
+    """The files that exist for a sound, the best format first."""
     files = []
     for extension in EXTENSIONS:
         file = sounds_dir / f"{name}.{extension}"
         if file.is_file():
-            files.append((file, extension))
+            files.append(file)
     return files
 
 
 class SoundPlayer:
-    def __init__(
-        self,
-        sounds_dir: Path = SOUNDS_DIR,
-        which: Callable[[str], str | None] = shutil.which,
-        launch: Callable[..., subprocess.Popen] = subprocess.Popen,
-    ):
+    def __init__(self, sounds_dir: Path, output: AudioOutput):
         self._sounds_dir = sounds_dir
-        self._which = which
-        self._launch = launch
-        self._running: list[subprocess.Popen] = []
+        self._output = output
 
     def play(self, sound: SoundEvent) -> None:
         files = sound_files(self._sounds_dir, sound)
         if not files and sound in FALLBACKS:
             files = sound_files(self._sounds_dir, FALLBACKS[sound])
-        for file, extension in files:
-            command = self._command_for(file, extension)
-            if command is not None:
-                self._start(command)
+        for file in files:
+            if self._output.play(file) is not None:
                 return
-
-    def _command_for(self, file: Path, extension: str) -> list[str] | None:
-        for program, options, formats in PLAYERS:
-            if extension not in formats:
-                continue
-            path = self._which(program)
-            if path is not None:
-                return [path, *options, str(file)]
-        return None
-
-    def _start(self, command: list[str]) -> None:
-        # A finished player stays a zombie until it is asked how it ended.
-        self._running = [process for process in self._running if process.poll() is None]
-        try:
-            process = self._launch(
-                command,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True,
-            )
-        except OSError:
-            return
-        self._running.append(process)
 
 
 class SoundNotifier:

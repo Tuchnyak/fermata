@@ -1,6 +1,5 @@
 import pytest
 from fermata import i18n
-from fermata.background_sound import BackgroundSound
 from fermata.intervals import IntervalKind
 from fermata.sound import SoundEvent
 from fermata.storage.db import Db
@@ -240,30 +239,46 @@ def start_a_scenario_of_one_work_interval(components):
 
 
 def test_the_background_sound_follows_the_timer_and_the_settings(
-    database_path, clock, player, tmp_path, monkeypatch
+    database_path, clock, player, tmp_path, monkeypatch, output
 ):
     (tmp_path / "rain.wav").write_bytes(b"sound")
-    started = []
-
-    def launch(command, **keywords):
-        started.append(command)
-        return type("Process", (), {"terminate": lambda self: None, "wait": lambda self, timeout: 0})()
-
     monkeypatch.setattr("fermata.wiring.SOUNDS_DIR", tmp_path)
-    monkeypatch.setattr(
-        "fermata.wiring.BackgroundSound",
-        lambda engine, get_settings, sounds_dir: BackgroundSound(
-            engine, get_settings, sounds_dir, which=lambda name: f"/usr/bin/{name}", launch=launch
-        ),
-    )
-    components = build_components(database_path, clock, player)
+    components = build_components(database_path, clock, player, output)
     components.settings_view_model.choose_background_sound("rain")
 
     start_flow(components)
     components.background_sound.update()
 
-    assert len(started) == 1
-    assert started[0][-1] == str(tmp_path / "rain.wav")
+    assert output.plays == [(tmp_path / "rain.wav", True)]
+
+
+def test_the_signals_are_played_through_the_audio_output(
+    database_path, clock, tmp_path, monkeypatch, output
+):
+    (tmp_path / "work_end.wav").write_bytes(b"sound")
+    monkeypatch.setattr("fermata.wiring.SOUNDS_DIR", tmp_path)
+    components = build_components(database_path, clock, audio_output=output)
+    start_flow(components)
+
+    clock.advance(components.engine.remaining_seconds())
+    components.engine.tick()
+
+    assert output.plays == [(tmp_path / "work_end.wav", False)]
+
+
+def test_closing_the_audio_output_stops_the_background_sound(
+    database_path, clock, player, tmp_path, monkeypatch, output
+):
+    (tmp_path / "rain.wav").write_bytes(b"sound")
+    monkeypatch.setattr("fermata.wiring.SOUNDS_DIR", tmp_path)
+    components = build_components(database_path, clock, player, output)
+    components.settings_view_model.choose_background_sound("rain")
+    start_flow(components)
+    components.background_sound.update()
+
+    components.audio_output.close()
+
+    assert output.running == []
 
 
 def test_a_scenario_run_to_its_end_plays_the_sound_of_its_end(components, clock, player):

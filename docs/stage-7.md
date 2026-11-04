@@ -7,13 +7,15 @@ Why: the owner wants to share the program as one file, so it must not rely on pl
 
 ## Pieces
 
-- [ ] **7.1 The sounds play inside the program**
+- [x] **7.1 The sounds play inside the program**
   - A new dependency, `miniaudio` (wheels for Linux, Windows and macOS, 0.3–0.6 MB). `audio.py` holds a small interface the rest of the program talks to (play a file once or in a loop, stop it) and its `miniaudio` implementation. The tests use a fake of the interface, so no sound is played by them.
   - A file is decoded when it is needed and kept for as long as it plays: the longest loop decodes in 0.1 s and takes 21 MB, the signals are under 1 MB. Every playing sound has its own device, so a signal over the background sound, or two signals one after another, do not cut each other, as now.
   - `SoundPlayer` (the signals) and `BackgroundSound` (the loop) use the interface. Gone for good: the table of players and their formats, `which` and `launch`, the `timeout` that bounded the loop and its extra seconds. What stays: which sound an event calls for, the fall back of `scenario_end` to `work_end`, the order wav, ogg, flac, mp3, and the rules of when the background sound plays (the owner's decisions of Stage 5).
   - The loop runs without a gap. A sound can no longer outlive the program: closing the window stops them all, and a program that dies takes its sound with it.
   - A missing file, an unreadable file or no sound system on the machine means silence, never an error.
-  - Verified: the tests with the fake; a PyInstaller build that starts and carries `miniaudio`; the real sound by the owner by ear (the agent says before it plays anything).
+  - Two things found while building it, both now covered: the built program crashed at start for want of `_cffi_backend` (the library's helper), so the installer adds `--hidden-import _cffi_backend`; and a playing device left open kept a program that ended without closing it from ending at all, so the output closes itself at exit (`atexit`) and the program closes it in a `finally` after the window.
+  - The frames of a sound, and so the loop without a gap, are a pure function (`sample_stream`) and tested alone; the output is tested against the null device of the library, which plays into nothing.
+  - Verified: the tests with the fake and with the null device; a PyInstaller build that starts and carries `miniaudio`; one second of silence through the owner's real sound system (PulseAudio), to see that the device opens without any sound; the real sound by the owner by ear (the agent says before it plays anything).
 
 - [ ] **7.2 Close-out**
   - `docs/spec.md` §14 and §19, `AGENTS.md`, `README.md` (no players are required any more), `src/fermata/sounds/README.md` and the roadmap match the code.

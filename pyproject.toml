@@ -7,6 +7,7 @@ license = "GPL-3.0-only"
 license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
+    "miniaudio>=1.71",
     "ttkbootstrap>=2.2.4",
 ]
 
