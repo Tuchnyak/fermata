@@ -48,14 +48,30 @@ def test_an_interval_ended_by_the_user_is_silent(clock, kind, status):
     assert sound_event_for(event(clock, finished_interval=interval)) is None
 
 
-def test_the_end_of_a_scenario_calls_for_the_work_sound(clock):
+def test_the_end_of_a_scenario_calls_for_its_own_sound(clock):
     interval = finished(IntervalKind.WORK, clock=clock)
 
     scenario_end = event(
         clock, finished_interval=interval, flow_ended=True, session_completed=True
     )
 
-    assert sound_event_for(scenario_end) == SoundEvent.WORK_END
+    assert sound_event_for(scenario_end) == SoundEvent.SCENARIO_END
+
+
+def test_a_scenario_ended_by_skipping_its_last_interval_is_silent(clock):
+    interval = finished(IntervalKind.WORK, IntervalStatus.SKIPPED, clock)
+
+    scenario_end = event(
+        clock, finished_interval=interval, flow_ended=True, session_completed=True
+    )
+
+    assert sound_event_for(scenario_end) is None
+
+
+def test_a_work_interval_in_the_middle_of_a_scenario_calls_for_the_work_sound(clock):
+    interval = finished(IntervalKind.WORK, clock=clock)
+
+    assert sound_event_for(event(clock, finished_interval=interval)) == SoundEvent.WORK_END
 
 
 def test_a_start_is_silent(clock):
@@ -150,6 +166,40 @@ def test_each_event_has_its_own_file(sounds_dir, launcher):
     make_player(sounds_dir, launcher, "paplay").play(SoundEvent.BREAK_END)
 
     assert launcher.commands == [["/usr/bin/paplay", str(path)]]
+
+
+def test_the_end_of_a_scenario_has_its_own_file(sounds_dir, launcher):
+    put(sounds_dir, "work_end.wav")
+    path = put(sounds_dir, "scenario_end.wav")
+
+    make_player(sounds_dir, launcher, "paplay").play(SoundEvent.SCENARIO_END)
+
+    assert launcher.commands == [["/usr/bin/paplay", str(path)]]
+
+
+def test_without_its_own_file_the_end_of_a_scenario_plays_the_work_sound(
+    sounds_dir, launcher
+):
+    path = put(sounds_dir, "work_end.wav")
+    put(sounds_dir, "break_end.wav")
+
+    make_player(sounds_dir, launcher, "paplay").play(SoundEvent.SCENARIO_END)
+
+    assert launcher.commands == [["/usr/bin/paplay", str(path)]]
+
+
+def test_the_work_sound_does_not_fall_back_to_the_scenario_sound(sounds_dir, launcher):
+    put(sounds_dir, "scenario_end.wav")
+
+    make_player(sounds_dir, launcher, "paplay").play(SoundEvent.WORK_END)
+
+    assert launcher.commands == []
+
+
+def test_the_end_of_a_scenario_is_silent_without_any_of_the_files(sounds_dir, launcher):
+    make_player(sounds_dir, launcher, "paplay").play(SoundEvent.SCENARIO_END)
+
+    assert launcher.commands == []
 
 
 @pytest.mark.parametrize("extension", ["wav", "ogg", "flac"])
@@ -281,6 +331,21 @@ def test_the_notifier_plays_what_an_event_calls_for(clock, player):
     notifier(event(clock, finished_interval=finished(IntervalKind.WORK, clock=clock)))
 
     assert player.played == [SoundEvent.WORK_END]
+
+
+def test_the_notifier_plays_the_sound_of_the_end_of_a_scenario(clock, player):
+    notifier = SoundNotifier(Settings, player)
+
+    notifier(
+        event(
+            clock,
+            finished_interval=finished(IntervalKind.WORK, clock=clock),
+            flow_ended=True,
+            session_completed=True,
+        )
+    )
+
+    assert player.played == [SoundEvent.SCENARIO_END]
 
 
 def test_the_notifier_stays_silent_for_an_event_without_a_sound(clock, player):

@@ -8,6 +8,7 @@ from functools import partial
 from tkinter import ttk as tk_ttk
 
 import ttkbootstrap as ttk
+from timer.background_sound import BackgroundSound
 from timer.build import is_release
 from timer.i18n import t
 from timer.ui.categories_screen import CategoriesScreen
@@ -17,6 +18,7 @@ from timer.ui.history_view_model import HistoryViewModel
 from timer.ui.home_view_model import HomeMode, HomeViewModel
 from timer.ui.fullscreen import Fullscreen, shows_board
 from timer.ui.hotkeys import HotkeyHandler
+from timer.ui.mute_button import MuteButton
 from timer.ui.navigation import Navigation, Screen
 from timer.ui.running_panel import RunningPanel
 from timer.ui.running_view_model import RunningViewModel
@@ -57,6 +59,7 @@ class MainWindow:
         scenarios_view_model: ScenariosViewModel,
         history_view_model: HistoryViewModel,
         fullscreen: Fullscreen,
+        background_sound: BackgroundSound,
     ):
         self._root = root
         self._navigation = navigation
@@ -69,6 +72,7 @@ class MainWindow:
         self._scenarios_view_model = scenarios_view_model
         self._history_view_model = history_view_model
         self._fullscreen = fullscreen
+        self._background_sound = background_sound
         self._shown_home_mode: HomeMode | None = None
         self._running_panel: RunningPanel | None = None
         self._normal_geometry = ""  # of the normal window, taken when it goes fullscreen
@@ -100,6 +104,7 @@ class MainWindow:
     def _on_tick(self) -> None:
         # The engine is ticked whatever screen is shown, so that intervals end on time.
         self._running_view_model.tick()
+        self._background_sound.update()
         self._refresh_home_screen()
         self._root.after(TICK_MILLISECONDS, self._on_tick)
 
@@ -150,6 +155,7 @@ class MainWindow:
         self._settings_view_model.remember_window_geometry(
             without_offset(geometry, self._placement_offset)
         )
+        self._background_sound.stop()
         self._root.destroy()
 
     def _open(self, screen: Screen) -> None:
@@ -199,6 +205,9 @@ class MainWindow:
                 command=self._toggle_fullscreen,
                 takefocus=False,
             ).pack(side="right")
+            MuteButton(self._header, self._settings_view_model).pack(
+                side="right", padx=(0, 8)
+            )
 
         if self._navigation.current == Screen.SCENARIOS:
             ScenariosScreen(
@@ -221,6 +230,14 @@ class MainWindow:
 
     def _show_home_content(self, board: bool) -> None:
         self._shown_home_mode = self._home_view_model.mode()
+        self._show_home_panel(board)
+        if board:
+            # The board has no header; its one button is over the corner of the panel.
+            MuteButton(self._content, self._settings_view_model).place(
+                relx=1.0, rely=0.0, anchor="ne"
+            )
+
+    def _show_home_panel(self, board: bool) -> None:
         if self._shown_home_mode == HomeMode.RUNNING:
             self._running_panel = RunningPanel(
                 self._content, self._running_view_model, board
