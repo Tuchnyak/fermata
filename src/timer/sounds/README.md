@@ -19,9 +19,9 @@ Names are lower case, with an underscore.
 1. [work_end.mp3](https://pixabay.com/sound-effects/film-special-effects-clear-bell-notification-sound-351709/)
 2. [break_end.mp3](https://pixabay.com/sound-effects/film-special-effects-church-bell-toll-156464/)
 3. [scenario_end.mp3](https://pixabay.com/sound-effects/musical-marimba-win-b-1-209678/)
-4. [ticking](https://pixabay.com/sound-effects/film-special-effects-ticking-clock-1-wav-edition-264449/)
-5. [white_noise](https://pixabay.com/sound-effects/film-special-effects-soft-soothing-deep-white-noise-378857/)
-6. [rain](https://pixabay.com/sound-effects/nature-rain-sound-307165/)
+4. [ticking.ogg](https://pixabay.com/sound-effects/film-special-effects-ticking-clock-1-wav-edition-264449/)
+5. [white_noise.ogg](https://pixabay.com/sound-effects/film-special-effects-soft-soothing-deep-white-noise-378857/)
+6. [rain.ogg](https://pixabay.com/sound-effects/nature-rain-sound-307165/)
 
 The background sounds are two-minute pieces re-encoded to `ogg` from longer originals (`ticking` is whole, only re-encoded). The ends of `white_noise` and `rain` are cross-faded into their beginnings, so that they loop without a gap or a click.
 
