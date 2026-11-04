@@ -34,7 +34,7 @@ What is already there from [release-0.2.md](release-0.2.md): the PyInstaller bui
   - No code moves the data: the owner is the only user. When the new program is installed, the agent shows and, after the owner's yes, runs the commands that move `~/.local/share/timer` and `timer-dev` to the new names and delete the old `~/.local/bin/timer` and `timer.desktop`.
   - The repository is renamed on GitHub with `gh repo rename fermata` (GitHub redirects the old address) and `origin` is changed, after the owner's go-ahead at that moment.
 
-- [ ] **6.5 The icon**
+- [x] **6.5 The icon**
   - Chosen with the owner in the brainstorm, from twenty drafts: "Sunset". A tile of warm white `#f7f4ee` with rounded corners; a red sun `#bc002d`, which is the dot of the fermata, setting behind a black horizon `#1b1b1b` that fills the bottom of the tile; above it the musical arc in the same black, thick in the middle and thin at the ends. The colors are the program's sign and do not follow the theme. On a very dark panel the black horizon merges with the panel: seen and accepted by the owner.
   - The exact shape (in a 128-unit square): the tile from 4 to 124 with a corner radius of 26; the sun at (64, 92) with a radius of 24; the horizon from y = 96 down; the arc an outer half circle of radius 38 and an inner half ellipse 33.5 wide and 25 high, both standing on y = 70 around x = 64 (so the middle is 13 thick, the ends 4.5).
   - One script, `scripts/make_icon.py`, holds that shape and writes both files from it: `src/fermata/icons/fermata.svg` and `fermata.png` (256 px, drawn larger and scaled down, as the circles of the program are). Both are committed; the script is run again only if the icon changes. No SVG renderer is needed.

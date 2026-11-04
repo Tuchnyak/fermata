@@ -22,6 +22,7 @@ def desktop_entry(executable: str) -> str:
         f"Name={english['app.title']}",
         f"GenericName={english['app.generic_name']}",
         f"Comment={english['app.description']}",
+        "Icon=fermata",  # the name of the icon in the icon folders, see scripts/install-local.sh
     ]
     for code in LANGUAGE_IDS:
         if code == "en":

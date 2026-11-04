@@ -14,6 +14,10 @@ def test_the_entry_is_an_application_entry():
     assert "Categories=Utility;" in lines()
 
 
+def test_the_entry_has_the_icon_of_the_program():
+    assert "Icon=fermata" in lines()
+
+
 def test_the_entry_starts_the_installed_program():
     assert f"Exec={EXECUTABLE}" in lines()
 

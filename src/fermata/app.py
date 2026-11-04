@@ -1,3 +1,6 @@
+import tkinter
+from pathlib import Path
+
 import ttkbootstrap as ttk
 from fermata.arguments import parse_arguments
 from fermata.build import is_release
@@ -14,6 +17,7 @@ from fermata.ui.navigation import Navigation
 from fermata.wiring import build_components
 from ttkbootstrap.dialogs import Messagebox
 
+ICON_PNG = Path(__file__).parent / "icons" / "fermata.png"
 ASK_DELAY_MILLISECONDS = 100  # the window is shown first, the question opens over it
 
 
@@ -41,6 +45,9 @@ def main():
     stored_theme = components.settings_view_model.settings().theme
     root = ttk.Window(themename=ttk_theme_name(stored_theme))
     apply_library_locale(current_language())
+    icon = tkinter.PhotoImage(file=str(ICON_PNG))  # Tk reads PNG, not SVG
+    root.iconphoto(True, icon)
+    root.fermata_icon = icon  # the window shows the picture only while something holds it
     navigation = Navigation()
     fullscreen = Fullscreen()
     hotkey_handler = HotkeyHandler(

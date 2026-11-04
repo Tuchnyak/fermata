@@ -27,7 +27,7 @@ A run from source keeps its data apart from an installed release and shows "(dev
 ./scripts/install-local.sh
 ```
 
-Builds a single executable with PyInstaller and installs it as `~/.local/bin/fermata` with an entry in the application menu. It is built for the machine it is built on. The installed program is a release: its data is in `~/.local/share/fermata` (separate from the data of a run from source), its clock is the real one, and sounds come from `src/fermata/sounds/`. Run the script again after changing the code to update it. To remove the program, delete `~/.local/bin/fermata` and `~/.local/share/applications/fermata.desktop`; the data stays until you delete `~/.local/share/fermata`.
+Builds a single executable with PyInstaller and installs it as `~/.local/bin/fermata` with an entry in the application menu. It is built for the machine it is built on. The installed program is a release: its data is in `~/.local/share/fermata` (separate from the data of a run from source), its clock is the real one, and sounds come from `src/fermata/sounds/`. Run the script again after changing the code to update it. To remove the program, delete `~/.local/bin/fermata`, `~/.local/share/applications/fermata.desktop` and the two `fermata` icons in `~/.local/share/icons/hicolor/`; the data stays until you delete `~/.local/share/fermata`.
 
 ## Test
 
