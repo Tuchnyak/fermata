@@ -81,7 +81,7 @@ class HistoryScreen(ttk.Frame):
         tree.heading("status", text=t("history.column.status"), anchor="w")
         tree.column("#0", stretch=True, minwidth=160)
         tree.column("started", width=110, stretch=False)
-        tree.column("duration", width=90, stretch=False, anchor="e")
+        tree.column("duration", width=125, stretch=False, anchor="e")
         tree.column("status", width=110, stretch=False)
         for row in view.rows:
             tree.insert(

@@ -43,6 +43,23 @@ def test_format_duration_drops_seconds():
     assert format_duration(25 * 60 + 59) == "25m"
 
 
+@pytest.mark.parametrize(
+    ("code", "short", "long"),
+    [
+        ("es", "25 min", "3 h 05 min"),
+        ("pt", "25 min", "3 h 05 min"),
+        ("de", "25 Min.", "3 Std. 05 Min."),
+        ("zh", "25分钟", "3小时05分钟"),
+        ("ja", "25分", "3時間05分"),
+    ],
+)
+def test_format_duration_in_the_other_languages(code, short, long):
+    i18n.set_language(code)
+
+    assert format_duration(25 * 60) == short
+    assert format_duration(3 * 3600 + 5 * 60) == long
+
+
 def test_format_duration_comes_in_the_language_in_force():
     i18n.set_language("ru")
 

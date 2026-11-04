@@ -5,6 +5,7 @@ from datetime import UTC, date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 import pytest
+from timer import i18n
 from timer.ui.history_period import (
     PeriodKind,
     first_day_of,
@@ -132,3 +133,24 @@ def test_the_title_of_a_week_names_its_first_and_last_day():
 
 def test_the_title_of_a_week_across_a_new_year_names_both_years():
     assert period_title(WEEK, date(2026, 12, 31)) == "28 Dec 2026 – 3 Jan 2027"
+
+
+# --- the titles in the other languages -----------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("code", "day", "week", "two_years"),
+    [
+        ("es", "Mié, 4 nov 2026", "2 nov – 8 nov 2026", "28 dic 2026 – 3 ene 2027"),
+        ("pt", "Qua, 4 nov 2026", "2 nov – 8 nov 2026", "28 dez 2026 – 3 jan 2027"),
+        ("de", "Mi, 4. Nov 2026", "2. Nov – 8. Nov 2026", "28. Dez 2026 – 3. Jan 2027"),
+        ("zh", "2026年11月4日 周三", "2026年11月2日 – 11月8日", "2026年12月28日 – 2027年1月3日"),
+        ("ja", "2026年11月4日(水)", "2026年11月2日 – 11月8日", "2026年12月28日 – 2027年1月3日"),
+    ],
+)
+def test_the_titles_of_the_periods_in_the_other_languages(code, day, week, two_years):
+    i18n.set_language(code)
+
+    assert period_title(PeriodKind.DAY, date(2026, 11, 4)) == day
+    assert period_title(PeriodKind.WEEK, date(2026, 11, 4)) == week
+    assert period_title(PeriodKind.WEEK, date(2026, 12, 30)) == two_years

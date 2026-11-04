@@ -137,3 +137,21 @@ def test_a_catalog_has_its_own_name_and_the_texts_of_the_dialogs(code):
 
     assert catalog["language.name"]
     assert catalog["dialog.yes"] and catalog["dialog.no"]
+
+
+def test_there_are_seven_languages_and_english_comes_first():
+    assert LANGUAGE_IDS == ("en", "ru", "es", "pt", "de", "zh", "ja")
+
+
+@pytest.mark.parametrize(
+    ("code", "name"),
+    [("es", "Español"), ("pt", "Português"), ("de", "Deutsch"), ("zh", "中文"), ("ja", "日本語")],
+)
+def test_the_other_languages_are_named_in_themselves(code, name):
+    assert i18n.language_name(code) == name
+
+
+@pytest.mark.parametrize("code", [code for code in LANGUAGE_IDS if code != "en"])
+@pytest.mark.parametrize("key", ["nav.back", "settings.save", "history.today", "running.skip"])
+def test_a_translation_is_not_a_copy_of_the_english_text(code, key):
+    assert i18n.catalog_of(code)[key] != i18n.catalog_of("en")[key]

@@ -5,7 +5,7 @@ from timer.storage.db import Db
 from timer.version import app_version
 from timer.storage.migrate import MIGRATIONS_DIR, migrate
 from timer.storage.settings import Settings, SettingsRepository
-from timer.storage.settings_rules import BACKGROUND_SOUND_IDS, TRANSITION_MODES
+from timer.storage.settings_rules import BACKGROUND_SOUND_IDS, LANGUAGE_IDS, TRANSITION_MODES
 from timer.ui.settings_view_model import SettingsViewModel
 
 
@@ -342,13 +342,15 @@ def test_the_language_is_english_by_default(settings_view_model):
 
 
 def test_the_languages_are_offered_each_in_its_own_name(settings_view_model):
-    assert settings_view_model.languages() == [("en", "English"), ("ru", "Русский")]
+    assert settings_view_model.languages() == [("en", "English"), ("ru", "Русский"), ("es", "Español"), ("pt", "Português"), ("de", "Deutsch"), ("zh", "中文"), ("ja", "日本語")]
 
 
 def test_the_names_of_the_languages_do_not_change_with_the_language(settings_view_model):
     settings_view_model.choose_language("ru")
 
-    assert settings_view_model.languages() == [("en", "English"), ("ru", "Русский")]
+    assert [name for _, name in settings_view_model.languages()] == [
+        name for _, name in [("en", "English"), ("ru", "Русский"), ("es", "Español"), ("pt", "Português"), ("de", "Deutsch"), ("zh", "中文"), ("ja", "日本語")]
+    ]
 
 
 def test_a_chosen_language_is_stored_at_once_and_applies_at_once(db, settings_view_model):
@@ -387,6 +389,12 @@ def test_the_messages_of_a_rejected_value_come_in_the_chosen_language(settings_v
     assert message != "The work interval must be a whole number from 1 to 120 minutes."
 
 
+@pytest.mark.parametrize("code", LANGUAGE_IDS)
+def test_every_language_can_be_chosen(db, settings_view_model, code):
+    assert settings_view_model.choose_language(code) is None
+    assert i18n.current_language() == code
+
+
 def test_the_language_label_exists_in_every_language():
-    for code in ("en", "ru"):
+    for code in LANGUAGE_IDS:
         assert i18n.catalog_of(code)["settings.language"]

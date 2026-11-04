@@ -21,8 +21,11 @@ What is already there from [release-0.2.md](release-0.2.md): the PyInstaller bui
   - The Yes / No buttons of the questions are named in the language (`ui/dialogs.py`); the line-of-text and color dialogs of ttkbootstrap speak the language through the library's own catalog, to which the Russian texts we use are added (`ui/library_locale.py`).
   - The names of the categories and scenarios are the user's data and are not translated (the system category stays `None`).
 
-- [ ] **6.3 The other languages**
-  - Spanish, Portuguese, German, Chinese and Japanese catalogs. The translations are written by the agent and are not checked by native speakers; this is said in the docs. The window must show Chinese and Japanese text: checked on the owner's laptop.
+- [x] **6.3 The other languages**
+  - Spanish, Portuguese (Brazilian), German, Chinese (Simplified) and Japanese catalogs, each with the keys and placeholders of `en.json` (the test of 6.2 holds them to it); the five join the list of Settings, which now has seven languages. The translations are written by the agent and are not checked by native speakers; this is said in the docs. Russian is the owner's to read.
+  - The date titles follow each language's order (`2026年11月4日(水)`, `Mi, 4. Nov 2026`), and so do the lengths of time (`3 Std. 05 Min.`, `3時間05分`).
+  - The line-of-text and color dialogs of ttkbootstrap speak all seven languages: the library has its own translations for Spanish, Portuguese, German and Japanese, and the Chinese ones it lacks (the color chooser) are added next to the Russian ones.
+  - Checked on screens of the owner's laptop kind: every language fits the Settings screen (the tightest one) and the list of the History, and Chinese and Japanese text is drawn by the system's CJK font.
 
 - [ ] **6.4 The icon**
   - One square PNG chosen by the owner (at least 256 × 256, a transparent background) in `src/timer/icons/timer.png`.

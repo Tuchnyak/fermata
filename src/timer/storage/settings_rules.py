@@ -18,7 +18,7 @@ SHORT_BREAK_MINUTES_RANGE = (1, 30)
 LONG_BREAK_MINUTES_RANGE = (1, 60)
 LONG_BREAK_EVERY_RANGE = (1, 10)
 TRANSITION_MODES = ("auto", "confirm", "mixed")
-LANGUAGE_IDS = ("en", "ru")  # the languages that have a catalog, English first
+LANGUAGE_IDS = ("en", "ru", "es", "pt", "de", "zh", "ja")  # English first, then as listed
 BACKGROUND_SOUND_IDS = ("off", "ticking", "white_noise", "rain")
 THEME_IDS = (
     "light",
