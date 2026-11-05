@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 from contextlib import contextmanager
 from datetime import UTC, date, datetime, timedelta, timezone
@@ -105,6 +106,7 @@ def computer_time_zone(name):
         time.tzset()
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows has no time.tzset")
 def test_without_a_zone_the_days_are_those_of_this_computer():
     with computer_time_zone("Asia/Tokyo"):  # UTC+9, no summer time
         bounds = utc_bounds(DAY, TUESDAY)

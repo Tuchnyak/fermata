@@ -262,7 +262,7 @@ The database schema is documented so the user can query history directly (`sqlit
 ## 16. Data storage
 
 Everything is stored in one SQLite database (`sqlite3` from the standard library):
-`$XDG_DATA_HOME/fermata/fermata.db`, by default `~/.local/share/fermata/fermata.db`.
+`$XDG_DATA_HOME/fermata/fermata.db`, by default `~/.local/share/fermata/fermata.db`; on Windows `%LOCALAPPDATA%\fermata\fermata.db` (local, not roaming: the database must not travel between machines). A value of `XDG_DATA_HOME` or `LOCALAPPDATA` that is not an absolute path is ignored.
 
 That is the database of a release. A run from source (development) uses `fermata-dev` instead of `fermata`, so development never touches the data of an installed release. The environment variable `FERMATA_DATA_DIR`, when set to an absolute path, replaces the whole directory in either build.
 

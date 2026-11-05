@@ -8,7 +8,7 @@ The agent has no Windows: what cannot be checked on Linux is checked by the owne
 
 ## Pieces
 
-- [ ] **8.1 The code does not depend on Linux**
+- [x] **8.1 The code does not depend on Linux**
   - The data folder is chosen by platform: on Windows `%LOCALAPPDATA%\fermata` for a release and `%LOCALAPPDATA%\fermata-dev` for a run from source; Linux is unchanged. `FERMATA_DATA_DIR` still overrides both.
   - The test that switches the time zone with `time.tzset` is skipped on Windows, which has no `tzset`. `tzdata` is a dev dependency on Windows only (the tests read named zones; the program reads the local time from the system).
   - The tests of the data folder run on both platforms.
