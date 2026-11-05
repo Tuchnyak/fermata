@@ -248,10 +248,17 @@ class MainWindow:
         self._shown_home_mode = self._home_view_model.mode()
         self._show_home_panel(board)
         if board:
-            # The board has no header; its one button is over the corner of the panel.
-            MuteButton(self._content, self._settings_view_model).place(
-                relx=1.0, rely=0.0, anchor="ne"
-            )
+            # The board has no header; its two buttons are over the corner of the panel, in the
+            # order of the header: mute, then the sign that enters fullscreen and here leaves it.
+            corner = ttk.Frame(self._content)
+            MuteButton(corner, self._settings_view_model).pack(side="left", padx=(0, 8))
+            ttk.Button(
+                corner,
+                text=t("nav.fullscreen"),
+                command=self._toggle_fullscreen,
+                takefocus=False,
+            ).pack(side="left")
+            corner.place(relx=1.0, rely=0.0, anchor="ne")
 
     def _show_home_panel(self, board: bool) -> None:
         if self._shown_home_mode == HomeMode.RUNNING:
