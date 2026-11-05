@@ -99,6 +99,8 @@ Added at the owner's request: the program is to be shared as one file, so its so
 
 ## Stage 8 — Windows
 
+Breakdown into pieces with progress: [stage-8.md](stage-8.md).
+
 Added at the owner's request: the owner wants to share the program, and has a Windows machine to check on. A separate stage, after Stage 7 (the sound it makes is the part of the program that would not run on Windows). What has to change, found by looking at the code:
 
 - Sound: done in Stage 7, only to be checked on Windows.
