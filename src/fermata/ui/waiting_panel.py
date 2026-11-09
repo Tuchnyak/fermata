@@ -38,7 +38,7 @@ class WaitingPanel(ttk.Frame):
         ttk.Button(
             buttons,
             text=t("waiting.next"),
-            command=view_model.confirm,
+            command=self._view_model.confirm,
             width=10,
             bootstyle="success",
             takefocus=False,
